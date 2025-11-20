@@ -15,7 +15,7 @@ from . import images_bp
 
 @images_bp.route('/api/images/<int:image_id>/analyze', methods=['POST'])
 def analyze_image(image_id):
-    """Analyze single image/video with AI and optionally auto-rename"""
+    """Analyze single image/video with AI and optionally auto-rename and auto-categorize"""
     temp_image_path = None
     try:
         image = db.get_image(image_id)
@@ -77,7 +77,56 @@ def analyze_image(image_id):
             )
             print(f"[ANALYZE] ✅ Database updated successfully for image {image_id}")
 
-            # --- ВАЖНО: Генериране на Embedding веднага ---
+            # --- 1. SMART BOARDS (Съществуващи правила) ---
+            added_to_boards = []
+            try:
+                added_to_boards = db.process_smart_boards(image_id)
+                if added_to_boards:
+                    print(f"[ANALYZE] 🤖 Auto-categorized image {image_id} into {len(added_to_boards)} smart board(s)")
+            except Exception as e:
+                print(f"[ANALYZE] ⚠️ Smart boards processing failed: {e}")
+
+            # --- 2. AUTO SUGGEST & CREATE (Ако не е добавена никъде) ---
+            if not added_to_boards:
+                try:
+                    print(f"[ANALYZE] 🤔 Image not in any board, asking AI for suggestions...")
+                    all_boards = db.get_all_boards()
+                    
+                    # Викаме AI да предложи структура
+                    suggestion = ai.suggest_boards(
+                        result['description'], 
+                        result['tags'], 
+                        all_boards
+                    )
+                    
+                    if suggestion:
+                        # Случай А: AI предлага да създадем НОВ БОРД
+                        if suggestion['action'] == 'create_new' and suggestion.get('new_board'):
+                            new_data = suggestion['new_board']
+                            print(f"[ANALYZE] 💡 AI suggests creating NEW board: '{new_data['name']}'")
+                            
+                            # Създаваме борда
+                            new_board_id = db.create_board(
+                                name=new_data['name'],
+                                description=new_data.get('description'),
+                                parent_id=new_data.get('parent_id')
+                            )
+                            
+                            # Добавяме снимката в новия борд
+                            db.add_image_to_board(new_board_id, image_id)
+                            print(f"[ANALYZE] ✨ Created board '{new_data['name']}' and added image {image_id}")
+                            
+                        # Случай Б: AI е открил съществуващ борд, който Smart Rules са пропуснали
+                        elif suggestion['action'] == 'add_to_existing':
+                            for b_id in suggestion['suggested_boards']:
+                                db.add_image_to_board(b_id, image_id)
+                                print(f"[ANALYZE] 📎 AI matched image {image_id} to existing board {b_id}")
+
+                except Exception as e:
+                    print(f"[ANALYZE] ⚠️ Auto-board suggestion failed: {e}")
+            # -------------------------------------------------------
+
+            # --- 3. EMBEDDINGS (CLIP) ---
             try:
                 embedding = generate_embedding_for_image(analysis_path)
                 if embedding is not None:
@@ -89,7 +138,7 @@ def analyze_image(image_id):
                     print(f"[ANALYZE] ⚠️ Could not generate embedding for image {image_id} (CLIP may not be available)")
             except Exception as e:
                 print(f"[ANALYZE] ⚠️ Failed to generate embedding: {e}")
-            # -----------------------------------------------
+            # ----------------------------
 
             # Auto-rename if AI suggested a filename
             new_filename = None
@@ -215,6 +264,33 @@ def batch_analyze():
                 result['tags']
             )
             analyzed_count += 1
+
+            # --- AUTO CATEGORIZE FOR BATCH ---
+            try:
+                added = db.process_smart_boards(image_id)
+                if not added:
+                    # За batch режим, може би искаме само да добавяме към съществуващи,
+                    # за да не създаваме 100 нови папки. Но ето логиката и тук:
+                    all_b = db.get_all_boards()
+                    sugg = ai.suggest_boards(result['description'], result['tags'], all_b)
+                    if sugg and sugg['action'] == 'create_new' and sugg.get('new_board'):
+                         # Create ONLY if confidence is high (optional logic)
+                         pass # В batch режим е по-безопасно да не създаваме нови папки автоматично, за да не стане хаос
+                    elif sugg and sugg['action'] == 'add_to_existing':
+                         for bid in sugg['suggested_boards']:
+                             db.add_image_to_board(bid, image_id)
+            except:
+                pass
+            # --------------------------------
+
+            # Generate Embedding
+            try:
+                embedding = generate_embedding_for_image(filepath)
+                if embedding is not None:
+                    blob = embedding_to_blob(embedding)
+                    db.save_embedding(image_id, blob)
+            except:
+                pass
 
             # Auto-rename if AI suggested a filename
             if result.get('suggested_filename'):

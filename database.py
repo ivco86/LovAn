@@ -56,12 +56,20 @@ class Database:
                 description TEXT,
                 parent_id INTEGER,
                 cover_image_id INTEGER,
+                smart_rules TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (parent_id) REFERENCES boards(id) ON DELETE CASCADE,
                 FOREIGN KEY (cover_image_id) REFERENCES images(id) ON DELETE SET NULL
             )
         """)
+        
+        # Add smart_rules column if it doesn't exist (migration)
+        cursor.execute("PRAGMA table_info(boards)")
+        columns = [col[1] for col in cursor.fetchall()]
+        if 'smart_rules' not in columns:
+            cursor.execute("ALTER TABLE boards ADD COLUMN smart_rules TEXT DEFAULT NULL")
+            conn.commit()
         
         # Board-Image relationships (many-to-many)
         cursor.execute("""
@@ -1027,6 +1035,15 @@ class Database:
         else:
             data['tags'] = []
 
+        # Parse smart_rules JSON
+        if 'smart_rules' in data and data['smart_rules']:
+            try:
+                data['smart_rules'] = json.loads(data['smart_rules'])
+            except:
+                data['smart_rules'] = None
+        else:
+            data['smart_rules'] = None
+
         # Convert boolean
         if 'is_favorite' in data:
             data['is_favorite'] = bool(data['is_favorite'])
@@ -1257,3 +1274,159 @@ class Database:
         conn.close()
 
         return [self._row_to_dict(row) for row in results]
+
+    # ============ SMART BOARDS OPERATIONS ============
+
+    def update_board_smart_rules(self, board_id: int, smart_rules: Dict) -> bool:
+        """
+        Update smart rules for a board
+        
+        Args:
+            board_id: Board ID
+            smart_rules: Dictionary with rules (will be stored as JSON)
+                Example: {
+                    'tags_include': ['sunset', 'sky'],
+                    'tags_exclude': ['portrait'],
+                    'description_contains': 'nature',
+                    'min_confidence': 0.8
+                }
+        
+        Returns:
+            bool: True if successful
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            rules_json = json.dumps(smart_rules) if smart_rules else None
+            cursor.execute("""
+                UPDATE boards 
+                SET smart_rules = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (rules_json, board_id))
+            
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error updating smart rules: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def process_smart_boards(self, image_id: int) -> List[int]:
+        """
+        Run smart board rules against a specific image and auto-add to matching boards
+        
+        Args:
+            image_id: Image ID to process
+        
+        Returns:
+            List[int]: List of board IDs that the image was added to
+        """
+        # Get image data
+        image = self.get_image(image_id)
+        if not image:
+            return []
+        
+        # Parse tags
+        image_tags = []
+        if image.get('tags'):
+            try:
+                if isinstance(image['tags'], str):
+                    image_tags = json.loads(image['tags'])
+                elif isinstance(image['tags'], list):
+                    image_tags = image['tags']
+            except:
+                image_tags = []
+        
+        image_tags_set = set(t.lower().strip() for t in image_tags if t)
+        image_description = (image.get('description') or '').lower()
+        
+        # Get all smart boards
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT id, name, smart_rules FROM boards WHERE smart_rules IS NOT NULL AND smart_rules != ''")
+        smart_boards = cursor.fetchall()
+        conn.close()
+        
+        added_to_boards = []
+        
+        for board in smart_boards:
+            try:
+                rules_json = board['smart_rules']
+                if not rules_json:
+                    continue
+                    
+                rules = json.loads(rules_json)
+                match = False
+                
+                # RULE 1: Tags Include (at least one tag must match)
+                if 'tags_include' in rules and rules['tags_include']:
+                    required_tags = set(t.lower().strip() for t in rules['tags_include'] if t)
+                    if required_tags and not required_tags.isdisjoint(image_tags_set):
+                        match = True
+                        print(f"[SMART BOARD] Image {image_id} matches board '{board['name']}' (tags_include: {required_tags})")
+                
+                # RULE 2: Tags Exclude (none of these tags should be present)
+                if 'tags_exclude' in rules and rules['tags_exclude']:
+                    excluded_tags = set(t.lower().strip() for t in rules['tags_exclude'] if t)
+                    if excluded_tags and not excluded_tags.isdisjoint(image_tags_set):
+                        match = False  # Exclude overrides include
+                        print(f"[SMART BOARD] Image {image_id} excluded from board '{board['name']}' (tags_exclude: {excluded_tags})")
+                        continue
+                
+                # RULE 3: Description Contains (text search in description)
+                if 'description_contains' in rules and rules['description_contains']:
+                    search_text = rules['description_contains'].lower()
+                    if search_text in image_description:
+                        match = True
+                        print(f"[SMART BOARD] Image {image_id} matches board '{board['name']}' (description contains: '{search_text}')")
+                
+                # RULE 4: All Tags Required (all tags must be present)
+                if 'tags_all' in rules and rules['tags_all']:
+                    required_all = set(t.lower().strip() for t in rules['tags_all'] if t)
+                    if required_all and required_all.issubset(image_tags_set):
+                        match = True
+                        print(f"[SMART BOARD] Image {image_id} matches board '{board['name']}' (tags_all: {required_all})")
+                    elif required_all:
+                        match = False  # If all tags required but not present, don't match
+                
+                # If match found, add to board
+                if match:
+                    self.add_image_to_board(board['id'], image_id, auto_add_to_parents=True)
+                    added_to_boards.append(board['id'])
+                    
+            except Exception as e:
+                print(f"[SMART BOARD] Error processing rules for board {board['id']} ({board.get('name', 'unknown')}): {e}")
+                import traceback
+                traceback.print_exc()
+                continue
+        
+        if added_to_boards:
+            print(f"[SMART BOARD] ✅ Auto-added image {image_id} to {len(added_to_boards)} smart board(s): {added_to_boards}")
+        
+        return added_to_boards
+
+    def process_all_images_for_smart_board(self, board_id: int) -> int:
+        """
+        Process all existing images against a specific smart board (retroactive)
+        Useful when creating a new smart board or updating rules
+        
+        Args:
+            board_id: Board ID to process
+        
+        Returns:
+            int: Number of images added
+        """
+        # Get all analyzed images
+        all_images = self.get_all_images(limit=10000)
+        added_count = 0
+        
+        for image in all_images:
+            if image.get('tags') or image.get('description'):
+                added_boards = self.process_smart_boards(image['id'])
+                if board_id in added_boards:
+                    added_count += 1
+        
+        return added_count

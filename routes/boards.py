@@ -91,6 +91,15 @@ def board_detail(board_id):
         if name is not None or description is not None:
             db.update_board(board_id, name, description)
 
+        # Update smart rules if provided
+        if 'smart_rules' in data:
+            smart_rules = data.get('smart_rules')
+            if smart_rules is not None:  # Allow setting to None to disable
+                db.update_board_smart_rules(board_id, smart_rules)
+            else:
+                # Remove smart rules
+                db.update_board_smart_rules(board_id, None)
+
         # Move board if parent_id is explicitly provided (including None for top-level)
         if 'parent_id' in data:
             try:
@@ -114,6 +123,70 @@ def board_detail(board_id):
             'board_id': board_id,
             'deleted_sub_boards': delete_sub_boards
         })
+
+
+@boards_bp.route('/api/boards/<int:board_id>/smart-rules', methods=['PUT', 'POST'])
+def update_smart_rules(board_id):
+    """Update smart rules for a board"""
+    board = db.get_board(board_id)
+    if not board:
+        return jsonify({'error': 'Board not found'}), 404
+
+    data = request.json or {}
+    smart_rules = data.get('smart_rules')
+    
+    # If smart_rules is None or empty dict, disable smart board
+    if smart_rules is None or (isinstance(smart_rules, dict) and not smart_rules):
+        db.update_board_smart_rules(board_id, None)
+        return jsonify({
+            'success': True,
+            'message': 'Smart rules disabled',
+            'board_id': board_id
+        })
+
+    # Validate smart_rules structure
+    if not isinstance(smart_rules, dict):
+        return jsonify({'error': 'smart_rules must be a dictionary'}), 400
+
+    # Update rules
+    success = db.update_board_smart_rules(board_id, smart_rules)
+    
+    if not success:
+        return jsonify({'error': 'Failed to update smart rules'}), 500
+
+    # Optionally process all existing images (retroactive)
+    process_existing = data.get('process_existing', False)
+    added_count = 0
+    
+    if process_existing:
+        added_count = db.process_all_images_for_smart_board(board_id)
+
+    return jsonify({
+        'success': True,
+        'board_id': board_id,
+        'smart_rules': smart_rules,
+        'processed_existing': process_existing,
+        'images_added': added_count
+    })
+
+
+@boards_bp.route('/api/boards/<int:board_id>/process-smart', methods=['POST'])
+def process_smart_board(board_id):
+    """Process all existing images against a smart board (retroactive)"""
+    board = db.get_board(board_id)
+    if not board:
+        return jsonify({'error': 'Board not found'}), 404
+
+    if not board.get('smart_rules'):
+        return jsonify({'error': 'Board does not have smart rules'}), 400
+
+    added_count = db.process_all_images_for_smart_board(board_id)
+
+    return jsonify({
+        'success': True,
+        'board_id': board_id,
+        'images_added': added_count
+    })
 
 
 @boards_bp.route('/api/boards/<int:board_id>/merge', methods=['POST'])
