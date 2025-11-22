@@ -33,70 +33,41 @@ function togglePeopleSection() {
     }
 }
 
-// Render people in sidebar as image cards
-async function renderPeopleList(people) {
+// Render people in sidebar as tags (like Popular Tags)
+function renderPeopleList(people) {
     const peopleList = document.getElementById('peopleList');
     const peopleCount = document.getElementById('peopleCount');
     if (!peopleList) return;
 
     if (!people || people.length === 0) {
-        peopleList.innerHTML = '<div style="padding: var(--spacing-sm); color: var(--text-muted); font-size: 0.875rem; grid-column: 1 / -1;">No people yet</div>';
+        peopleList.innerHTML = '<span style="color: var(--text-muted); font-size: 0.75rem;">No people yet</span>';
         if (peopleCount) peopleCount.textContent = '0';
         return;
     }
 
-    // Update count first
+    // Update count
     if (peopleCount) peopleCount.textContent = people.length;
 
-    // Render cards with placeholder first
+    // Render people as tags (tag-cloud-item style)
     peopleList.innerHTML = people.map(person => {
         const name = person.name || `Unknown Person #${person.id}`;
-        const faceCount = person.face_count || 0;
         const imageCount = person.image_count || 0;
+        const faceCount = person.face_count || 0;
+
+        // Calculate size class based on image count (like tag cloud)
+        let sizeClass = 'tag-size-sm';
+        if (imageCount > 20) sizeClass = 'tag-size-xl';
+        else if (imageCount > 10) sizeClass = 'tag-size-lg';
+        else if (imageCount > 5) sizeClass = 'tag-size-md';
 
         return `
-            <div class="image-card person-card-sidebar" data-person-id="${person.id}" onclick="openPersonDetail(${person.id})">
-                <div class="image-card-status-icon status-icon-analyzed">👤</div>
-                <img
-                    class="image-card-image person-card-image"
-                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23252b3a' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%238b95a5' font-size='60' font-family='Arial'%3E👤%3C/text%3E%3C/svg%3E"
-                    alt="${escapeHtml(name)}"
-                    loading="lazy"
-                    data-person-id="${person.id}"
-                >
-                <div class="image-card-content">
-                    <div class="image-card-header">
-                        <div class="image-card-filename">${escapeHtml(name)}</div>
-                    </div>
-                    <div class="image-card-description">${imageCount} image${imageCount !== 1 ? 's' : ''} • ${faceCount} face${faceCount !== 1 ? 's' : ''}</div>
-                    <div class="image-card-tags">
-                        <span class="tag">Person</span>
-                    </div>
-                </div>
-            </div>
+            <span class="tag-cloud-item ${sizeClass}" data-person-id="${person.id}" onclick="showPersonImages(${person.id}, '${escapeHtml(name)}')">
+                <span style="font-size: 0.9em;">👤</span>
+                ${escapeHtml(name)}
+                <span class="tag-cloud-count">${imageCount}</span>
+            </span>
         `;
     }).join('');
-
-    // Load first image for each person asynchronously
-    people.forEach(async (person) => {
-        try {
-            const response = await fetch(`/api/people/${person.id}`);
-            const data = await response.json();
-
-            if (data.success && data.faces && data.faces.length > 0) {
-                const firstFace = data.faces[0];
-                const card = peopleList.querySelector(`.person-card-sidebar[data-person-id="${person.id}"]`);
-                if (card) {
-                    const img = card.querySelector('.person-card-image');
-                    if (img) {
-                        img.src = `/api/images/${firstFace.image_id}/thumbnail?size=500`;
-                    }
-                }
-            }
-        } catch (error) {
-            console.error(`Error loading image for person ${person.id}:`, error);
-        }
-    });
 }
 
 // Open people modal
@@ -409,7 +380,7 @@ async function showPeopleView() {
     }
 }
 
-// Show all images for a person
+// Show all images for a person (like gallery view)
 async function showPersonImages(personId, personName) {
     try {
         const response = await fetch(`/api/people/${personId}`);
@@ -442,47 +413,79 @@ async function showPersonImages(personId, personName) {
             return;
         }
 
-        // Group faces by image_id to show unique images
+        // Group faces by image_id to get unique images
         const imageMap = new Map();
         faces.forEach(face => {
             if (!imageMap.has(face.image_id)) {
                 imageMap.set(face.image_id, {
                     image_id: face.image_id,
-                    filepath: face.filepath,
-                    filename: face.filename,
                     faces: []
                 });
             }
             imageMap.get(face.image_id).faces.push(face);
         });
 
-        const uniqueImages = Array.from(imageMap.values());
+        const uniqueImageIds = Array.from(imageMap.keys());
 
-        // Render images
-        imageGrid.innerHTML = uniqueImages.map(img => `
-            <div class="image-card" onclick="openImageModal({id: ${img.image_id}})">
-                <div class="image-thumbnail">
-                    <img src="/api/images/${img.image_id}/thumbnail?size=500" alt="${escapeHtml(img.filename)}" loading="lazy">
-                    <div class="image-overlay">
-                        <div class="face-count-badge" style="
-                            position: absolute;
-                            top: var(--spacing-sm);
-                            left: var(--spacing-sm);
-                            background: rgba(0, 0, 0, 0.7);
-                            color: white;
-                            padding: var(--spacing-xs) var(--spacing-sm);
-                            border-radius: var(--radius-sm);
-                            font-size: 0.75rem;
-                        ">
-                            👤 ${img.faces.length} face${img.faces.length > 1 ? 's' : ''}
+        // Load full image details for each image
+        const imagePromises = uniqueImageIds.map(async (imageId) => {
+            try {
+                const imgResponse = await fetch(`/api/images/${imageId}`);
+                const imgData = await imgResponse.json();
+                return imgData;
+            } catch (error) {
+                console.error(`Error loading image ${imageId}:`, error);
+                return null;
+            }
+        });
+
+        const images = (await Promise.all(imagePromises)).filter(img => img !== null);
+
+        if (images.length === 0) {
+            imageGrid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">👤</div>
+                    <h2>No Images Found</h2>
+                    <p>Could not load images for this person</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Render images using createImageCard (like in gallery)
+        if (typeof createImageCard === 'function') {
+            imageGrid.innerHTML = images.map(image => createImageCard(image)).join('');
+
+            // Add click handlers for image cards
+            imageGrid.querySelectorAll('.image-card').forEach(card => {
+                card.addEventListener('click', async (e) => {
+                    // Don't trigger if clicking checkbox or favorite
+                    if (e.target.closest('.image-card-checkbox') || e.target.closest('.image-card-favorite')) {
+                        return;
+                    }
+                    
+                    const imageId = parseInt(card.dataset.id);
+                    if (imageId && typeof openImageModal === 'function') {
+                        const imageDetails = await getImageDetails(imageId);
+                        if (imageDetails) {
+                            openImageModal(imageDetails);
+                        }
+                    }
+                });
+            });
+        } else {
+            // Fallback if createImageCard is not available
+            imageGrid.innerHTML = images.map(image => `
+                <div class="image-card" data-id="${image.id}" onclick="openImageModal({id: ${image.id}})">
+                    <img class="image-card-image" src="/api/images/${image.id}/thumbnail?size=500" alt="${escapeHtml(image.filename)}" loading="lazy">
+                    <div class="image-card-content">
+                        <div class="image-card-header">
+                            <div class="image-card-filename">${escapeHtml(image.filename)}</div>
                         </div>
                     </div>
                 </div>
-                <div class="image-info">
-                    <div class="image-filename">${escapeHtml(img.filename)}</div>
-                </div>
-            </div>
-        `).join('');
+            `).join('');
+        }
 
     } catch (error) {
         console.error('Error showing person images:', error);
