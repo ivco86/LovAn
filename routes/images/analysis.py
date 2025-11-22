@@ -140,6 +140,46 @@ def analyze_image(image_id):
                 print(f"[ANALYZE] ⚠️ Failed to generate embedding: {e}")
             # ----------------------------
 
+            # --- 4. FACE DETECTION (DeepFace) ---
+            faces_detected = 0
+            try:
+                # Only detect faces for images, not videos
+                if media_type == 'image':
+                    from face_recognition_service import FaceRecognitionService
+                    face_service = FaceRecognitionService(model_name='Facenet', detector_backend='opencv')
+
+                    if face_service.enabled:
+                        print(f"[ANALYZE] 👤 Detecting faces in image {image_id}...")
+                        faces = face_service.detect_and_analyze_faces(filepath)
+
+                        if faces:
+                            for face_data in faces:
+                                # Add face to database
+                                face_id = db.add_face(
+                                    image_id=image_id,
+                                    bounding_box=face_data['bounding_box'],
+                                    confidence=face_data.get('confidence', 1.0),
+                                    age=face_data.get('age'),
+                                    gender=face_data.get('gender'),
+                                    emotion=face_data.get('emotion')
+                                )
+
+                                # Store embedding
+                                if face_id and face_data.get('embedding') is not None:
+                                    embedding_bytes = face_service.serialize_embedding(face_data['embedding'])
+                                    db.add_face_embedding(face_id, embedding_bytes, face_service.model_name)
+
+                                faces_detected += 1
+
+                            print(f"[ANALYZE] ✅ Detected and saved {faces_detected} face(s) for image {image_id}")
+                    else:
+                        print(f"[ANALYZE] ⏭️ Face detection skipped (DeepFace not available)")
+            except Exception as e:
+                print(f"[ANALYZE] ⚠️ Face detection failed: {e}")
+                import traceback
+                traceback.print_exc()
+            # ----------------------------------------
+
             # Auto-rename if AI suggested a filename
             new_filename = None
             renamed = False

@@ -153,6 +153,49 @@ class Database:
             )
         """)
 
+        # ============ FACE RECOGNITION TABLES ============
+
+        # Person groups (people identified in photos)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS person_groups (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                cover_face_id INTEGER,
+                face_count INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Detected faces in images
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS faces (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                image_id INTEGER NOT NULL,
+                person_group_id INTEGER,
+                bounding_box TEXT NOT NULL,
+                confidence REAL DEFAULT 1.0,
+                age INTEGER,
+                gender TEXT,
+                emotion TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
+                FOREIGN KEY (person_group_id) REFERENCES person_groups(id) ON DELETE SET NULL
+            )
+        """)
+
+        # Face embeddings (DeepFace vectors for similarity matching)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS face_embeddings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                face_id INTEGER UNIQUE NOT NULL,
+                embedding BLOB NOT NULL,
+                model_name TEXT DEFAULT 'Facenet',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (face_id) REFERENCES faces(id) ON DELETE CASCADE
+            )
+        """)
+
         # Audit log table (for tracking changes)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS audit_log (
@@ -173,6 +216,12 @@ class Database:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_exif_gps ON exif_data(gps_latitude, gps_longitude)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_embeddings_image ON image_embeddings(image_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_colors_image ON image_colors(image_id)")
+
+        # Create indexes for face recognition
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_faces_image ON faces(image_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_faces_person ON faces(person_group_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_face_embeddings_face ON face_embeddings(face_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_person_groups_name ON person_groups(name)")
 
         # Full-text search index - check if needs migration
         cursor.execute("""
@@ -1428,5 +1477,350 @@ class Database:
                 added_boards = self.process_smart_boards(image['id'])
                 if board_id in added_boards:
                     added_count += 1
-        
+
         return added_count
+
+    # ============ FACE RECOGNITION OPERATIONS ============
+
+    def add_face(self, image_id: int, bounding_box: Dict, confidence: float = 1.0,
+                 age: int = None, gender: str = None, emotion: str = None) -> int:
+        """
+        Add a detected face to the database
+
+        Args:
+            image_id: Image ID where face was detected
+            bounding_box: Dict with x, y, w, h coordinates
+            confidence: Detection confidence (0-1)
+            age: Detected age (optional)
+            gender: Detected gender (optional)
+            emotion: Detected emotion (optional)
+
+        Returns:
+            int: Face ID
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                INSERT INTO faces (image_id, bounding_box, confidence, age, gender, emotion)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (image_id, json.dumps(bounding_box), confidence, age, gender, emotion))
+
+            conn.commit()
+            face_id = cursor.lastrowid
+            return face_id
+        except Exception as e:
+            print(f"Error adding face: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def add_face_embedding(self, face_id: int, embedding: bytes, model_name: str = 'Facenet') -> bool:
+        """
+        Store face embedding (DeepFace vector)
+
+        Args:
+            face_id: Face ID
+            embedding: Serialized embedding vector (numpy array as bytes)
+            model_name: DeepFace model name
+
+        Returns:
+            bool: Success
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                INSERT OR REPLACE INTO face_embeddings (face_id, embedding, model_name)
+                VALUES (?, ?, ?)
+            """, (face_id, embedding, model_name))
+
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error adding face embedding: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def get_faces_by_image(self, image_id: int) -> List[Dict]:
+        """Get all faces detected in an image"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT f.*, fe.embedding, fe.model_name,
+                   pg.name as person_name, pg.id as person_group_id
+            FROM faces f
+            LEFT JOIN face_embeddings fe ON f.id = fe.face_id
+            LEFT JOIN person_groups pg ON f.person_group_id = pg.id
+            WHERE f.image_id = ?
+            ORDER BY f.id
+        """, (image_id,))
+
+        results = cursor.fetchall()
+        conn.close()
+
+        faces = []
+        for row in results:
+            face = self._row_to_dict(row)
+            if face.get('bounding_box'):
+                try:
+                    face['bounding_box'] = json.loads(face['bounding_box'])
+                except:
+                    pass
+            faces.append(face)
+
+        return faces
+
+    def get_all_face_embeddings(self) -> List[Tuple[int, bytes, int]]:
+        """
+        Get all face embeddings for clustering
+
+        Returns:
+            List of tuples: (face_id, embedding_bytes, person_group_id or None)
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT fe.face_id, fe.embedding, f.person_group_id
+            FROM face_embeddings fe
+            JOIN faces f ON fe.face_id = f.id
+            ORDER BY fe.face_id
+        """)
+
+        results = cursor.fetchall()
+        conn.close()
+
+        return [(row['face_id'], row['embedding'], row['person_group_id']) for row in results]
+
+    def create_person_group(self, name: str = None) -> int:
+        """
+        Create a new person group (represents one person)
+
+        Args:
+            name: Person name (optional, can be set later)
+
+        Returns:
+            int: Person group ID
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                INSERT INTO person_groups (name, face_count)
+                VALUES (?, 0)
+            """, (name,))
+
+            conn.commit()
+            person_id = cursor.lastrowid
+            return person_id
+        except Exception as e:
+            print(f"Error creating person group: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def update_person_group_name(self, person_id: int, name: str) -> bool:
+        """Update person group name"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                UPDATE person_groups
+                SET name = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (name, person_id))
+
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error updating person name: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def assign_face_to_person(self, face_id: int, person_group_id: int) -> bool:
+        """Assign a face to a person group"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                UPDATE faces
+                SET person_group_id = ?
+                WHERE id = ?
+            """, (person_group_id, face_id))
+
+            # Update face count
+            cursor.execute("""
+                UPDATE person_groups
+                SET face_count = (
+                    SELECT COUNT(*) FROM faces WHERE person_group_id = ?
+                ),
+                updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (person_group_id, person_group_id))
+
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error assigning face to person: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def unassign_face(self, face_id: int) -> bool:
+        """Remove face from its person group (make it unassigned)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            # Get current person_group_id before unassigning
+            cursor.execute("SELECT person_group_id FROM faces WHERE id = ?", (face_id,))
+            result = cursor.fetchone()
+            old_person_id = result['person_group_id'] if result else None
+
+            # Set person_group_id to NULL
+            cursor.execute("""
+                UPDATE faces
+                SET person_group_id = NULL
+                WHERE id = ?
+            """, (face_id,))
+
+            # Update face count for the old person group
+            if old_person_id:
+                cursor.execute("""
+                    UPDATE person_groups
+                    SET face_count = (
+                        SELECT COUNT(*) FROM faces WHERE person_group_id = ?
+                    ),
+                    updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                """, (old_person_id, old_person_id))
+
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error unassigning face: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def get_all_person_groups(self) -> List[Dict]:
+        """Get all person groups with face counts"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT pg.*,
+                   COUNT(DISTINCT f.id) as face_count,
+                   COUNT(DISTINCT f.image_id) as image_count
+            FROM person_groups pg
+            LEFT JOIN faces f ON pg.id = f.person_group_id
+            GROUP BY pg.id
+            ORDER BY pg.name IS NULL, pg.name, pg.created_at DESC
+        """)
+
+        results = cursor.fetchall()
+        conn.close()
+
+        return [self._row_to_dict(row) for row in results]
+
+    def get_person_group(self, person_id: int) -> Dict:
+        """Get person group details"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT pg.*,
+                   COUNT(DISTINCT f.id) as face_count,
+                   COUNT(DISTINCT f.image_id) as image_count
+            FROM person_groups pg
+            LEFT JOIN faces f ON pg.id = f.person_group_id
+            WHERE pg.id = ?
+            GROUP BY pg.id
+        """, (person_id,))
+
+        result = cursor.fetchone()
+        conn.close()
+
+        return self._row_to_dict(result) if result else None
+
+    def get_faces_by_person(self, person_id: int, limit: int = 100) -> List[Dict]:
+        """Get all faces for a person group"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT f.*, i.filepath, i.filename, i.id as image_id
+            FROM faces f
+            JOIN images i ON f.image_id = i.id
+            WHERE f.person_group_id = ?
+            ORDER BY f.created_at DESC
+            LIMIT ?
+        """, (person_id, limit))
+
+        results = cursor.fetchall()
+        conn.close()
+
+        faces = []
+        for row in results:
+            face = self._row_to_dict(row)
+            if face.get('bounding_box'):
+                try:
+                    face['bounding_box'] = json.loads(face['bounding_box'])
+                except:
+                    pass
+            faces.append(face)
+
+        return faces
+
+    def delete_person_group(self, person_id: int) -> bool:
+        """Delete a person group (faces become unassigned)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("DELETE FROM person_groups WHERE id = ?", (person_id,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error deleting person group: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def get_unassigned_faces(self, limit: int = 100) -> List[Dict]:
+        """Get faces that haven't been assigned to any person"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT f.*, i.filepath, i.filename, i.id as image_id
+            FROM faces f
+            JOIN images i ON f.image_id = i.id
+            WHERE f.person_group_id IS NULL
+            ORDER BY f.created_at DESC
+            LIMIT ?
+        """, (limit,))
+
+        results = cursor.fetchall()
+        conn.close()
+
+        faces = []
+        for row in results:
+            face = self._row_to_dict(row)
+            if face.get('bounding_box'):
+                try:
+                    face['bounding_box'] = json.loads(face['bounding_box'])
+                except:
+                    pass
+            faces.append(face)
+
+        return faces

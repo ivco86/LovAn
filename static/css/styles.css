@@ -55,6 +55,12 @@
     --transition-fast: 0.15s ease;
     --transition-normal: 0.3s ease;
     --transition-slow: 0.5s ease;
+
+    /* Button gradient colors */
+    --slist: #7b2cbf, #ff006e, #00f5d4;
+
+    /* Header height */
+    --header-height: 70px;
 }
 
 /* Respect user motion preferences */
@@ -205,7 +211,7 @@ body {
     accent-color: var(--accent-pink);
 }
 
-.ai-toggle input[type="checkbox"]:checked ~ *,
+.ai-toggle input[type="checkbox"]:checked~*,
 .ai-toggle:has(input[type="checkbox"]:checked) label {
     color: var(--accent-pink);
 }
@@ -214,6 +220,27 @@ body {
     display: flex;
     gap: var(--spacing-sm);
     flex-shrink: 0;
+}
+
+/* ============ Header Buttons ============ */
+.header-right button,
+.header button {
+    display: grid;
+    grid-auto-flow: column;
+    grid-gap: .5em;
+    border: solid .25em transparent;
+    padding: 0.6em 1em;
+    border-radius: 9em;
+    background: linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+                linear-gradient(to right bottom, var(--slist)) border-box;
+    font: 700 0.9em/ 1.25 ubuntu, sans-serif;
+    text-transform: uppercase;
+    color: white;
+}
+
+.header-right button::after,
+.header button::after {
+    content: attr(data-ico);
 }
 
 /* ============ Buttons ============ */
@@ -325,8 +352,8 @@ body {
     flex-shrink: 0;
     resize: horizontal;
     position: sticky;
-    top: 0;
-    height: 100vh;
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height));
     align-self: flex-start;
 }
 
@@ -911,6 +938,7 @@ body {
         opacity: 0;
         transform: translateY(-20px) scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -1648,6 +1676,7 @@ body {
         transform: translateX(400px);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -1659,6 +1688,7 @@ body {
         transform: translateX(0);
         opacity: 1;
     }
+
     to {
         transform: translateX(400px);
         opacity: 0;
@@ -1744,8 +1774,8 @@ body {
     .sidebar {
         position: fixed;
         left: -280px;
-        top: 70px;
-        height: calc(100vh - 70px);
+        top: var(--header-height);
+        height: calc(100vh - var(--header-height));
         z-index: 99;
         transition: left 0.3s;
     }
@@ -1849,6 +1879,26 @@ body {
     transform: translateY(-4px) scale(1.02);
 }
 
+/* Person cards in sidebar */
+.person-card-sidebar {
+    aspect-ratio: 3 / 4;
+    min-height: 200px;
+}
+
+.person-card-sidebar .image-card-image {
+    aspect-ratio: 3 / 4;
+    min-height: 150px;
+    background: var(--bg-tertiary);
+}
+
+.person-card-sidebar .image-card-status-icon {
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+}
+
 /* Batch Operations Bar */
 .batch-operations-bar {
     position: fixed;
@@ -1874,6 +1924,7 @@ body {
         transform: translateY(100%);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -1994,6 +2045,7 @@ body {
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);

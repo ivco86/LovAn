@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Gallery</title>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
+
 <body>
     <!-- Header -->
     <header class="header">
@@ -13,31 +15,30 @@
             <h1>🖼️ AI Gallery</h1>
             <span class="status-indicator" id="aiStatus">🔴 AI Offline</span>
         </div>
-        
+
         <div class="header-center">
             <div class="search-box">
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    placeholder="Search images..." 
-                    autocomplete="off"
-                >
+                <input type="text" id="searchInput" placeholder="Search images..." autocomplete="off">
                 <div class="ai-toggle">
                     <label>
-                        <input type="checkbox" id="ai-search-toggle"> 
+                        <input type="checkbox" id="ai-search-toggle">
                         ✨ AI Search
                     </label>
                 </div>
                 <button id="searchBtn" aria-label="Search images">🔍</button>
             </div>
         </div>
-        
+
         <div class="header-right">
-            <button class="btn btn-primary" id="uploadBtn" aria-label="Upload images from your computer">📤 Upload</button>
-            <button class="btn btn-primary" id="scanBtn" aria-label="Scan photos directory for new images">📂 Scan</button>
+            <button class="btn btn-primary" id="uploadBtn" aria-label="Upload images from your computer">📤
+                Upload</button>
+            <button class="btn btn-primary" id="scanBtn" aria-label="Scan photos directory for new images">📂
+                Scan</button>
             <button class="btn btn-secondary" id="sortImagesBtn" aria-label="Sort images">🔄 Sort</button>
-            <button class="btn btn-secondary" id="findDuplicatesBtn" aria-label="Find duplicate images">🔍 Find Duplicates</button>
-            <button class="btn btn-secondary" id="analyzeBtn" aria-label="Analyze multiple images with AI">🤖 Analyze</button>
+            <button class="btn btn-secondary" id="findDuplicatesBtn" aria-label="Find duplicate images">🔍 Find
+                Duplicates</button>
+            <button class="btn btn-secondary" id="analyzeBtn" aria-label="Analyze multiple images with AI">🤖
+                Analyze</button>
             <button class="btn btn-secondary" id="selectBtn" aria-label="Select multiple images">✓ Select</button>
             <button class="btn btn-secondary" id="settingsBtn" aria-label="Open settings">⚙️ Settings</button>
         </div>
@@ -83,11 +84,57 @@
             <div class="sidebar-section">
                 <div class="section-header">
                     <h3>Boards</h3>
-                    <button class="btn-icon" id="createBoardBtn" title="Create Board" aria-label="Create new board">+</button>
+                    <button class="btn-icon" id="createBoardBtn" title="Create Board"
+                        aria-label="Create new board">+</button>
                 </div>
                 <ul class="nav-list" id="boardsList">
                     <!-- Boards will be loaded here -->
                 </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-header" style="cursor: pointer;" onclick="togglePeopleSection()">
+                    <h3>
+                        <span id="peopleSectionToggle">▶</span> People <span class="count" id="peopleCount"
+                            style="margin-left: var(--spacing-xs);">0</span>
+                    </h3>
+                    <button class="btn-icon" id="clusterFacesBtn" title="Auto-Group Faces"
+                        aria-label="Automatically group similar faces">🔗</button>
+                </div>
+                <div id="peopleContent" style="display: none;">
+                    <div id="peopleList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">
+                        <!-- People will be loaded here -->
+                    </div>
+
+                    <div
+                        style="border-top: 1px solid var(--border); padding-top: var(--spacing-sm); margin-top: var(--spacing-sm);">
+                        <div
+                            style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: var(--spacing-xs); font-weight: 500;">
+                            Unknown Faces</div>
+                        <div id="unknownFacesList"
+                            style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-xs);">
+                            <!-- Unknown faces will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Inline assign form (shown when clicking unknown face) -->
+                    <div id="inlineAssignForm"
+                        style="display: none; border-top: 1px solid var(--border); padding-top: var(--spacing-sm); margin-top: var(--spacing-sm);">
+                        <div
+                            style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: var(--spacing-xs); font-weight: 500;">
+                            Assign Face</div>
+                        <img id="inlineAssignPreview" src="" alt="Face"
+                            style="width: 60px; height: 60px; border-radius: var(--radius-sm); margin-bottom: var(--spacing-xs); object-fit: cover;">
+                        <input type="text" id="inlinePersonSearch" placeholder="Search or create person..."
+                            style="width: 100%; padding: var(--spacing-xs); background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.875rem; margin-bottom: var(--spacing-xs);">
+                        <div id="inlinePersonSuggestions"
+                            style="max-height: 150px; overflow-y: auto; font-size: 0.875rem;">
+                            <!-- Suggestions will appear here -->
+                        </div>
+                        <button class="btn btn-sm btn-secondary" id="inlineCancelAssignBtn"
+                            style="width: 100%; margin-top: var(--spacing-xs);">Cancel</button>
+                    </div>
+                </div>
             </div>
 
             <div class="sidebar-section">
@@ -132,7 +179,8 @@
                 <div class="empty-icon">📂</div>
                 <h2>No Images Found</h2>
                 <p>Scan your photos directory to get started</p>
-                <button class="btn btn-primary" id="scanBtnEmpty" aria-label="Scan photos directory for new images">📂 Scan Directory</button>
+                <button class="btn btn-primary" id="scanBtnEmpty" aria-label="Scan photos directory for new images">📂
+                    Scan Directory</button>
             </div>
 
             <!-- Image Grid -->
@@ -159,28 +207,28 @@
         <div class="modal-overlay"></div>
         <div class="modal-content modal-small">
             <button class="modal-close" id="createBoardClose" aria-label="Close create board modal">&times;</button>
-            
+
             <div class="modal-body">
                 <h2>Create Board</h2>
-                
+
                 <form id="createBoardForm">
                     <div class="form-group">
                         <label for="boardName">Board Name *</label>
                         <input type="text" id="boardName" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="boardDescription">Description</label>
                         <textarea id="boardDescription" rows="3"></textarea>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="boardParent">Parent Board (optional)</label>
                         <select id="boardParent">
                             <option value="">-- Top Level --</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" id="cancelBoardBtn">Cancel</button>
                         <button type="submit" class="btn btn-primary">Create Board</button>
@@ -195,14 +243,14 @@
         <div class="modal-overlay"></div>
         <div class="modal-content modal-small">
             <button class="modal-close" id="addToBoardClose" aria-label="Close add to board modal">&times;</button>
-            
+
             <div class="modal-body">
                 <h2>Add to Board</h2>
-                
+
                 <div class="board-selection" id="boardSelection">
                     <!-- Board checkboxes will be loaded here -->
                 </div>
-                
+
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="cancelAddToBoardBtn">Cancel</button>
                     <button type="button" class="btn btn-primary" id="saveAddToBoardBtn">Save</button>
@@ -227,9 +275,7 @@
                 <div id="customPromptSection" style="display: none; margin-top: var(--spacing-md);">
                     <div class="form-group">
                         <label for="customPrompt">Custom Prompt:</label>
-                        <textarea
-                            id="customPrompt"
-                            rows="5"
+                        <textarea id="customPrompt" rows="5"
                             placeholder="Enter your custom AI prompt here..."></textarea>
                     </div>
                 </div>
@@ -265,13 +311,15 @@
 
                     <div class="form-group" style="margin-top: var(--spacing-lg);">
                         <label for="uploadBoardSelect">Add to Board (optional)</label>
-                        <select id="uploadBoardSelect" style="width: 100%; padding: var(--spacing-sm); background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary);">
+                        <select id="uploadBoardSelect"
+                            style="width: 100%; padding: var(--spacing-sm); background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary);">
                             <option value="">-- None (just upload) --</option>
                             <option value="__create_new__">➕ Create New Board...</option>
                         </select>
                     </div>
 
-                    <div id="createBoardSection" style="display: none; margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                    <div id="createBoardSection"
+                        style="display: none; margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--bg-tertiary); border-radius: var(--radius-md);">
                         <div class="form-group" style="margin-bottom: var(--spacing-sm);">
                             <label for="newBoardNameUpload">New Board Name *</label>
                             <input type="text" id="newBoardNameUpload" placeholder="Enter board name">
@@ -426,6 +474,76 @@
         </div>
     </div>
 
+    <!-- Smart Rules Modal -->
+    <div class="modal" id="smartRulesModal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-small">
+            <button class="modal-close" id="smartRulesClose" aria-label="Close smart rules modal">&times;</button>
+
+            <div class="modal-body">
+                <h2>🤖 Smart Rules</h2>
+
+                <p style="margin-bottom: var(--spacing-md); color: var(--text-secondary);">
+                    Automatically add images to <strong id="smartRulesBoardName"></strong> based on AI analysis.
+                </p>
+
+                <form id="smartRulesForm">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="smartRulesEnabled">
+                            Enable Smart Rules for this board
+                        </label>
+                    </div>
+
+                    <div id="smartRulesConfig" style="display: none;">
+                        <div class="form-group">
+                            <label for="tagsInclude">Tags to Include (comma-separated)</label>
+                            <input type="text" id="tagsInclude" placeholder="e.g., sunset, nature, landscape">
+                            <small>Images must have at least ONE of these tags</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tagsExclude">Tags to Exclude (comma-separated)</label>
+                            <input type="text" id="tagsExclude" placeholder="e.g., portrait, people">
+                            <small>Images must NOT have any of these tags</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="descriptionContains">Description Contains</label>
+                            <input type="text" id="descriptionContains" placeholder="e.g., mountain">
+                            <small>AI description must contain this text (case-insensitive)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="processExisting">
+                                Apply rules to existing images now
+                            </label>
+                            <small>Check this to process all already-analyzed images</small>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelSmartRulesBtn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Rules</button>
+                    </div>
+                </form>
+
+                <div
+                    style="margin-top: var(--spacing-lg); padding: var(--spacing-md); background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                    <p style="font-size: 0.875rem; margin-bottom: var(--spacing-sm);"><strong>How it works:</strong></p>
+                    <ul
+                        style="font-size: 0.875rem; color: var(--text-secondary); margin: 0; padding-left: var(--spacing-lg);">
+                        <li>When you analyze an image, Smart Rules run automatically</li>
+                        <li>If the image matches all conditions, it's added to this board</li>
+                        <li>Multiple boards can have different Smart Rules</li>
+                        <li>Leave all fields empty to disable rules</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Edit Image Modal -->
     <div class="modal" id="editImageModal" style="display: none;">
         <div class="modal-overlay"></div>
@@ -443,21 +561,18 @@
 
                     <div class="form-group">
                         <label for="editImageDescription">Description</label>
-                        <textarea id="editImageDescription" rows="4" placeholder="Enter image description..."></textarea>
+                        <textarea id="editImageDescription" rows="4"
+                            placeholder="Enter image description..."></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="editImageTags">Tags</label>
-                        <div id="editTagsContainer" style="display: flex; flex-wrap: wrap; gap: var(--spacing-xs); margin-bottom: var(--spacing-sm);">
+                        <div id="editTagsContainer"
+                            style="display: flex; flex-wrap: wrap; gap: var(--spacing-xs); margin-bottom: var(--spacing-sm);">
                             <!-- Existing tags will be shown here -->
                         </div>
                         <div style="display: flex; gap: var(--spacing-xs);">
-                            <input
-                                type="text"
-                                id="editImageNewTag"
-                                placeholder="Add new tag..."
-                                style="flex: 1;"
-                            >
+                            <input type="text" id="editImageNewTag" placeholder="Add new tag..." style="flex: 1;">
                             <button type="button" class="btn btn-secondary" id="addTagBtn">+ Add</button>
                         </div>
                         <small>Press Enter or click Add to add a tag</small>
@@ -499,23 +614,22 @@
                     </div>
 
                     <div id="botLogsSection" style="display: none; margin-top: var(--spacing-md);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
                             <h4 style="margin: 0;">Bot Logs</h4>
                             <button class="btn btn-sm btn-secondary" id="refreshLogsBtn">🔄 Refresh</button>
                         </div>
-                        <pre id="botLogs" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: var(--spacing-md); max-height: 300px; overflow-y: auto; font-size: 12px; color: var(--text-secondary);"></pre>
+                        <pre id="botLogs"
+                            style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: var(--spacing-md); max-height: 300px; overflow-y: auto; font-size: 12px; color: var(--text-secondary);"></pre>
                     </div>
 
                     <form id="botConfigForm">
                         <div class="form-group">
                             <label for="botToken">Bot Token (from @BotFather)</label>
-                            <input
-                                type="password"
-                                id="botToken"
-                                placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
-                                autocomplete="off"
-                            >
-                            <small>Get your token from <a href="https://t.me/botfather" target="_blank">@BotFather</a> on Telegram</small>
+                            <input type="password" id="botToken" placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+                                autocomplete="off">
+                            <small>Get your token from <a href="https://t.me/botfather" target="_blank">@BotFather</a>
+                                on Telegram</small>
                         </div>
 
                         <div class="form-group">
@@ -563,14 +677,16 @@
                     <div id="imageAppsList" style="margin-bottom: var(--spacing-lg);">
                         <!-- Populated by JavaScript -->
                     </div>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="showAddAppModal('image')">➕ Add Image Editor</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="showAddAppModal('image')">➕ Add
+                        Image Editor</button>
 
                     <!-- Video Apps -->
                     <h4 style="margin-top: var(--spacing-lg);">🎬 Video Players</h4>
                     <div id="videoAppsList" style="margin-bottom: var(--spacing-lg);">
                         <!-- Populated by JavaScript -->
                     </div>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="showAddAppModal('video')">➕ Add Video Player</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="showAddAppModal('video')">➕ Add
+                        Video Player</button>
                 </div>
             </div>
         </div>
@@ -620,7 +736,8 @@
                     </div>
 
                     <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').style.display='none'">Cancel</button>
+                        <button type="button" class="btn btn-secondary"
+                            onclick="this.closest('.modal').style.display='none'">Cancel</button>
                         <button type="submit" class="btn btn-primary">Save Application</button>
                     </div>
                 </form>
@@ -632,6 +749,9 @@
     <div class="context-menu" id="boardContextMenu" style="display: none;">
         <div class="context-menu-item" data-action="rename">
             ✏️ Rename
+        </div>
+        <div class="context-menu-item" data-action="smart-rules">
+            🤖 Smart Rules
         </div>
         <div class="context-menu-item" data-action="move">
             📁 Move to...
@@ -689,6 +809,72 @@
         </div>
     </div>
 
+    <!-- People Modal -->
+    <div class="modal" id="peopleModal" style="display: none;">
+        <div class="modal-overlay" id="peopleOverlay"></div>
+        <div class="modal-content" style="max-width: 90vw;">
+            <button class="modal-close" id="peopleClose" aria-label="Close people manager">&times;</button>
+
+            <div class="modal-body" id="peopleBody">
+                <h2>👤 People</h2>
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                    <p style="color: var(--text-secondary); margin: 0;">
+                        Manage face recognition groups
+                    </p>
+                    <div>
+                        <button class="btn btn-sm btn-secondary" id="clusterFacesModalBtn">🔗 Auto-Group Faces</button>
+                    </div>
+                </div>
+
+                <div id="peopleContent"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--spacing-md);">
+                    <!-- Person cards will be loaded here -->
+                </div>
+
+                <div id="peopleEmpty"
+                    style="display: none; text-align: center; padding: var(--spacing-xl); color: var(--text-muted);">
+                    <p>👤 No people detected yet</p>
+                    <p style="font-size: 0.875rem;">Analyze images with AI to detect faces automatically</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Person Detail Modal -->
+    <div class="modal" id="personDetailModal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button class="modal-close" id="personDetailClose" aria-label="Close person details">&times;</button>
+
+            <div class="modal-body">
+                <h2 id="personDetailName">Person</h2>
+
+                <div style="margin-bottom: var(--spacing-md);">
+                    <input type="text" id="personNameInput" placeholder="Enter name..."
+                        style="width: 100%; padding: var(--spacing-sm); background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary);">
+                    <button class="btn btn-sm btn-primary" id="savePersonNameBtn"
+                        style="margin-top: var(--spacing-sm);">💾 Save Name</button>
+                </div>
+
+                <div style="margin-bottom: var(--spacing-md);">
+                    <strong>Faces:</strong> <span id="personFaceCount">0</span> |
+                    <strong>Images:</strong> <span id="personImageCount">0</span>
+                </div>
+
+                <div id="personFacesGrid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--spacing-sm);">
+                    <!-- Face thumbnails will be loaded here -->
+                </div>
+
+                <div style="margin-top: var(--spacing-lg);">
+                    <button class="btn btn-danger" id="deletePersonBtn">🗑️ Delete Person</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Duplicates Modal -->
     <div class="modal" id="duplicatesModal" style="display: none;">
         <div class="modal-overlay" id="duplicatesOverlay"></div>
@@ -705,5 +891,7 @@
     </div>
 
     <script src="/static/js/app.js"></script>
+    <script src="/static/js/faces.js"></script>
 </body>
+
 </html>

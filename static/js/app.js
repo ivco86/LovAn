@@ -82,20 +82,20 @@ async function apiCall(endpoint, options = {}) {
             },
             ...options
         });
-        
+
         if (!response.ok) {
             let errorMessage = 'API request failed';
-            
+
             try {
                 const error = await response.json();
                 errorMessage = error.error || error.message || errorMessage;
             } catch (e) {
                 errorMessage = `HTTP ${response.status}: ${response.statusText}`;
             }
-            
+
             throw new Error(errorMessage);
         }
-        
+
         return await response.json();
     } catch (error) {
         console.error('API Error:', error);
@@ -107,7 +107,7 @@ async function apiCall(endpoint, options = {}) {
 async function checkHealth() {
     try {
         const data = await apiCall('/health');
-        
+
         // Update AI status indicator
         const statusEl = document.getElementById('aiStatus');
         if (data.ai_connected) {
@@ -117,7 +117,7 @@ async function checkHealth() {
             statusEl.textContent = '🔴 AI Offline';
             statusEl.classList.remove('connected');
         }
-        
+
         state.stats = data.stats;
     } catch (error) {
         console.error('Health check failed:', error);
@@ -195,7 +195,7 @@ async function scanDirectory() {
         showToast('Scan already in progress', 'warning');
         return;
     }
-    
+
     state.isScanning = true;
     const scanBtn = document.getElementById('scanBtn');
     const scanBtnEmpty = document.getElementById('scanBtnEmpty');
@@ -213,7 +213,7 @@ async function scanDirectory() {
     try {
         const data = await apiCall('/scan', { method: 'POST' });
         showToast(`Found ${data.found} images, ${data.new} new`, 'success');
-        
+
         await loadImages();
         await updateStats();
         renderImages();
@@ -303,25 +303,25 @@ async function analyzeImage(imageId, style = null, customPrompt = null) {
             method: 'POST',
             body: JSON.stringify(requestBody)
         });
-        
+
         // Update image in state
         const imageIndex = state.images.findIndex(img => img.id === imageId);
         if (imageIndex !== -1) {
             state.images[imageIndex].description = data.description;
             state.images[imageIndex].tags = data.tags;
             state.images[imageIndex].analyzed_at = new Date().toISOString();
-            
+
             if (data.renamed && data.new_filename) {
                 state.images[imageIndex].filename = data.new_filename;
             }
         }
-        
+
         if (data.renamed) {
             showToast(`Analyzed & renamed to: ${data.new_filename}`, 'success');
         } else {
             showToast('Image analyzed successfully!', 'success');
         }
-        
+
         // Update UI if modal is open
         if (state.currentImage && state.currentImage.id === imageId) {
             state.currentImage.description = data.description;
@@ -331,10 +331,10 @@ async function analyzeImage(imageId, style = null, customPrompt = null) {
             }
             updateModal();
         }
-        
+
         await updateStats();
         renderImages();
-        
+
     } catch (error) {
         showToast('Analysis failed: ' + error.message, 'error');
         throw error;
@@ -346,29 +346,29 @@ async function batchAnalyze(limit = 10) {
         showToast('Analysis already in progress', 'warning');
         return;
     }
-    
+
     state.isAnalyzing = true;
     const analyzeBtn = document.getElementById('analyzeBtn');
     const originalText = analyzeBtn.textContent;
-    
+
     analyzeBtn.disabled = true;
     analyzeBtn.textContent = '⏳ Analyzing...';
-    
+
     try {
         showToast(`Analyzing up to ${limit} images...`, 'warning');
-        
+
         const data = await apiCall(`/analyze-batch?limit=${limit}`, { method: 'POST' });
-        
+
         if (data.renamed > 0) {
             showToast(`Analyzed ${data.analyzed} images, renamed ${data.renamed} files${data.failed ? `, ${data.failed} failed` : ''}`, 'success');
         } else {
             showToast(`Analyzed ${data.analyzed} images${data.failed ? `, ${data.failed} failed` : ''}`, 'success');
         }
-        
+
         await loadImages();
         await updateStats();
         renderImages();
-        
+
     } catch (error) {
         showToast('Batch analysis failed: ' + error.message, 'error');
     } finally {
@@ -381,20 +381,20 @@ async function batchAnalyze(limit = 10) {
 async function toggleFavorite(imageId) {
     try {
         const data = await apiCall(`/images/${imageId}/favorite`, { method: 'POST' });
-        
+
         const imageIndex = state.images.findIndex(img => img.id === imageId);
         if (imageIndex !== -1) {
             state.images[imageIndex].is_favorite = data.is_favorite;
         }
-        
+
         if (state.currentImage && state.currentImage.id === imageId) {
             state.currentImage.is_favorite = data.is_favorite;
             updateModal();
         }
-        
+
         await updateStats();
         renderImages();
-        
+
     } catch (error) {
         showToast('Failed to toggle favorite: ' + error.message, 'error');
     }
@@ -596,7 +596,7 @@ async function saveImageEdit() {
 
         // Refresh current image and reload
         await loadImages();
-        
+
         // Reopen the image modal with updated data
         const updatedImage = state.images.find(img => img.id === imageId);
         if (updatedImage) {
@@ -616,24 +616,24 @@ async function searchImages(query) {
         updateBreadcrumb('All Images');
         return;
     }
-    
+
     try {
         const useAI = document.getElementById('ai-search-toggle')?.checked || false;
         let data;
-        
+
         if (useAI) {
             // --- НОВАТА AI ЛОГИКА ---
             console.log("Използвам AI търсене...");
             data = await apiCall('/search/semantic', {
                 method: 'POST',
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     query: query,
-                    top_k: 20 
+                    top_k: 20
                 })
             });
             // AI endpoint връща results директно
             console.log("AI търсене резултати:", data);
-            
+
             // Нормализиране на данните - уверяваме се че tags е масив
             const results = (data.results || []).map(img => {
                 // Ако tags е string, парсваме го
@@ -650,7 +650,7 @@ async function searchImages(query) {
                 }
                 return img;
             });
-            
+
             state.images = results;
             if (state.images.length === 0) {
                 console.warn("AI търсенето не върна резултати.");
@@ -685,7 +685,7 @@ async function searchImages(query) {
             data = await apiCall(`/images/search?q=${encodeURIComponent(query)}`);
             state.images = data.results || [];
         }
-        
+
         state.searchQuery = query;
         renderImages();
         updateBreadcrumb(`Search: "${query}"${useAI ? ' (AI)' : ''}`);
@@ -718,13 +718,13 @@ async function createBoard(name, description, parentId) {
                 parent_id: parentId || null
             })
         });
-        
+
         showToast('Board created successfully!', 'success');
-        
+
         await loadBoards();
         renderBoards();
         await updateStats();
-        
+
         return data.board_id;
     } catch (error) {
         showToast('Failed to create board: ' + error.message, 'error');
@@ -870,10 +870,10 @@ async function loadSimilarImages(imageId) {
 
     try {
         const data = await apiCall(`/images/${imageId}/similar?limit=${CONFIG.SIMILAR_IMAGES_LIMIT}`);
-        
+
         const similarImages = data.similar || [];
         state.similarImagesCache.set(imageId, similarImages);
-        
+
         renderSimilarImagesInContainer(container, similarImages, imageId);
     } catch (error) {
         console.error('Failed to load similar images:', error);
@@ -913,10 +913,10 @@ function getConsistentHeight(imageId, width, height) {
         const heights = [200, 250, 280, 320, 350, 400];
         return heights[imageId % heights.length];
     }
-    
+
     const aspectRatio = height / width;
     let imageHeight = Math.floor(CONFIG.BASE_HEIGHT * aspectRatio);
-    
+
     return Math.max(CONFIG.MIN_IMAGE_HEIGHT, Math.min(CONFIG.MAX_IMAGE_HEIGHT, imageHeight));
 }
 
@@ -1002,7 +1002,7 @@ function createImageCard(image) {
             <div class="image-card-checkbox ${checkboxClass}" data-id="${image.id}"></div>
             <div class="image-card-status-icon ${statusIconClass}">${statusIcon}</div>
             ${isVideo ?
-                `<div class="image-card-video-wrapper">
+            `<div class="image-card-video-wrapper">
                     <img
                         class="image-card-image"
                         src="/api/images/${image.id}/thumbnail?size=500"
@@ -1014,13 +1014,13 @@ function createImageCard(image) {
                         <div class="video-icon-label">VIDEO</div>
                     </div>
                 </div>` :
-                `<img
+            `<img
                     class="image-card-image"
                     src="/api/images/${image.id}/thumbnail?size=500"
                     alt="${escapeHtml(image.filename)}"
                     loading="lazy"
                 >`
-            }
+        }
             <div class="image-card-content">
                 <div class="image-card-header">
                     <div class="image-card-filename">${escapeHtml(image.filename)}</div>
@@ -1143,11 +1143,11 @@ function createBoardItem(board, isSubBoard = false) {
 
 function createBoardOption(board, prefix = '') {
     let html = `<option value="${board.id}">${prefix}${escapeHtml(board.name)}</option>`;
-    
+
     if (board.sub_boards && board.sub_boards.length > 0) {
         html += board.sub_boards.map(sub => createBoardOption(sub, prefix + '  ')).join('');
     }
-    
+
     return html;
 }
 
@@ -1173,13 +1173,13 @@ async function switchView(view, param = null) {
     state.currentView = view;
     state.currentBoard = null;
     state.searchQuery = '';
-    
+
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
     });
-    
+
     showLoading();
-    
+
     try {
         switch (view) {
             case 'all':
@@ -1188,14 +1188,14 @@ async function switchView(view, param = null) {
                 const allView = document.querySelector('[data-view="all"]');
                 if (allView) allView.classList.add('active');
                 break;
-                
+
             case 'favorites':
                 await loadImages({ favorites: 'true' });
                 updateBreadcrumb('Favorites');
                 const favView = document.querySelector('[data-view="favorites"]');
                 if (favView) favView.classList.add('active');
                 break;
-                
+
             case 'unanalyzed':
                 await loadImages({ analyzed: 'false' });
                 updateBreadcrumb('Unanalyzed');
@@ -1216,7 +1216,7 @@ async function switchView(view, param = null) {
                 if (boardItem) boardItem.classList.add('active');
                 break;
         }
-        
+
         renderImages();
     } finally {
         hideLoading();
@@ -1227,15 +1227,15 @@ async function switchView(view, param = null) {
 
 async function openImageModal(image) {
     state.currentImage = image;
-    
+
     const fullDetails = await getImageDetails(image.id);
     if (fullDetails) {
         state.currentImage = fullDetails;
     }
-    
+
     const modal = document.getElementById('imageModal');
     modal.style.display = 'block';
-    
+
     updateModal();
 }
 
@@ -1285,9 +1285,9 @@ function updateModal() {
                     <h3>Tags</h3>
                     <div class="tags-container">
                         ${image.tags && image.tags.length > 0
-                            ? image.tags.map(tag => `<span class="tag" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</span>`).join('')
-                            : '<span class="tags-placeholder">No tags yet</span>'
-                        }
+            ? image.tags.map(tag => `<span class="tag" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</span>`).join('')
+            : '<span class="tags-placeholder">No tags yet</span>'
+        }
                     </div>
                 </div>
 
@@ -1295,9 +1295,9 @@ function updateModal() {
                     <h3>Boards</h3>
                     <div class="boards-container">
                         ${image.boards && image.boards.length > 0
-                            ? image.boards.map(board => `<span class="tag">${escapeHtml(board.name)}</span>`).join('')
-                            : '<div class="boards-placeholder">Not in any boards</div>'
-                        }
+            ? image.boards.map(board => `<span class="tag">${escapeHtml(board.name)}</span>`).join('')
+            : '<div class="boards-placeholder">Not in any boards</div>'
+        }
                     </div>
                 </div>
 
@@ -1394,7 +1394,7 @@ function closeModal(modalId, resetCallback = null) {
     if (modal) {
         modal.style.display = 'none';
     }
-    
+
     if (resetCallback) {
         resetCallback();
     }
@@ -1415,7 +1415,7 @@ function closeAIStyleModal() {
 function openCreateBoardModal() {
     const modal = document.getElementById('createBoardModal');
     modal.style.display = 'block';
-    
+
     document.getElementById('createBoardForm').reset();
 }
 
@@ -1547,6 +1547,53 @@ function closeDeleteBoardModal() {
     });
 }
 
+function openSmartRulesModal(boardId) {
+    const board = findBoardById(boardId, state.boards);
+    if (!board) return;
+
+    currentBoardAction.boardId = boardId;
+    currentBoardAction.boardName = board.name;
+
+    document.getElementById('smartRulesBoardName').textContent = board.name;
+
+    // Parse existing smart rules
+    const smartRules = board.smart_rules || {};
+    const hasRules = smartRules && Object.keys(smartRules).length > 0;
+
+    // Set checkbox state
+    const enabledCheckbox = document.getElementById('smartRulesEnabled');
+    enabledCheckbox.checked = hasRules;
+
+    // Show/hide config section
+    const configSection = document.getElementById('smartRulesConfig');
+    configSection.style.display = hasRules ? 'block' : 'none';
+
+    // Populate fields
+    if (smartRules.tags_include && Array.isArray(smartRules.tags_include)) {
+        document.getElementById('tagsInclude').value = smartRules.tags_include.join(', ');
+    } else {
+        document.getElementById('tagsInclude').value = '';
+    }
+
+    if (smartRules.tags_exclude && Array.isArray(smartRules.tags_exclude)) {
+        document.getElementById('tagsExclude').value = smartRules.tags_exclude.join(', ');
+    } else {
+        document.getElementById('tagsExclude').value = '';
+    }
+
+    document.getElementById('descriptionContains').value = smartRules.description_contains || '';
+    document.getElementById('processExisting').checked = false;
+
+    const modal = document.getElementById('smartRulesModal');
+    modal.style.display = 'block';
+}
+
+function closeSmartRulesModal() {
+    closeModal('smartRulesModal', () => {
+        currentBoardAction = { boardId: null, boardName: '' };
+    });
+}
+
 // Helper functions for board management
 function findBoardById(boardId, boards) {
     for (const board of boards) {
@@ -1646,7 +1693,7 @@ function attachEventListeners() {
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
     let searchTimeout = null;
-    
+
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
@@ -1655,13 +1702,13 @@ function attachEventListeners() {
             }, CONFIG.SEARCH_DEBOUNCE_MS);
         });
     }
-    
+
     if (searchBtn) {
         searchBtn.addEventListener('click', () => {
             searchImages(searchInput.value);
         });
     }
-    
+
     // View navigation
     document.querySelectorAll('[data-view]').forEach(item => {
         item.addEventListener('click', (e) => {
@@ -1670,7 +1717,7 @@ function attachEventListeners() {
             switchView(view);
         });
     });
-    
+
     // ✅ Image Grid - Event delegation for image cards
     const imageGrid = document.getElementById('imageGrid');
     if (imageGrid) {
@@ -1710,7 +1757,7 @@ function attachEventListeners() {
             }
         });
     }
-    
+
     // ✅ Boards List - Event delegation with single/double click
     const boardsList = document.getElementById('boardsList');
     if (boardsList) {
@@ -1797,6 +1844,10 @@ function attachEventListeners() {
 
                 if (action === 'rename') {
                     openRenameBoardModal(boardId);
+                } else if (action === 'smart-rules') {
+                    openSmartRulesModal(boardId);
+                } else if (action === 'move') {
+                    openMoveBoardModal(boardId);
                 } else if (action === 'merge') {
                     openMergeBoardModal(boardId);
                 } else if (action === 'export') {
@@ -1880,7 +1931,89 @@ function attachEventListeners() {
             }
         });
     }
-    
+
+    // Smart Rules Modal
+    const smartRulesClose = document.getElementById('smartRulesClose');
+    const cancelSmartRulesBtn = document.getElementById('cancelSmartRulesBtn');
+    const smartRulesForm = document.getElementById('smartRulesForm');
+    const smartRulesEnabled = document.getElementById('smartRulesEnabled');
+    const smartRulesConfig = document.getElementById('smartRulesConfig');
+
+    if (smartRulesClose) smartRulesClose.addEventListener('click', closeSmartRulesModal);
+    if (cancelSmartRulesBtn) cancelSmartRulesBtn.addEventListener('click', closeSmartRulesModal);
+
+    // Toggle config visibility
+    if (smartRulesEnabled && smartRulesConfig) {
+        smartRulesEnabled.addEventListener('change', (e) => {
+            smartRulesConfig.style.display = e.target.checked ? 'block' : 'none';
+        });
+    }
+
+    if (smartRulesForm) {
+        smartRulesForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const boardId = currentBoardAction.boardId;
+            if (!boardId) return;
+
+            const enabled = document.getElementById('smartRulesEnabled').checked;
+
+            let smartRules = null;
+
+            if (enabled) {
+                // Parse tags
+                const tagsInclude = document.getElementById('tagsInclude').value
+                    .split(',')
+                    .map(t => t.trim())
+                    .filter(t => t.length > 0);
+
+                const tagsExclude = document.getElementById('tagsExclude').value
+                    .split(',')
+                    .map(t => t.trim())
+                    .filter(t => t.length > 0);
+
+                const descriptionContains = document.getElementById('descriptionContains').value.trim();
+
+                // Build rules object
+                smartRules = {};
+                if (tagsInclude.length > 0) smartRules.tags_include = tagsInclude;
+                if (tagsExclude.length > 0) smartRules.tags_exclude = tagsExclude;
+                if (descriptionContains) smartRules.description_contains = descriptionContains;
+
+                // If no rules specified, treat as disabled
+                if (Object.keys(smartRules).length === 0) {
+                    smartRules = null;
+                }
+            }
+
+            const processExisting = document.getElementById('processExisting').checked;
+
+            try {
+                const response = await fetch(`/api/boards/${boardId}/smart-rules`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        smart_rules: smartRules,
+                        process_existing: processExisting
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast(smartRules ? `Smart Rules saved! ${data.images_added || 0} images added.` : 'Smart Rules disabled', 'success');
+                    closeSmartRulesModal();
+                    await loadBoards(); // Refresh boards to get updated rules
+                } else {
+                    showToast(data.error || 'Failed to save Smart Rules', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving Smart Rules:', error);
+                showToast('Error saving Smart Rules', 'error');
+            }
+        });
+    }
+
     // Image Modal
     const modalClose = document.getElementById('modalClose');
     const modalOverlay = document.getElementById('modalOverlay');
@@ -1925,19 +2058,19 @@ function attachEventListeners() {
     const createBoardClose = document.getElementById('createBoardClose');
     const cancelBoardBtn = document.getElementById('cancelBoardBtn');
     const createBoardForm = document.getElementById('createBoardForm');
-    
+
     if (createBoardBtn) createBoardBtn.addEventListener('click', openCreateBoardModal);
     if (createBoardClose) createBoardClose.addEventListener('click', closeCreateBoardModal);
     if (cancelBoardBtn) cancelBoardBtn.addEventListener('click', closeCreateBoardModal);
-    
+
     if (createBoardForm) {
         createBoardForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const name = document.getElementById('boardName').value.trim();
             const description = document.getElementById('boardDescription').value.trim();
             const parentId = document.getElementById('boardParent').value;
-            
+
             if (name) {
                 try {
                     await createBoard(name, description, parentId || null);
@@ -1948,15 +2081,15 @@ function attachEventListeners() {
             }
         });
     }
-    
+
     // Add to Board Modal
     const addToBoardClose = document.getElementById('addToBoardClose');
     const cancelAddToBoardBtn = document.getElementById('cancelAddToBoardBtn');
     const saveAddToBoardBtn = document.getElementById('saveAddToBoardBtn');
-    
+
     if (addToBoardClose) addToBoardClose.addEventListener('click', closeAddToBoardModal);
     if (cancelAddToBoardBtn) cancelAddToBoardBtn.addEventListener('click', closeAddToBoardModal);
-    
+
     if (saveAddToBoardBtn) {
         saveAddToBoardBtn.addEventListener('click', async () => {
             const checkboxes = document.querySelectorAll('#boardSelection input[type="checkbox"]');
@@ -2025,7 +2158,7 @@ function attachEventListeners() {
     const aiStyleOverlay = document.getElementById('aiStyleOverlay');
     const cancelAIStyleBtn = document.getElementById('cancelAIStyleBtn');
     const analyzeWithStyleBtn = document.getElementById('analyzeWithStyleBtn');
-    
+
     if (aiStyleClose) aiStyleClose.addEventListener('click', closeAIStyleModal);
     if (aiStyleOverlay) aiStyleOverlay.addEventListener('click', closeAIStyleModal);
     if (cancelAIStyleBtn) cancelAIStyleBtn.addEventListener('click', closeAIStyleModal);
@@ -2069,7 +2202,7 @@ function attachEventListeners() {
     const fileInput = document.getElementById('fileInput');
     const cancelUploadBtn = document.getElementById('cancelUploadBtn');
     const startUploadBtn = document.getElementById('startUploadBtn');
-    
+
     if (uploadModalClose) uploadModalClose.addEventListener('click', closeUploadModal);
     if (selectFilesBtn) {
         selectFilesBtn.addEventListener('click', () => {
@@ -2095,20 +2228,20 @@ function attachEventListeners() {
             }
         });
     }
-    
+
     // Drag and drop for upload area
     const uploadArea = document.getElementById('uploadArea');
-    
+
     if (uploadArea) {
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('dragover');
         });
-        
+
         uploadArea.addEventListener('dragleave', () => {
             uploadArea.classList.remove('dragover');
         });
-        
+
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
@@ -2122,12 +2255,12 @@ function attachEventListeners() {
                 showUploadPreview();
             }
         });
-        
+
         uploadArea.addEventListener('click', () => {
             if (fileInput) fileInput.click();
         });
     }
-    
+
     // Settings Modal
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsClose = document.getElementById('settingsClose');
@@ -2255,7 +2388,7 @@ function showLoading() {
     const loadingState = document.getElementById('loadingState');
     const imageGrid = document.getElementById('imageGrid');
     const emptyState = document.getElementById('emptyState');
-    
+
     if (loadingState) loadingState.style.display = 'flex';
     if (imageGrid) imageGrid.style.display = 'none';
     if (emptyState) emptyState.style.display = 'none';
@@ -2290,11 +2423,11 @@ function showToast(message, type = 'success', duration = null) {
 
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
-    
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
 
@@ -2401,10 +2534,10 @@ function getAllBoardsFlat() {
 
 function removeUploadFile(index) {
     state.uploadFiles.splice(index, 1);
-    
+
     const uploadArea = document.getElementById('uploadArea');
     const uploadPreview = document.getElementById('uploadPreview');
-    
+
     if (state.uploadFiles.length === 0) {
         if (uploadArea) uploadArea.style.display = 'block';
         if (uploadPreview) uploadPreview.style.display = 'none';
@@ -2534,7 +2667,7 @@ async function uploadFiles() {
 
         for (let i = 0; i < uploadedImageIds.length; i++) {
             const imageId = uploadedImageIds[i];
-            
+
             try {
                 console.log(`Analyzing image ${i + 1}/${uploadedImageIds.length}...`);
                 await analyzeImage(imageId, 'classic', null);
@@ -2556,12 +2689,12 @@ async function uploadFiles() {
         if (analyzeFailed > 0) {
             messages.push(`⚠️ ${analyzeFailed} failed`);
         }
-        
+
         if (messages.length > 0) {
             showToast(messages.join(', '), analyzed > 0 ? 'success' : 'error');
         }
     }
-    
+
     state.isUploading = false;
     if (uploadBtn) {
         uploadBtn.disabled = false;
@@ -3151,7 +3284,7 @@ function createDuplicateCard(image) {
         <div class="duplicate-card" style="position: relative; cursor: pointer;" onclick="openImageModal(state.images.find(img => img.id === ${image.id}))">
             <div style="position: relative; aspect-ratio: 1; overflow: hidden; border-radius: var(--radius-md); background: var(--bg-tertiary);">
                 ${isVideo ?
-                    `<img
+            `<img
                         src="/api/images/${image.id}/thumbnail?size=300"
                         alt="${escapeHtml(image.filename)}"
                         style="width: 100%; height: 100%; object-fit: cover;"
@@ -3159,12 +3292,12 @@ function createDuplicateCard(image) {
                     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                         <div style="font-size: 20px;">▶</div>
                     </div>` :
-                    `<img
+            `<img
                         src="/api/images/${image.id}/thumbnail?size=300"
                         alt="${escapeHtml(image.filename)}"
                         style="width: 100%; height: 100%; object-fit: cover;"
                     >`
-                }
+        }
             </div>
             <div style="padding: var(--spacing-sm); background: var(--bg-secondary); border-radius: 0 0 var(--radius-md) var(--radius-md);">
                 <div style="font-size: 12px; color: var(--text-primary); font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(image.filename)}">
@@ -4036,14 +4169,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Update existing app
                     response = await fetch(`/api/settings/external-apps/${mediaType}/${editId}`, {
                         method: 'PUT',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(appData)
                     });
                 } else {
                     // Add new app
                     response = await fetch('/api/settings/external-apps', {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             media_type: mediaType,
                             app: appData

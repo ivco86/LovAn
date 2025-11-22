@@ -14,6 +14,7 @@ from shared import PHOTOS_DIR, LM_STUDIO_URL, DATABASE_PATH
 
 # Import all blueprints
 from routes import system_bp, telegram_bp, images_bp, boards_bp, export_bp, ai_bp
+from routes.faces import faces_bp
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -26,6 +27,7 @@ app.register_blueprint(images_bp)
 app.register_blueprint(boards_bp)
 app.register_blueprint(export_bp)
 app.register_blueprint(ai_bp)
+app.register_blueprint(faces_bp)
 
 
 # ============ FRONTEND ROUTES ============
