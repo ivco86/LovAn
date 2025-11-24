@@ -1355,6 +1355,9 @@ function updateModal() {
                     <button class="action-btn secondary" onclick="showExportMenu(event, ${image.id})">
                         Export
                     </button>
+                    <button class="action-btn secondary" onclick="syncToExif(${image.id})" title="Save description and tags to EXIF metadata">
+                        💾 Save to EXIF
+                    </button>
                     <button class="action-btn secondary" onclick="openReverseSearchModal(${image.id})">
                         Reverse Search
                     </button>
@@ -4299,5 +4302,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ============================================================================
+// EXIF Sync Function
+// ============================================================================
+
+async function syncToExif(imageId) {
+    // Sync image description and tags to EXIF metadata
+    // Writes the data directly into the image file
+    try {
+        showToast('Saving to EXIF...', 'info');
+
+        const response = await fetch(`/api/images/${imageId}/exif/sync`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast(`✓ ${data.message}`, 'success');
+        } else {
+            showToast(`✗ ${data.message || 'Failed to save to EXIF'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error syncing to EXIF:', error);
+        showToast('Failed to save to EXIF', 'error');
+    }
+}
 
 console.log('AI Gallery initialized ✨');
