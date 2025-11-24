@@ -36,6 +36,7 @@
             <button class="btn btn-secondary" id="findDuplicatesBtn" aria-label="Find duplicate images">Find Duplicates</button>
             <button class="btn btn-secondary" id="analyzeBtn" aria-label="Analyze multiple images with AI">Analyze</button>
             <button class="btn btn-secondary" id="selectBtn" aria-label="Select multiple images">Select</button>
+            <button class="btn btn-primary" id="chatBtn" aria-label="Chat with AI">💬 Chat</button>
             <button class="btn btn-secondary" id="settingsBtn" aria-label="Open settings">Settings</button>
         </div>
     </header>
@@ -758,6 +759,75 @@
         </div>
     </div>
 
+    <!-- AI Chat Modal -->
+    <div class="modal" id="chatModal" style="display: none;">
+        <div class="modal-overlay" id="chatOverlay"></div>
+        <div class="modal-content" style="max-width: 800px; max-height: 80vh; display: flex; flex-direction: column;">
+            <button class="modal-close" id="chatClose" aria-label="Close chat">&times;</button>
+
+            <div class="modal-body" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+                <h2>💬 Chat with AI</h2>
+                <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+                    Ask me anything! I can help you with questions about your images or just have a conversation.
+                </p>
+
+                <!-- Chat Messages -->
+                <div id="chatMessages" style="
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: var(--spacing-md);
+                    background: var(--bg-secondary);
+                    border-radius: var(--radius-md);
+                    margin-bottom: var(--spacing-md);
+                    min-height: 300px;
+                    max-height: 500px;
+                ">
+                    <!-- Messages will appear here -->
+                    <div class="chat-message-welcome" style="
+                        text-align: center;
+                        padding: var(--spacing-xl);
+                        color: var(--text-muted);
+                    ">
+                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">👋</div>
+                        <p>Hi! I'm your AI assistant. How can I help you today?</p>
+                    </div>
+                </div>
+
+                <!-- Chat Input -->
+                <div style="display: flex; gap: var(--spacing-sm);">
+                    <input
+                        type="text"
+                        id="chatInput"
+                        placeholder="Type your message..."
+                        style="
+                            flex: 1;
+                            padding: var(--spacing-md);
+                            background: var(--bg-tertiary);
+                            border: 1px solid var(--border);
+                            border-radius: var(--radius-sm);
+                            color: var(--text-primary);
+                            font-size: 0.9375rem;
+                        "
+                        autocomplete="off"
+                    >
+                    <button
+                        class="btn btn-primary"
+                        id="chatSendBtn"
+                        style="padding: var(--spacing-md) var(--spacing-lg);"
+                    >
+                        Send
+                    </button>
+                </div>
+
+                <!-- Loading indicator -->
+                <div id="chatLoading" style="display: none; text-align: center; padding: var(--spacing-sm); color: var(--text-muted);">
+                    <span class="spinner" style="display: inline-block; width: 16px; height: 16px;"></span>
+                    AI is thinking...
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Batch Operations Bar -->
     <div class="batch-operations-bar" id="batchOperationsBar" style="display: none;">
         <div class="batch-info">
@@ -883,6 +953,7 @@
 
     <script src="/static/js/app.js"></script>
     <script src="/static/js/faces.js"></script>
+    <script src="/static/js/chat.js"></script>
 </body>
 
 </html>
