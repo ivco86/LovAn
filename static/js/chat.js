@@ -80,11 +80,17 @@ async function openChatWithImage(imageId) {
     // Fetch image details
     try {
         const response = await fetch(`/api/images/${imageId}`);
-        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const imageData = await response.json();
 
-        if (data.success) {
+        // API returns image object directly, not wrapped in {success, image}
+        if (imageData && imageData.id) {
             chatState.currentImageId = imageId;
-            chatState.currentImageData = data.image;
+            chatState.currentImageData = imageData;
 
             // Clear previous chat history when switching images
             clearChat();
@@ -93,15 +99,18 @@ async function openChatWithImage(imageId) {
             openChat();
 
             // Add context message
-            const contextMsg = `I'm looking at: "${data.image.filename}"${data.image.description ? '\n\nDescription: ' + data.image.description : ''}${data.image.tags && data.image.tags.length > 0 ? '\n\nTags: ' + data.image.tags.join(', ') : ''}`;
+            const contextMsg = `I'm looking at: "${imageData.filename || 'Unknown'}"${imageData.description ? '\n\nDescription: ' + imageData.description : ''}${imageData.tags && imageData.tags.length > 0 ? '\n\nTags: ' + imageData.tags.join(', ') : ''}`;
 
-            addMessageToChat('system', `📸 Image Context\n${contextMsg}`);
+            addMessageToChat('system', `Image Context\n${contextMsg}`);
+        } else {
+            throw new Error('Invalid image data');
         }
     } catch (error) {
         console.error('Failed to fetch image details:', error);
         // Still open chat even if we can't fetch details
         chatState.currentImageId = imageId;
         openChat();
+        addMessageToChat('system', `Chatting about image ID: ${imageId}\nNote: Could not load full image details.`);
     }
 }
 
@@ -111,9 +120,9 @@ async function openChatWithImage(imageId) {
 function updateChatTitle() {
     const titleElement = document.querySelector('#chatModal h2');
     if (chatState.currentImageId) {
-        titleElement.textContent = '💬 Chat About Image';
+        titleElement.textContent = 'Chat About Image';
     } else {
-        titleElement.textContent = '💬 Chat with AI';
+        titleElement.textContent = 'Chat with AI';
     }
 }
 
@@ -172,6 +181,19 @@ async function sendMessage() {
             body: JSON.stringify(payload)
         });
 
+        if (!response.ok) {
+            // Handle HTTP errors
+            if (response.status === 503) {
+                addMessageToChat('error', 'AI service is not available. Please make sure LM Studio is running on http://localhost:1234');
+            } else if (response.status === 504) {
+                addMessageToChat('error', 'AI service timeout. Please try again.');
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                addMessageToChat('error', errorData.error || `Error ${response.status}: ${response.statusText}`);
+            }
+            return;
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -189,7 +211,11 @@ async function sendMessage() {
         }
     } catch (error) {
         console.error('Chat error:', error);
-        addMessageToChat('error', 'Failed to connect to AI service. Please try again.');
+        if (error.message.includes('fetch')) {
+            addMessageToChat('error', 'Cannot connect to server. Please check if the application is running.');
+        } else {
+            addMessageToChat('error', 'Failed to connect to AI service. Please try again.');
+        }
     } finally {
         setLoading(false);
     }
@@ -278,7 +304,6 @@ function clearChat() {
             padding: var(--spacing-xl);
             color: var(--text-muted);
         ">
-            <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">👋</div>
             <p>Hi! I'm your AI assistant. How can I help you today?</p>
         </div>
     `;

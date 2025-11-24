@@ -149,7 +149,7 @@ async function openPersonDetail(personId) {
             if (faces && faces.length > 0) {
                 facesGrid.innerHTML = faces.map(face => `
                     <div style="position: relative; aspect-ratio: 1; background: var(--bg-tertiary); border-radius: var(--radius-sm); overflow: hidden; group;">
-                        <img src="/api/images/${face.image_id}/thumbnail" alt="Face" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                        <img src="/api/images/${face.image_id}/thumbnail?size=300" alt="Face" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
                         <button
                             onclick="removeFaceFromPerson(${face.id}, ${personId}); event.stopPropagation();"
                             style="
@@ -569,7 +569,7 @@ function renderUnknownFaces(faces) {
             onmouseout="this.style.borderColor='transparent'"
             title="Click to assign to person"
         >
-            <img src="/api/images/${face.image_id}/thumbnail" alt="Unknown face" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+            <img src="/api/images/${face.image_id}/thumbnail?size=300" alt="Unknown face" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
             <div style="
                 position: absolute;
                 bottom: 0;
