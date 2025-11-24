@@ -26,10 +26,10 @@ function togglePeopleSection() {
 
     if (content.style.display === 'none') {
         content.style.display = 'block';
-        toggle.textContent = '▼';
+        toggle.style.display = 'none';
     } else {
         content.style.display = 'none';
-        toggle.textContent = '▶';
+        toggle.style.display = 'none';
     }
 }
 
@@ -62,7 +62,6 @@ function renderPeopleList(people) {
 
         return `
             <span class="tag-cloud-item ${sizeClass}" data-person-id="${person.id}" onclick="showPersonImages(${person.id}, '${escapeHtml(name)}')">
-                <span style="font-size: 0.9em;">👤</span>
                 ${escapeHtml(name)}
                 <span class="tag-cloud-count">${imageCount}</span>
             </span>

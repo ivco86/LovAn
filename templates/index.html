@@ -12,8 +12,8 @@
     <!-- Header -->
     <header class="header">
         <div class="header-left">
-            <h1>🖼️ AI Gallery</h1>
-            <span class="status-indicator" id="aiStatus">🔴 AI Offline</span>
+            <h1>AI Gallery</h1>
+            <span class="status-indicator" id="aiStatus">AI Offline</span>
         </div>
 
         <div class="header-center">
@@ -25,22 +25,18 @@
                         ✨ AI Search
                     </label>
                 </div>
-                <button id="searchBtn" aria-label="Search images">🔍</button>
+                <button id="searchBtn" aria-label="Search images">Search</button>
             </div>
         </div>
 
         <div class="header-right">
-            <button class="btn btn-primary" id="uploadBtn" aria-label="Upload images from your computer">📤
-                Upload</button>
-            <button class="btn btn-primary" id="scanBtn" aria-label="Scan photos directory for new images">📂
-                Scan</button>
-            <button class="btn btn-secondary" id="sortImagesBtn" aria-label="Sort images">🔄 Sort</button>
-            <button class="btn btn-secondary" id="findDuplicatesBtn" aria-label="Find duplicate images">🔍 Find
-                Duplicates</button>
-            <button class="btn btn-secondary" id="analyzeBtn" aria-label="Analyze multiple images with AI">🤖
-                Analyze</button>
-            <button class="btn btn-secondary" id="selectBtn" aria-label="Select multiple images">✓ Select</button>
-            <button class="btn btn-secondary" id="settingsBtn" aria-label="Open settings">⚙️ Settings</button>
+            <button class="btn btn-primary" id="uploadBtn" aria-label="Upload images from your computer">Upload</button>
+            <button class="btn btn-primary" id="scanBtn" aria-label="Scan photos directory for new images">Scan</button>
+            <button class="btn btn-secondary" id="sortImagesBtn" aria-label="Sort images">Sort</button>
+            <button class="btn btn-secondary" id="findDuplicatesBtn" aria-label="Find duplicate images">Find Duplicates</button>
+            <button class="btn btn-secondary" id="analyzeBtn" aria-label="Analyze multiple images with AI">Analyze</button>
+            <button class="btn btn-secondary" id="selectBtn" aria-label="Select multiple images">Select</button>
+            <button class="btn btn-secondary" id="settingsBtn" aria-label="Open settings">Settings</button>
         </div>
     </header>
 
@@ -52,28 +48,24 @@
                 <ul class="nav-list">
                     <li>
                         <a href="#" class="nav-item active" data-view="all">
-                            <span class="icon">🖼️</span>
                             <span>All Images</span>
                             <span class="count" id="allCount">0</span>
                         </a>
                     </li>
                     <li>
                         <a href="#" class="nav-item" data-view="favorites">
-                            <span class="icon">⭐</span>
                             <span>Favorites</span>
                             <span class="count" id="favCount">0</span>
                         </a>
                     </li>
                     <li>
                         <a href="#" class="nav-item" data-view="unanalyzed">
-                            <span class="icon">⏳</span>
                             <span>Unanalyzed</span>
                             <span class="count" id="unanalyzedCount">0</span>
                         </a>
                     </li>
                     <li>
                         <a href="#" class="nav-item" data-view="videos">
-                            <span class="icon">🎬</span>
                             <span>Videos</span>
                             <span class="count" id="videosCount">0</span>
                         </a>
@@ -94,12 +86,12 @@
 
             <div class="sidebar-section">
                 <div class="section-header" style="cursor: pointer;" onclick="togglePeopleSection()">
-                    <h3>
-                        <span id="peopleSectionToggle">▶</span> People <span class="count" id="peopleCount"
+                        <h3>
+                        <span id="peopleSectionToggle" style="display: none;"></span>People <span class="count" id="peopleCount"
                             style="margin-left: var(--spacing-xs);">0</span>
                     </h3>
                     <button class="btn-icon" id="clusterFacesBtn" title="Auto-Group Faces"
-                        aria-label="Automatically group similar faces">🔗</button>
+                        aria-label="Automatically group similar faces">Link</button>
                 </div>
                 <div id="peopleContent" style="display: none;">
                     <div id="peopleList" class="tag-cloud" style="margin-bottom: var(--spacing-md);">
@@ -176,11 +168,10 @@
 
             <!-- Empty State -->
             <div class="empty-state" id="emptyState" style="display: none;">
-                <div class="empty-icon">📂</div>
+                <div class="empty-icon"></div>
                 <h2>No Images Found</h2>
                 <p>Scan your photos directory to get started</p>
-                <button class="btn btn-primary" id="scanBtnEmpty" aria-label="Scan photos directory for new images">📂
-                    Scan Directory</button>
+                <button class="btn btn-primary" id="scanBtnEmpty" aria-label="Scan photos directory for new images">Scan Directory</button>
             </div>
 
             <!-- Image Grid -->
@@ -314,7 +305,7 @@
                         <select id="uploadBoardSelect"
                             style="width: 100%; padding: var(--spacing-sm); background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary);">
                             <option value="">-- None (just upload) --</option>
-                            <option value="__create_new__">➕ Create New Board...</option>
+                            <option value="__create_new__">Create New Board...</option>
                         </select>
                     </div>
 
@@ -481,7 +472,7 @@
             <button class="modal-close" id="smartRulesClose" aria-label="Close smart rules modal">&times;</button>
 
             <div class="modal-body">
-                <h2>🤖 Smart Rules</h2>
+                <h2>Smart Rules</h2>
 
                 <p style="margin-bottom: var(--spacing-md); color: var(--text-secondary);">
                     Automatically add images to <strong id="smartRulesBoardName"></strong> based on AI analysis.
@@ -594,7 +585,7 @@
             <button class="modal-close" id="settingsClose" aria-label="Close settings">&times;</button>
 
             <div class="modal-body">
-                <h2>⚙️ Settings</h2>
+                <h2>Settings</h2>
 
                 <!-- Telegram Bot Settings -->
                 <div class="settings-section">
@@ -606,10 +597,10 @@
                             <span id="botStatusText">Bot Offline</span>
                         </div>
                         <div class="bot-controls">
-                            <button class="btn btn-sm btn-primary" id="startBotBtn">▶️ Start</button>
-                            <button class="btn btn-sm btn-danger" id="stopBotBtn">⏹️ Stop</button>
-                            <button class="btn btn-sm btn-secondary" id="testBotBtn">🔍 Test</button>
-                            <button class="btn btn-sm btn-secondary" id="viewLogsBtn">📄 View Logs</button>
+                            <button class="btn btn-sm btn-primary" id="startBotBtn">Start</button>
+                            <button class="btn btn-sm btn-danger" id="stopBotBtn">Stop</button>
+                            <button class="btn btn-sm btn-secondary" id="testBotBtn">Test</button>
+                            <button class="btn btn-sm btn-secondary" id="viewLogsBtn">View Logs</button>
                         </div>
                     </div>
 
@@ -617,7 +608,7 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
                             <h4 style="margin: 0;">Bot Logs</h4>
-                            <button class="btn btn-sm btn-secondary" id="refreshLogsBtn">🔄 Refresh</button>
+                            <button class="btn btn-sm btn-secondary" id="refreshLogsBtn">Refresh</button>
                         </div>
                         <pre id="botLogs"
                             style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: var(--spacing-md); max-height: 300px; overflow-y: auto; font-size: 12px; color: var(--text-secondary);"></pre>
@@ -677,7 +668,7 @@
                     <div id="imageAppsList" style="margin-bottom: var(--spacing-lg);">
                         <!-- Populated by JavaScript -->
                     </div>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="showAddAppModal('image')">➕ Add
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="showAddAppModal('image')">Add
                         Image Editor</button>
 
                     <!-- Video Apps -->
@@ -685,7 +676,7 @@
                     <div id="videoAppsList" style="margin-bottom: var(--spacing-lg);">
                         <!-- Populated by JavaScript -->
                     </div>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="showAddAppModal('video')">➕ Add
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="showAddAppModal('video')">Add
                         Video Player</button>
                 </div>
             </div>
@@ -748,22 +739,22 @@
     <!-- Board Context Menu -->
     <div class="context-menu" id="boardContextMenu" style="display: none;">
         <div class="context-menu-item" data-action="rename">
-            ✏️ Rename
+            Rename
         </div>
         <div class="context-menu-item" data-action="smart-rules">
-            🤖 Smart Rules
+            Smart Rules
         </div>
         <div class="context-menu-item" data-action="move">
-            📁 Move to...
+            Move to...
         </div>
         <div class="context-menu-item" data-action="merge">
-            🔀 Merge into...
+            Merge into...
         </div>
         <div class="context-menu-item" data-action="export">
-            📄 Export...
+            Export...
         </div>
         <div class="context-menu-item" data-action="delete">
-            🗑️ Delete
+            Delete
         </div>
     </div>
 
@@ -775,11 +766,11 @@
             <button class="btn-text" id="deselectAllBtn">Deselect All</button>
         </div>
         <div class="batch-actions">
-            <button class="btn btn-sm btn-secondary" id="batchAnalyzeBtn">🤖 AI Analysis</button>
-            <button class="btn btn-sm btn-secondary" id="batchTagBtn">🏷️ AI Tags</button>
-            <button class="btn btn-sm btn-secondary" id="batchNameBtn">✏️ AI Names</button>
-            <button class="btn btn-sm btn-primary" id="batchAddToBoardBtn">📌 Add to Board</button>
-            <button class="btn btn-sm btn-secondary" id="batchExportBtn">📄 Export</button>
+            <button class="btn btn-sm btn-secondary" id="batchAnalyzeBtn">AI Analysis</button>
+            <button class="btn btn-sm btn-secondary" id="batchTagBtn">AI Tags</button>
+            <button class="btn btn-sm btn-secondary" id="batchNameBtn">AI Names</button>
+            <button class="btn btn-sm btn-primary" id="batchAddToBoardBtn">Add to Board</button>
+            <button class="btn btn-sm btn-secondary" id="batchExportBtn">Export</button>
             <button class="btn btn-sm btn-danger" id="closeBatchBtn">✕</button>
         </div>
     </div>
@@ -790,22 +781,22 @@
     <!-- Image Sort Menu -->
     <div class="context-menu" id="imageSortMenu" style="display: none;">
         <div class="context-menu-item sort-option active" data-sort="date-desc">
-            📅 Newest First
+            Newest First
         </div>
         <div class="context-menu-item sort-option" data-sort="date-asc">
-            📅 Oldest First
+            Oldest First
         </div>
         <div class="context-menu-item sort-option" data-sort="name-asc">
-            🔤 Name A-Z
+            Name A-Z
         </div>
         <div class="context-menu-item sort-option" data-sort="name-desc">
-            🔤 Name Z-A
+            Name Z-A
         </div>
         <div class="context-menu-item sort-option" data-sort="size-desc">
-            📏 Largest First
+            Largest First
         </div>
         <div class="context-menu-item sort-option" data-sort="size-asc">
-            📏 Smallest First
+            Smallest First
         </div>
     </div>
 
@@ -816,7 +807,7 @@
             <button class="modal-close" id="peopleClose" aria-label="Close people manager">&times;</button>
 
             <div class="modal-body" id="peopleBody">
-                <h2>👤 People</h2>
+                <h2>People</h2>
 
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
@@ -824,7 +815,7 @@
                         Manage face recognition groups
                     </p>
                     <div>
-                        <button class="btn btn-sm btn-secondary" id="clusterFacesModalBtn">🔗 Auto-Group Faces</button>
+                        <button class="btn btn-sm btn-secondary" id="clusterFacesModalBtn">Auto-Group Faces</button>
                     </div>
                 </div>
 
@@ -835,7 +826,7 @@
 
                 <div id="peopleEmpty"
                     style="display: none; text-align: center; padding: var(--spacing-xl); color: var(--text-muted);">
-                    <p>👤 No people detected yet</p>
+                    <p>No people detected yet</p>
                     <p style="font-size: 0.875rem;">Analyze images with AI to detect faces automatically</p>
                 </div>
             </div>
@@ -869,7 +860,7 @@
                 </div>
 
                 <div style="margin-top: var(--spacing-lg);">
-                    <button class="btn btn-danger" id="deletePersonBtn">🗑️ Delete Person</button>
+                    <button class="btn btn-danger" id="deletePersonBtn">Delete Person</button>
                 </div>
             </div>
         </div>
@@ -882,7 +873,7 @@
             <button class="modal-close" id="duplicatesClose" aria-label="Close duplicates finder">&times;</button>
 
             <div class="modal-body" id="duplicatesBody">
-                <h2>🔍 Duplicate Images</h2>
+                <h2>Duplicate Images</h2>
                 <div id="duplicatesContent">
                     <!-- Duplicate groups will be loaded here -->
                 </div>

@@ -111,10 +111,10 @@ async function checkHealth() {
         // Update AI status indicator
         const statusEl = document.getElementById('aiStatus');
         if (data.ai_connected) {
-            statusEl.textContent = '🟢 AI Connected';
+            statusEl.textContent = 'AI Connected';
             statusEl.classList.add('connected');
         } else {
-            statusEl.textContent = '🔴 AI Offline';
+            statusEl.textContent = 'AI Offline';
             statusEl.classList.remove('connected');
         }
 
@@ -203,11 +203,11 @@ async function scanDirectory() {
 
     if (scanBtn) {
         scanBtn.disabled = true;
-        scanBtn.textContent = '⏳ Scanning...';
+        scanBtn.textContent = 'Scanning...';
     }
     if (scanBtnEmpty) {
         scanBtnEmpty.disabled = true;
-        scanBtnEmpty.textContent = '⏳ Scanning...';
+        scanBtnEmpty.textContent = 'Scanning...';
     }
 
     try {
@@ -227,7 +227,7 @@ async function scanDirectory() {
         }
         if (scanBtnEmpty) {
             scanBtnEmpty.disabled = false;
-            scanBtnEmpty.textContent = '🔍 Scan Directory';
+            scanBtnEmpty.textContent = 'Scan Directory';
         }
     }
 }
@@ -352,7 +352,7 @@ async function batchAnalyze(limit = 10) {
     const originalText = analyzeBtn.textContent;
 
     analyzeBtn.disabled = true;
-    analyzeBtn.textContent = '⏳ Analyzing...';
+    analyzeBtn.textContent = 'Analyzing...';
 
     try {
         showToast(`Analyzing up to ${limit} images...`, 'warning');
@@ -2722,17 +2722,17 @@ function updateBotStatusUI(status) {
     const stopBtn = document.getElementById('stopBotBtn');
 
     if (status.running) {
-        statusDot.textContent = '🟢';
+        statusDot.textContent = '';
         statusText.textContent = `Bot Running (PID: ${status.pid})`;
         startBtn.disabled = true;
         stopBtn.disabled = false;
     } else if (status.configured) {
-        statusDot.textContent = '🟡';
+        statusDot.textContent = '';
         statusText.textContent = 'Bot Configured (Offline)';
         startBtn.disabled = false;
         stopBtn.disabled = true;
     } else {
-        statusDot.textContent = '🔴';
+        statusDot.textContent = '';
         statusText.textContent = 'Bot Not Configured';
         startBtn.disabled = true;
         stopBtn.disabled = true;
@@ -2744,7 +2744,7 @@ async function startBot() {
     const originalText = startBtn.textContent;
 
     startBtn.disabled = true;
-    startBtn.textContent = '⏳ Starting...';
+    startBtn.textContent = 'Starting...';
 
     try {
         const data = await apiCall('/telegram/start', { method: 'POST' });
@@ -2768,7 +2768,7 @@ async function stopBot() {
     const originalText = stopBtn.textContent;
 
     stopBtn.disabled = true;
-    stopBtn.textContent = '⏳ Stopping...';
+    stopBtn.textContent = 'Stopping...';
 
     try {
         const data = await apiCall('/telegram/stop', { method: 'POST' });
@@ -2806,11 +2806,11 @@ async function viewBotLogs() {
     // Toggle logs section visibility
     if (logsSection.style.display === 'none') {
         logsSection.style.display = 'block';
-        viewLogsBtn.textContent = '📄 Hide Logs';
+        viewLogsBtn.textContent = 'Hide Logs';
         await loadBotLogs();
     } else {
         logsSection.style.display = 'none';
-        viewLogsBtn.textContent = '📄 View Logs';
+        viewLogsBtn.textContent = 'View Logs';
     }
 }
 
@@ -2911,12 +2911,12 @@ function toggleSelectionMode() {
 
     if (state.selectionMode) {
         imageGrid.classList.add('selection-mode');
-        selectBtn.textContent = '✕ Cancel';
+        selectBtn.textContent = 'Cancel';
         selectBtn.classList.remove('btn-secondary');
         selectBtn.classList.add('btn-danger');
     } else {
         imageGrid.classList.remove('selection-mode');
-        selectBtn.textContent = '✓ Select';
+        selectBtn.textContent = 'Select';
         selectBtn.classList.remove('btn-danger');
         selectBtn.classList.add('btn-secondary');
 
