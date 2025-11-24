@@ -7,7 +7,12 @@ from flask import jsonify, request
 
 from shared import db, PHOTOS_DIR
 from utils import get_full_filepath
-from exif_utils import extract_exif_data, get_camera_list_from_exif_data, format_exif_for_display
+from exif_utils import (
+    extract_exif_data,
+    get_camera_list_from_exif_data,
+    format_exif_for_display,
+    sync_database_to_exif
+)
 from . import ai_bp
 
 
@@ -96,3 +101,41 @@ def get_cameras():
         'cameras': cameras,
         'count': len(cameras)
     })
+
+
+@ai_bp.route('/api/images/<int:image_id>/exif/sync', methods=['POST'])
+def sync_image_to_exif(image_id):
+    """
+    Sync image description and tags from database to EXIF metadata
+
+    This writes AI-generated descriptions and tags directly into the image file's
+    EXIF data, making them portable with the file.
+    """
+    image = db.get_image(image_id)
+    if not image:
+        return jsonify({'error': 'Image not found'}), 404
+
+    if image.get('media_type') == 'video':
+        return jsonify({'error': 'Cannot write EXIF to video files'}), 400
+
+    filepath = get_full_filepath(image['filepath'], PHOTOS_DIR)
+    if not os.path.exists(filepath):
+        return jsonify({'error': 'File not found'}), 404
+
+    # Sync database data to EXIF
+    result = sync_database_to_exif(filepath, {
+        'description': image.get('description'),
+        'tags': image.get('tags', [])
+    })
+
+    if result['success']:
+        return jsonify({
+            'success': True,
+            'message': result['message'],
+            'fields_written': result.get('fields_written', [])
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'message': result['message']
+        }), 500

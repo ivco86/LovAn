@@ -330,3 +330,121 @@ def format_exif_for_display(exif_data):
         result['gps_maps_url'] = f"https://www.google.com/maps?q={lat},{lon}"
 
     return result
+
+
+# ============================================================================
+# EXIF WRITING FUNCTIONS
+# ============================================================================
+
+def write_description_and_tags_to_exif(image_path, description=None, tags=None):
+    """
+    Write description and tags to image EXIF metadata
+
+    This writes to multiple EXIF/IPTC fields for maximum compatibility:
+    - ImageDescription (EXIF)
+    - UserComment (EXIF)
+    - XPComment (Windows)
+    - XPKeywords (Windows)
+
+    Args:
+        image_path: Path to the image file
+        description: Description text to write
+        tags: List of tag strings
+
+    Returns:
+        dict: {'success': bool, 'message': str}
+    """
+    try:
+        import piexif
+        from PIL import Image
+
+        # Open image
+        img = Image.open(image_path)
+
+        # Load existing EXIF data or create new
+        try:
+            exif_dict = piexif.load(image_path)
+        except:
+            # No EXIF data, create empty structure
+            exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+
+        # Write description if provided
+        if description:
+            # EXIF ImageDescription (tag 270)
+            exif_dict["0th"][piexif.ImageIFD.ImageDescription] = description.encode('utf-8')
+
+            # EXIF UserComment (tag 37510) - more space for longer descriptions
+            exif_dict["Exif"][piexif.ExifIFD.UserComment] = description.encode('utf-8')
+
+            # Windows XPComment (tag 40092) - UTF-16LE for Windows compatibility
+            try:
+                exif_dict["0th"][0x9c9c] = description.encode('utf-16le')
+            except:
+                pass
+
+        # Write tags if provided
+        if tags and isinstance(tags, list):
+            keywords_str = ';'.join(tags)
+
+            # Windows XPKeywords (tag 40094) - UTF-16LE
+            try:
+                exif_dict["0th"][0x9c9e] = keywords_str.encode('utf-16le')
+            except:
+                pass
+
+        # Convert EXIF dict to bytes
+        exif_bytes = piexif.dump(exif_dict)
+
+        # Save image with new EXIF data
+        img.save(image_path, exif=exif_bytes, quality=95)
+
+        return {
+            'success': True,
+            'message': f'EXIF data written successfully'
+        }
+
+    except ImportError:
+        return {
+            'success': False,
+            'message': 'piexif library not installed. Run: pip install piexif'
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'Error writing EXIF: {str(e)}'
+        }
+
+
+def sync_database_to_exif(image_path, image_data):
+    """
+    Sync image data from database to EXIF metadata
+
+    Args:
+        image_path: Path to the image file
+        image_data: Dictionary with 'description' and 'tags' keys
+
+    Returns:
+        dict: {'success': bool, 'message': str, 'fields_written': list}
+    """
+    description = image_data.get('description')
+    tags = image_data.get('tags', [])
+
+    if not description and not tags:
+        return {
+            'success': False,
+            'message': 'No description or tags to write'
+        }
+
+    result = write_description_and_tags_to_exif(image_path, description, tags)
+
+    if result['success']:
+        fields = []
+        if description:
+            fields.append('description')
+        if tags:
+            fields.append(f'{len(tags)} tags')
+
+        result['fields_written'] = fields
+        result['message'] = f"Synced to EXIF: {', '.join(fields)}"
+
+    return result
