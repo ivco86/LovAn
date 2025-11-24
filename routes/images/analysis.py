@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 from shared import db, ai, PHOTOS_DIR, DATA_DIR
 from utils import get_full_filepath, get_image_for_analysis
 from embeddings_utils import generate_embedding_for_image, embedding_to_blob, get_clip_model_version
+from exif_utils import extract_exif_data
 from . import images_bp
 
 
@@ -76,6 +77,32 @@ def analyze_image(image_id):
                 result['tags']
             )
             print(f"[ANALYZE] ✅ Database updated successfully for image {image_id}")
+
+            # --- EXIF DATA EXTRACTION ---
+            try:
+                # Only extract EXIF for images, not videos
+                if media_type == 'image':
+                    print(f"[ANALYZE] 📷 Extracting EXIF data for image {image_id}...")
+                    exif_data = extract_exif_data(filepath)
+                    
+                    if exif_data:
+                        success = db.save_exif_data(image_id, exif_data)
+                        if success:
+                            print(f"[ANALYZE] ✅ EXIF data extracted and saved for image {image_id}")
+                            if exif_data.get('camera_make') or exif_data.get('camera_model'):
+                                camera = f"{exif_data.get('camera_make', '')} {exif_data.get('camera_model', '')}".strip()
+                                print(f"[ANALYZE] 📷 Camera: {camera}")
+                        else:
+                            print(f"[ANALYZE] ⚠️ Failed to save EXIF data for image {image_id}")
+                    else:
+                        print(f"[ANALYZE] ⏭️ No EXIF data found in image {image_id}")
+                else:
+                    print(f"[ANALYZE] ⏭️ EXIF extraction skipped (video file)")
+            except Exception as e:
+                print(f"[ANALYZE] ⚠️ EXIF extraction failed: {e}")
+                import traceback
+                traceback.print_exc()
+            # ----------------------------
 
             # --- 1. SMART BOARDS (Съществуващи правила) ---
             added_to_boards = []
@@ -304,6 +331,17 @@ def batch_analyze():
                 result['tags']
             )
             analyzed_count += 1
+
+            # --- EXIF DATA EXTRACTION FOR BATCH ---
+            try:
+                media_type = image.get('media_type', 'image')
+                if media_type == 'image':
+                    exif_data = extract_exif_data(filepath)
+                    if exif_data:
+                        db.save_exif_data(image_id, exif_data)
+            except Exception as e:
+                print(f"[BATCH ANALYZE] ⚠️ EXIF extraction failed for image {image_id}: {e}")
+            # ----------------------------------------
 
             # --- AUTO CATEGORIZE FOR BATCH ---
             try:
