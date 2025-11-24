@@ -111,10 +111,12 @@ async function checkHealth() {
         // Update AI status indicator
         const statusEl = document.getElementById('aiStatus');
         if (data.ai_connected) {
-            statusEl.textContent = 'AI Connected';
+            statusEl.textContent = '●';
+            statusEl.title = 'AI Connected';
             statusEl.classList.add('connected');
         } else {
-            statusEl.textContent = 'AI Offline';
+            statusEl.textContent = '●';
+            statusEl.title = 'AI Offline';
             statusEl.classList.remove('connected');
         }
 
@@ -1754,16 +1756,71 @@ function hideBoardContextMenu() {
 // ============ Event Listeners ============
 
 function attachEventListeners() {
+    // Sidebar toggle
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+    }
+
+    // Dropdown menu toggle
+    const moreBtn = document.getElementById('moreBtn');
+    const moreMenu = document.getElementById('moreMenu');
+    if (moreBtn && moreMenu) {
+        moreBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            moreMenu.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            moreMenu.classList.remove('show');
+        });
+    }
+
+    // Dropdown menu items
+    const scanBtnMenu = document.getElementById('scanBtnMenu');
+    const sortImagesBtnMenu = document.getElementById('sortImagesBtnMenu');
+    const findDuplicatesBtnMenu = document.getElementById('findDuplicatesBtnMenu');
+    const analyzeBtnMenu = document.getElementById('analyzeBtnMenu');
+    const chatBtnMenu = document.getElementById('chatBtnMenu');
+    const settingsBtnMenu = document.getElementById('settingsBtnMenu');
+
+    if (scanBtnMenu) scanBtnMenu.addEventListener('click', scanDirectory);
+    if (sortImagesBtnMenu) sortImagesBtnMenu.addEventListener('click', () => {
+        const imageSortMenu = document.getElementById('imageSortMenu');
+        if (imageSortMenu) {
+            imageSortMenu.style.display = imageSortMenu.style.display === 'none' ? 'block' : 'none';
+        }
+    });
+    if (findDuplicatesBtnMenu) findDuplicatesBtnMenu.addEventListener('click', findDuplicates);
+    if (analyzeBtnMenu) analyzeBtnMenu.addEventListener('click', () => batchAnalyze(10));
+    if (chatBtnMenu) chatBtnMenu.addEventListener('click', () => {
+        if (typeof openChat === 'function') {
+            openChat();
+        }
+    });
+    if (settingsBtnMenu) settingsBtnMenu.addEventListener('click', openSettingsModal);
+
+    // Category pills
+    const categoryPills = document.querySelectorAll('.category-pill');
+    categoryPills.forEach(pill => {
+        pill.addEventListener('click', (e) => {
+            categoryPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            const view = pill.dataset.view;
+            switchView(view);
+        });
+    });
+
     // Header buttons
-    const scanBtn = document.getElementById('scanBtn');
     const scanBtnEmpty = document.getElementById('scanBtnEmpty');
-    const analyzeBtn = document.getElementById('analyzeBtn');
     const uploadBtn = document.getElementById('uploadBtn');
     const selectBtn = document.getElementById('selectBtn');
 
-    if (scanBtn) scanBtn.addEventListener('click', scanDirectory);
     if (scanBtnEmpty) scanBtnEmpty.addEventListener('click', scanDirectory);
-    if (analyzeBtn) analyzeBtn.addEventListener('click', () => batchAnalyze(10));
     if (uploadBtn) uploadBtn.addEventListener('click', openUploadModal);
     if (selectBtn) selectBtn.addEventListener('click', toggleSelectionMode);
 
@@ -1802,11 +1859,13 @@ function attachEventListeners() {
                 searchImages(e.target.value);
             }, CONFIG.SEARCH_DEBOUNCE_MS);
         });
-    }
 
-    if (searchBtn) {
-        searchBtn.addEventListener('click', () => {
-            searchImages(searchInput.value);
+        // Search on Enter key
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                clearTimeout(searchTimeout);
+                searchImages(searchInput.value);
+            }
         });
     }
 
