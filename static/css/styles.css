@@ -1471,6 +1471,17 @@ body {
     transform: translateY(-1px);
 }
 
+.action-btn.danger {
+    background: var(--error);
+    color: var(--text-inverse);
+    border: none;
+}
+
+.action-btn.danger:hover {
+    filter: brightness(0.9);
+    transform: translateY(-1px);
+}
+
 /* ============ Forms ============ */
 
 .form-group {

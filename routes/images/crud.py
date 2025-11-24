@@ -1,7 +1,8 @@
 """
-CRUD operations for images - list, get, update
+CRUD operations for images - list, get, update, delete
 """
 
+import os
 from flask import jsonify, request
 from shared import db
 from . import images_bp
@@ -90,3 +91,37 @@ def update_image(image_id):
         })
     except Exception as e:
         return jsonify({'error': f'Failed to update: {str(e)}'}), 500
+
+
+@images_bp.route('/api/images/<int:image_id>', methods=['DELETE'])
+def delete_image(image_id):
+    """Delete an image from database and optionally from disk"""
+    delete_file = request.args.get('delete_file', 'false').lower() == 'true'
+
+    # Get image details first
+    image = db.get_image(image_id)
+    if not image:
+        return jsonify({'error': 'Image not found'}), 404
+
+    file_path = image.get('file_path')
+
+    try:
+        # Delete from database
+        db.delete_image(image_id)
+
+        # Optionally delete the actual file
+        if delete_file and file_path and os.path.exists(file_path):
+            os.remove(file_path)
+            return jsonify({
+                'success': True,
+                'message': 'Image deleted from database and disk',
+                'file_deleted': True
+            })
+
+        return jsonify({
+            'success': True,
+            'message': 'Image deleted from database',
+            'file_deleted': False
+        })
+    except Exception as e:
+        return jsonify({'error': f'Failed to delete: {str(e)}'}), 500
