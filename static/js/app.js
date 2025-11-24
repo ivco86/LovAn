@@ -1357,6 +1357,8 @@ function updateModal() {
                     <button class="action-btn secondary" onclick="showExportMenu(event, ${image.id})">
                         Export
                     </button>
+                </div>
+                <div class="image-actions" style="margin-top: var(--spacing-xs);">
                     <button class="action-btn secondary" onclick="syncToExif(${image.id})" title="Save description and tags to EXIF metadata">
                         💾 Save to EXIF
                     </button>
@@ -1365,6 +1367,9 @@ function updateModal() {
                     </button>
                     <button class="action-btn secondary" onclick="openSendToTelegramModal(${image.id})">
                         Send to Telegram
+                    </button>
+                    <button class="action-btn danger" onclick="confirmDeleteImage(${image.id}, '${escapeHtml(image.filename).replace(/'/g, "\\'")}')">
+                        🗑️ Delete
                     </button>
                 </div>
             </div>
@@ -3382,6 +3387,97 @@ async function batchAddImagesToBoard() {
     openAddToBoardModal(selectedIds[0], true); // true indicates batch mode
 }
 
+// ============ Delete Image ============
+
+function confirmDeleteImage(imageId, filename) {
+    // Create confirmation modal
+    const existingModal = document.getElementById('deleteConfirmModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'deleteConfirmModal';
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-overlay" onclick="closeDeleteConfirmModal()"></div>
+        <div class="modal-content modal-small" style="max-width: 400px;">
+            <button class="modal-close" onclick="closeDeleteConfirmModal()">&times;</button>
+            <div class="modal-body" style="text-align: center;">
+                <h2 style="color: var(--error); margin-bottom: var(--spacing-lg);">🗑️ Delete Image</h2>
+                <p style="margin-bottom: var(--spacing-md); color: var(--text-secondary);">
+                    Are you sure you want to delete<br>
+                    <strong style="color: var(--text-primary);">${filename}</strong>?
+                </p>
+                <div style="display: flex; flex-direction: column; gap: var(--spacing-sm); margin-top: var(--spacing-lg);">
+                    <button class="btn btn-danger" onclick="deleteImage(${imageId}, false)">
+                        Remove from Gallery Only
+                    </button>
+                    <button class="btn btn-danger" style="background: #8b0000;" onclick="deleteImage(${imageId}, true)">
+                        Delete File from Disk
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeDeleteConfirmModal()">
+                        Cancel
+                    </button>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: var(--spacing-md);">
+                    "Remove from Gallery" keeps the file on your disk.<br>
+                    "Delete File" permanently removes it.
+                </p>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function closeDeleteConfirmModal() {
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function deleteImage(imageId, deleteFile = false) {
+    try {
+        const response = await fetch(`/api/images/${imageId}?delete_file=${deleteFile}`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Close modals
+            closeDeleteConfirmModal();
+            closeImageModal();
+
+            // Remove from state
+            state.images = state.images.filter(img => img.id !== imageId);
+
+            // Re-render
+            renderImages();
+            updateCounts();
+
+            // Refresh duplicates modal if open
+            const duplicatesModal = document.getElementById('duplicatesModal');
+            if (duplicatesModal && duplicatesModal.style.display === 'block') {
+                findDuplicates();
+            }
+
+            // Show success message
+            const message = deleteFile
+                ? 'Image deleted from gallery and disk'
+                : 'Image removed from gallery';
+            showToast(message, 'success');
+        } else {
+            showToast(data.error || 'Failed to delete image', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        showToast('Failed to delete image', 'error');
+    }
+}
+
 // ============ Duplicate Finder ============
 
 async function findDuplicates() {
@@ -3484,10 +3580,11 @@ function createDuplicateGroup(images, groupIndex) {
 
 function createDuplicateCard(image) {
     const isVideo = image.media_type === 'video';
+    const escapedFilename = escapeHtml(image.filename).replace(/'/g, "\\'");
 
     return `
-        <div class="duplicate-card" style="position: relative; cursor: pointer;" onclick="openImageModal(state.images.find(img => img.id === ${image.id}))">
-            <div style="position: relative; aspect-ratio: 1; overflow: hidden; border-radius: var(--radius-md); background: var(--bg-tertiary);">
+        <div class="duplicate-card" style="position: relative; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden;">
+            <div style="position: relative; aspect-ratio: 1; overflow: hidden; background: var(--bg-tertiary); cursor: pointer;" onclick="openImageModal(state.images.find(img => img.id === ${image.id}))">
                 ${isVideo ?
             `<img
                         src="/api/images/${image.id}/thumbnail?size=300"
@@ -3504,12 +3601,17 @@ function createDuplicateCard(image) {
                     >`
         }
             </div>
-            <div style="padding: var(--spacing-sm); background: var(--bg-secondary); border-radius: 0 0 var(--radius-md) var(--radius-md);">
+            <div style="padding: var(--spacing-sm); background: var(--bg-secondary);">
                 <div style="font-size: 12px; color: var(--text-primary); font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(image.filename)}">
                     ${escapeHtml(image.filename)}
                 </div>
-                <div style="font-size: 11px; color: var(--text-secondary);">
-                    ${image.width || 0}×${image.height || 0}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 11px; color: var(--text-secondary);">
+                        ${image.width || 0}×${image.height || 0}
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); confirmDeleteImage(${image.id}, '${escapedFilename}')" style="padding: 4px 8px; font-size: 11px;">
+                        🗑️
+                    </button>
                 </div>
             </div>
         </div>
