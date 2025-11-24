@@ -1756,6 +1756,15 @@ function hideBoardContextMenu() {
 // ============ Event Listeners ============
 
 function attachEventListeners() {
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+
+    // Initialize theme from localStorage or system preference
+    initializeTheme();
+
     // Sidebar toggle
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar = document.getElementById('sidebar');
@@ -2557,6 +2566,42 @@ function showLoading() {
 function hideLoading() {
     const loadingState = document.getElementById('loadingState');
     if (loadingState) loadingState.style.display = 'none';
+}
+
+// ============ Theme Functions ============
+
+function initializeTheme() {
+    // Check localStorage first
+    const savedTheme = localStorage.getItem('theme');
+
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    } else {
+        // Check system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = prefersDark ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        // Only auto-switch if user hasn't set a preference
+        if (!localStorage.getItem('theme')) {
+            const theme = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+    });
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+
+    // Optional: Show a brief toast notification
+    showToast(`Switched to ${newTheme} mode`, 'success', 2000);
 }
 
 function showToast(message, type = 'success', duration = null) {
