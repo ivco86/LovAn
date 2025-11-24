@@ -12,68 +12,54 @@
     <!-- Header -->
     <header class="header">
         <div class="header-left">
-            <h1>AI Gallery</h1>
-            <span class="status-indicator" id="aiStatus">AI Offline</span>
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+            <h1>Gallery</h1>
         </div>
 
         <div class="header-center">
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search images..." autocomplete="off">
+                <input type="text" id="searchInput" placeholder="Search..." autocomplete="off">
                 <div class="ai-toggle">
                     <label>
                         <input type="checkbox" id="ai-search-toggle">
-                        ✨ AI Search
+                        ✨ AI
                     </label>
                 </div>
-                <button id="searchBtn" aria-label="Search images">Search</button>
             </div>
         </div>
 
         <div class="header-right">
-            <button class="btn btn-primary" id="uploadBtn" aria-label="Upload images from your computer">Upload</button>
-            <button class="btn btn-primary" id="scanBtn" aria-label="Scan photos directory for new images">Scan</button>
-            <button class="btn btn-secondary" id="sortImagesBtn" aria-label="Sort images">Sort</button>
-            <button class="btn btn-secondary" id="findDuplicatesBtn" aria-label="Find duplicate images">Find Duplicates</button>
-            <button class="btn btn-secondary" id="analyzeBtn" aria-label="Analyze multiple images with AI">Analyze</button>
-            <button class="btn btn-secondary" id="selectBtn" aria-label="Select multiple images">Select</button>
-            <button class="btn btn-primary" id="chatBtn" aria-label="Chat with AI">Chat</button>
-            <button class="btn btn-secondary" id="settingsBtn" aria-label="Open settings">Settings</button>
+            <span class="status-indicator status-small" id="aiStatus">●</span>
+            <button class="btn-icon-round" id="uploadBtn" aria-label="Upload" title="Upload">+</button>
+            <button class="btn-icon-round" id="selectBtn" aria-label="Select" title="Select">☑</button>
+            <div class="dropdown">
+                <button class="btn-icon-round" id="moreBtn" aria-label="More actions" title="More">⋯</button>
+                <div class="dropdown-menu" id="moreMenu">
+                    <div class="dropdown-item" id="scanBtnMenu">Scan Directory</div>
+                    <div class="dropdown-item" id="sortImagesBtnMenu">Sort Images</div>
+                    <div class="dropdown-item" id="findDuplicatesBtnMenu">Find Duplicates</div>
+                    <div class="dropdown-item" id="analyzeBtnMenu">AI Analyze</div>
+                    <div class="dropdown-item" id="chatBtnMenu">AI Chat</div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item" id="settingsBtnMenu">Settings</div>
+                </div>
+            </div>
         </div>
     </header>
 
+    <!-- Category Pills -->
+    <div class="category-bar">
+        <div class="category-pills" id="categoryPills">
+            <button class="category-pill active" data-view="all">All</button>
+            <button class="category-pill" data-view="favorites">Favorites</button>
+            <button class="category-pill" data-view="unanalyzed">Unanalyzed</button>
+            <button class="category-pill" data-view="videos">Videos</button>
+        </div>
+    </div>
+
     <div class="container">
         <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-section">
-                <h3>Views</h3>
-                <ul class="nav-list">
-                    <li>
-                        <a href="#" class="nav-item active" data-view="all">
-                            <span>All Images</span>
-                            <span class="count" id="allCount">0</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="nav-item" data-view="favorites">
-                            <span>Favorites</span>
-                            <span class="count" id="favCount">0</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="nav-item" data-view="unanalyzed">
-                            <span>Unanalyzed</span>
-                            <span class="count" id="unanalyzedCount">0</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="nav-item" data-view="videos">
-                            <span>Videos</span>
-                            <span class="count" id="videosCount">0</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
+        <aside class="sidebar collapsed" id="sidebar">
             <div class="sidebar-section">
                 <div class="section-header">
                     <h3>Boards</h3>
@@ -137,30 +123,10 @@
                 </div>
             </div>
 
-            <div class="sidebar-section stats">
-                <h3>Stats</h3>
-                <div class="stat-item">
-                    <span class="stat-label">Total Images:</span>
-                    <span class="stat-value" id="statTotal">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Analyzed:</span>
-                    <span class="stat-value" id="statAnalyzed">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Boards:</span>
-                    <span class="stat-value" id="statBoards">0</span>
-                </div>
-            </div>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Breadcrumb -->
-            <div class="breadcrumb" id="breadcrumb">
-                <span class="breadcrumb-item">All Images</span>
-            </div>
-
             <!-- Loading State -->
             <div class="loading-state" id="loadingState" style="display: none;">
                 <div class="spinner"></div>
