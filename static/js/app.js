@@ -1327,6 +1327,9 @@ function updateModal() {
                     <button class="action-btn primary" onclick="openAIStyleModal(${image.id})">
                         ⚡ Analyze
                     </button>
+                    <button class="action-btn primary" onclick="openChatWithImage(${image.id})">
+                        💬 Chat About This
+                    </button>
                     <button class="action-btn secondary" onclick="editImage(${image.id})">
                         ✏️ Edit
                     </button>
