@@ -36,6 +36,8 @@ def chat():
         data = request.get_json()
         user_message = data.get('message', '').strip()
         chat_history = data.get('history', [])
+        image_id = data.get('image_id')
+        image_data = data.get('image_data')
 
         if not user_message:
             return jsonify({
@@ -46,10 +48,31 @@ def chat():
         # Build messages array for LM Studio API
         messages = []
 
+        # Build system message based on context
+        system_content = "You are a helpful AI assistant in an image gallery application. You can help users with questions, provide information, and have friendly conversations. Be concise and helpful."
+
+        # If discussing a specific image, add context
+        if image_id and image_data:
+            image_context = f"\n\nCURRENT IMAGE CONTEXT:\n"
+            image_context += f"Filename: {image_data.get('filename', 'Unknown')}\n"
+
+            if image_data.get('description'):
+                image_context += f"Description: {image_data.get('description')}\n"
+
+            if image_data.get('tags'):
+                tags_str = ', '.join(image_data.get('tags', []))
+                image_context += f"Tags: {tags_str}\n"
+
+            if image_data.get('width') and image_data.get('height'):
+                image_context += f"Dimensions: {image_data.get('width')}x{image_data.get('height')}px\n"
+
+            image_context += "\nThe user is asking about this specific image. Use this context to answer their questions accurately."
+            system_content += image_context
+
         # Add system message
         messages.append({
             "role": "system",
-            "content": "You are a helpful AI assistant in an image gallery application. You can help users with questions, provide information, and have friendly conversations. Be concise and helpful."
+            "content": system_content
         })
 
         # Add chat history

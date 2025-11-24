@@ -1323,30 +1323,43 @@ function updateModal() {
                     </div>
                 </div>
 
+                <div class="detail-section exif-section" id="exifSection">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+                        <h3>EXIF Data</h3>
+                        <button class="btn btn-sm btn-secondary" onclick="loadImageEXIF(${image.id})" style="padding: 0.25em 0.75em; font-size: 0.875em;">Load</button>
+                    </div>
+                    <div id="exifContent-${image.id}" style="color: var(--text-secondary); font-size: 0.9em;">
+                        <span class="tags-placeholder">Click "Load" to view EXIF data</span>
+                    </div>
+                </div>
+
                 <div class="image-actions">
                     <button class="action-btn primary" onclick="openAIStyleModal(${image.id})">
-                        ⚡ Analyze
+                        Analyze
+                    </button>
+                    <button class="action-btn primary" onclick="openChatWithImage(${image.id})">
+                        Chat About This
                     </button>
                     <button class="action-btn secondary" onclick="editImage(${image.id})">
-                        ✏️ Edit
+                        Edit
                     </button>
                     <button class="action-btn secondary" onclick="openImageFolder(${image.id})">
-                        📁 Open Folder
+                        Open Folder
                     </button>
                     <button class="action-btn secondary" onclick="openAddToBoardModal()">
-                        📋 Boards
+                        Boards
                     </button>
                     <button class="action-btn secondary" onclick="showOpenWithMenu(event, ${image.id}, '${image.media_type || 'image'}')">
-                        🚀 Open With
+                        Open With
                     </button>
                     <button class="action-btn secondary" onclick="showExportMenu(event, ${image.id})">
-                        📄 Export
+                        Export
                     </button>
                     <button class="action-btn secondary" onclick="openReverseSearchModal(${image.id})">
-                        🔍 Reverse Search
+                        Reverse Search
                     </button>
                     <button class="action-btn secondary" onclick="openSendToTelegramModal(${image.id})">
-                        📤 Send to Telegram
+                        Send to Telegram
                     </button>
                 </div>
             </div>
@@ -1387,6 +1400,91 @@ function updateModal() {
     }
 
     loadSimilarImages(image.id);
+    
+    // Load EXIF data if available
+    loadImageEXIF(image.id);
+}
+
+// Load and display EXIF data for an image
+async function loadImageEXIF(imageId) {
+    const exifContent = document.getElementById(`exifContent-${imageId}`);
+    if (!exifContent) return;
+    
+    // Show loading
+    exifContent.innerHTML = '<span class="tags-placeholder">Loading EXIF data...</span>';
+    
+    try {
+        const response = await fetch(`/api/images/${imageId}/exif`);
+        const data = await response.json();
+        
+        if (data.has_exif && data.formatted) {
+            const formatted = data.formatted;
+            let html = '<div class="exif-grid" style="display: grid; grid-template-columns: auto 1fr; gap: 0.5em 1em; align-items: start;">';
+            
+            if (formatted.camera) {
+                html += `<div style="font-weight: 600; color: var(--text-primary);">Camera:</div><div>${escapeHtml(formatted.camera)}</div>`;
+            }
+            
+            if (formatted.lens) {
+                html += `<div style="font-weight: 600; color: var(--text-primary);">Lens:</div><div>${escapeHtml(formatted.lens)}</div>`;
+            }
+            
+            if (formatted.settings) {
+                html += `<div style="font-weight: 600; color: var(--text-primary);">Settings:</div><div>${escapeHtml(formatted.settings)}</div>`;
+            }
+            
+            if (formatted.exposure_compensation) {
+                html += `<div style="font-weight: 600; color: var(--text-primary);">Exposure:</div><div>${escapeHtml(formatted.exposure_compensation)}</div>`;
+            }
+            
+            if (formatted.flash) {
+                html += `<div style="font-weight: 600; color: var(--text-primary);">Flash:</div><div>${escapeHtml(formatted.flash)}</div>`;
+            }
+            
+            if (formatted.date_taken) {
+                html += `<div style="font-weight: 600; color: var(--text-primary);">Date Taken:</div><div>${escapeHtml(formatted.date_taken)}</div>`;
+            }
+            
+            if (formatted.gps) {
+                html += `<div style="font-weight: 600; color: var(--text-primary);">Location:</div><div><a href="${escapeHtml(formatted.gps)}" target="_blank" style="color: var(--accent-purple);">View on Map</a></div>`;
+            }
+            
+            html += '</div>';
+            exifContent.innerHTML = html;
+        } else {
+            // Try to extract EXIF if not available
+            exifContent.innerHTML = '<span class="tags-placeholder">No EXIF data available. <button onclick="extractImageEXIF(' + imageId + ')" style="background: none; border: none; color: var(--accent-purple); cursor: pointer; text-decoration: underline;">Extract from file</button></span>';
+        }
+    } catch (error) {
+        console.error('Failed to load EXIF data:', error);
+        exifContent.innerHTML = '<span class="tags-placeholder" style="color: var(--danger);">Failed to load EXIF data</span>';
+    }
+}
+
+// Extract EXIF data from image file
+async function extractImageEXIF(imageId) {
+    const exifContent = document.getElementById(`exifContent-${imageId}`);
+    if (!exifContent) return;
+    
+    exifContent.innerHTML = '<span class="tags-placeholder">Extracting EXIF data...</span>';
+    
+    try {
+        const response = await fetch(`/api/images/${imageId}/exif/extract`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.formatted) {
+            // Reload EXIF data
+            await loadImageEXIF(imageId);
+        } else {
+            exifContent.innerHTML = '<span class="tags-placeholder" style="color: var(--danger);">' + (data.message || 'No EXIF data found in file') + '</span>';
+        }
+    } catch (error) {
+        console.error('Failed to extract EXIF data:', error);
+        exifContent.innerHTML = '<span class="tags-placeholder" style="color: var(--danger);">Failed to extract EXIF data</span>';
+    }
 }
 
 function closeModal(modalId, resetCallback = null) {
