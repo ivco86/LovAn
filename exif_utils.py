@@ -81,7 +81,7 @@ def _parse_int(value):
         if isinstance(value, (list, tuple)):
             return int(value[0])
         return int(value)
-    except:
+    except (ValueError, TypeError, IndexError, ZeroDivisionError):
         return None
 
 
@@ -93,7 +93,7 @@ def _parse_aperture(value):
         if isinstance(value, (list, tuple)) and len(value) == 2:
             return round(value[0] / value[1], 1)
         return round(float(value), 1)
-    except:
+    except (ValueError, TypeError, IndexError, ZeroDivisionError):
         return None
 
 
@@ -105,7 +105,7 @@ def _parse_shutter_speed(value):
         if isinstance(value, (list, tuple)) and len(value) == 2:
             return value[0] / value[1]
         return float(value)
-    except:
+    except (ValueError, TypeError, IndexError, ZeroDivisionError):
         return None
 
 
@@ -117,7 +117,7 @@ def _parse_focal_length(value):
         if isinstance(value, (list, tuple)) and len(value) == 2:
             return round(value[0] / value[1], 1)
         return round(float(value), 1)
-    except:
+    except (ValueError, TypeError, IndexError, ZeroDivisionError):
         return None
 
 
@@ -128,7 +128,7 @@ def _parse_flash(value):
     try:
         # Flash is a bitmask, check if bit 0 is set (flash fired)
         return 1 if (int(value) & 0x01) else 0
-    except:
+    except (ValueError, TypeError):
         return None
 
 
