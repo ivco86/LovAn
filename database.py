@@ -2022,6 +2022,35 @@ class Database:
             return data
         return None
 
+    def get_youtube_video_by_image_id(self, image_id: int) -> Optional[Dict]:
+        """Get YouTube video by image_id"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT yv.*
+            FROM youtube_videos yv
+            WHERE yv.image_id = ?
+        """, (image_id,))
+
+        result = cursor.fetchone()
+        conn.close()
+
+        if result:
+            data = dict(result)
+            if data.get('categories'):
+                try:
+                    data['categories'] = json.loads(data['categories'])
+                except:
+                    data['categories'] = []
+            if data.get('subtitle_languages'):
+                try:
+                    data['subtitle_languages'] = json.loads(data['subtitle_languages'])
+                except:
+                    data['subtitle_languages'] = []
+            return data
+        return None
+
     def get_all_youtube_videos(self, limit: int = 100, offset: int = 0) -> List[Dict]:
         """Get all YouTube videos with pagination"""
         conn = self.get_connection()

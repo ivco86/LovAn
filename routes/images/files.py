@@ -4,6 +4,8 @@ File serving - serve images, thumbnails, and handle file operations
 
 import os
 import mimetypes
+import requests
+from io import BytesIO
 from flask import jsonify, request, send_file
 from PIL import Image
 
@@ -85,9 +87,58 @@ def serve_thumbnail(image_id):
             return send_file(cache_path, mimetype='image/jpeg')
 
         # Generate and cache thumbnail
+        img = None
         if is_video:
-            # Try to extract frame from video
-            img = extract_video_frame(abs_filepath, cache_path, time_sec=1.0)
+            # Check if this is a YouTube video with a thumbnail URL
+            youtube_video = db.get_youtube_video_by_image_id(image_id)
+            if youtube_video and youtube_video.get('thumbnail_url'):
+                # Try to download and use YouTube thumbnail (usually higher quality and larger)
+                try:
+                    thumbnail_url = youtube_video['thumbnail_url']
+                    # YouTube thumbnails have different sizes available:
+                    # maxresdefault (1280x720) - highest quality
+                    # hqdefault (480x360) - high quality
+                    # mqdefault (320x180) - medium quality
+                    # default (120x90) - low quality
+                    
+                    # Extract YouTube ID from thumbnail URL or use the youtube_id from database
+                    youtube_id = youtube_video.get('youtube_id', '')
+                    if not youtube_id and 'vi/' in thumbnail_url:
+                        # Extract from URL like https://i.ytimg.com/vi/VIDEO_ID/default.jpg
+                        parts = thumbnail_url.split('/vi/')
+                        if len(parts) > 1:
+                            youtube_id = parts[1].split('/')[0]
+                    
+                    # Try different qualities, starting with highest
+                    if youtube_id:
+                        for quality in ['maxresdefault', 'hqdefault', 'mqdefault', 'default']:
+                            quality_url = f"https://i.ytimg.com/vi/{youtube_id}/{quality}.jpg"
+                            try:
+                                response = requests.get(quality_url, timeout=10, stream=True)
+                                if response.status_code == 200:
+                                    img_data = BytesIO(response.content)
+                                    img = Image.open(img_data)
+                                    print(f"[THUMBNAIL] Using YouTube thumbnail for image {image_id} (quality: {quality}, size: {img.size})")
+                                    break
+                            except Exception as e:
+                                print(f"[THUMBNAIL] Failed to download {quality} thumbnail: {e}")
+                                continue
+                    else:
+                        # Fallback to original thumbnail URL
+                        try:
+                            response = requests.get(thumbnail_url, timeout=10, stream=True)
+                            if response.status_code == 200:
+                                img_data = BytesIO(response.content)
+                                img = Image.open(img_data)
+                                print(f"[THUMBNAIL] Using original YouTube thumbnail for image {image_id}")
+                        except Exception as e:
+                            print(f"[THUMBNAIL] Failed to download original thumbnail: {e}")
+                except Exception as e:
+                    print(f"[THUMBNAIL] Error downloading YouTube thumbnail: {e}")
+            
+            # If YouTube thumbnail failed or doesn't exist, extract frame from video
+            if not img:
+                img = extract_video_frame(abs_filepath, cache_path, time_sec=1.0)
 
             if not img:
                 # Fallback to placeholder if opencv not available or extraction failed

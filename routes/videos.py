@@ -62,9 +62,27 @@ def get_video_info():
     if not url:
         return jsonify({'error': 'URL parameter required'}), 400
 
-    info = youtube_service.get_video_info(url)
-    if not info:
-        return jsonify({'error': 'Failed to get video information'}), 400
+    try:
+        info = youtube_service.get_video_info(url)
+        if not info:
+            return jsonify({'error': 'Failed to get video information'}), 400
+    except RuntimeError as e:
+        # yt-dlp not installed
+        return jsonify({
+            'error': str(e),
+            'code': 'YTDLP_NOT_INSTALLED'
+        }), 503
+    except ValueError as e:
+        # Invalid URL format
+        return jsonify({
+            'error': str(e),
+            'code': 'INVALID_URL'
+        }), 400
+    except Exception as e:
+        return jsonify({
+            'error': f'Failed to get video information: {str(e)}',
+            'code': 'UNKNOWN_ERROR'
+        }), 500
 
     # Check if already in database
     existing = db.get_youtube_video_by_youtube_id(info['youtube_id'])

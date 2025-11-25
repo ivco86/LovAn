@@ -28,6 +28,12 @@ function initChat() {
     const chatSendBtn = document.getElementById('chatSendBtn');
     const chatInput = document.getElementById('chatInput');
 
+    // Check if elements exist before adding event listeners
+    if (!chatBtn || !chatModal || !chatClose || !chatOverlay || !chatSendBtn || !chatInput) {
+        console.warn('Chat elements not found, chat functionality disabled');
+        return;
+    }
+
     // Open chat modal
     chatBtn.addEventListener('click', () => {
         openChat();

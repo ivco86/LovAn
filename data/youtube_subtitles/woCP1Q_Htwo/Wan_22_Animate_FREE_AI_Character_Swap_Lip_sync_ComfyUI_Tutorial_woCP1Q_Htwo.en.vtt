@@ -1,0 +1,2120 @@
+WEBVTT
+Kind: captions
+Language: en
+
+00:00:00.160 --> 00:00:02.629 align:start position:0%
+ 
+You<00:00:00.320><c> can</c><00:00:00.480><c> now</c><00:00:00.719><c> use</c><00:00:00.960><c> AI</c><00:00:01.439><c> to</c><00:00:01.680><c> seamlessly</c><00:00:02.240><c> replace</c>
+
+00:00:02.629 --> 00:00:02.639 align:start position:0%
+You can now use AI to seamlessly replace
+ 
+
+00:00:02.639 --> 00:00:04.550 align:start position:0%
+You can now use AI to seamlessly replace
+any<00:00:02.960><c> character</c><00:00:03.280><c> in</c><00:00:03.520><c> your</c><00:00:03.760><c> video.</c><00:00:04.160><c> Not</c><00:00:04.400><c> only</c>
+
+00:00:04.550 --> 00:00:04.560 align:start position:0%
+any character in your video. Not only
+ 
+
+00:00:04.560 --> 00:00:06.470 align:start position:0%
+any character in your video. Not only
+that,<00:00:04.880><c> but</c><00:00:05.120><c> you</c><00:00:05.279><c> can</c><00:00:05.520><c> also</c><00:00:05.839><c> maintain</c><00:00:06.160><c> the</c>
+
+00:00:06.470 --> 00:00:06.480 align:start position:0%
+that, but you can also maintain the
+ 
+
+00:00:06.480 --> 00:00:08.950 align:start position:0%
+that, but you can also maintain the
+original<00:00:07.040><c> speech</c><00:00:07.600><c> and</c><00:00:08.000><c> sync</c><00:00:08.320><c> the</c><00:00:08.559><c> lip</c>
+
+00:00:08.950 --> 00:00:08.960 align:start position:0%
+original speech and sync the lip
+ 
+
+00:00:08.960 --> 00:00:11.669 align:start position:0%
+original speech and sync the lip
+movement<00:00:09.679><c> or</c><00:00:10.000><c> use</c><00:00:10.240><c> your</c><00:00:10.559><c> own</c><00:00:10.800><c> video</c><00:00:11.120><c> to</c><00:00:11.360><c> drive</c>
+
+00:00:11.669 --> 00:00:11.679 align:start position:0%
+movement or use your own video to drive
+ 
+
+00:00:11.679 --> 00:00:14.230 align:start position:0%
+movement or use your own video to drive
+the<00:00:11.920><c> animation</c><00:00:12.480><c> of</c><00:00:12.719><c> another</c><00:00:13.200><c> character</c><00:00:13.920><c> and</c>
+
+00:00:14.230 --> 00:00:14.240 align:start position:0%
+the animation of another character and
+ 
+
+00:00:14.240 --> 00:00:17.990 align:start position:0%
+the animation of another character and
+even<00:00:14.719><c> restyle</c><00:00:15.280><c> the</c><00:00:15.599><c> entire</c><00:00:16.240><c> video</c><00:00:16.720><c> into</c><00:00:17.440><c> any</c>
+
+00:00:17.990 --> 00:00:18.000 align:start position:0%
+even restyle the entire video into any
+ 
+
+00:00:18.000 --> 00:00:20.230 align:start position:0%
+even restyle the entire video into any
+look<00:00:18.320><c> you</c><00:00:18.640><c> want.</c><00:00:19.039><c> And</c><00:00:19.199><c> in</c><00:00:19.439><c> this</c><00:00:19.600><c> tutorial,</c><00:00:20.000><c> I'm</c>
+
+00:00:20.230 --> 00:00:20.240 align:start position:0%
+look you want. And in this tutorial, I'm
+ 
+
+00:00:20.240 --> 00:00:21.990 align:start position:0%
+look you want. And in this tutorial, I'm
+going<00:00:20.400><c> to</c><00:00:20.560><c> show</c><00:00:20.720><c> you</c><00:00:20.880><c> how</c><00:00:21.039><c> to</c><00:00:21.199><c> do</c><00:00:21.359><c> all</c><00:00:21.600><c> of</c><00:00:21.760><c> that</c>
+
+00:00:21.990 --> 00:00:22.000 align:start position:0%
+going to show you how to do all of that
+ 
+
+00:00:22.000 --> 00:00:25.509 align:start position:0%
+going to show you how to do all of that
+for<00:00:22.320><c> free</c><00:00:22.960><c> using</c><00:00:23.439><c> one</c><00:00:23.760><c> 2.2</c><00:00:24.320><c> animate</c><00:00:24.960><c> inside</c>
+
+00:00:25.509 --> 00:00:25.519 align:start position:0%
+for free using one 2.2 animate inside
+ 
+
+00:00:25.519 --> 00:00:27.670 align:start position:0%
+for free using one 2.2 animate inside
+Comfy<00:00:25.920><c> UI.</c>
+
+00:00:27.670 --> 00:00:27.680 align:start position:0%
+Comfy UI.
+ 
+
+00:00:27.680 --> 00:00:30.550 align:start position:0%
+Comfy UI.
+I've<00:00:28.080><c> already</c><00:00:28.560><c> created</c><00:00:28.960><c> a</c><00:00:29.279><c> video</c><00:00:29.760><c> about</c><00:00:30.240><c> one</c>
+
+00:00:30.550 --> 00:00:30.560 align:start position:0%
+I've already created a video about one
+ 
+
+00:00:30.560 --> 00:00:32.870 align:start position:0%
+I've already created a video about one
+2.2<00:00:31.119><c> animate</c><00:00:31.679><c> where</c><00:00:31.840><c> I</c><00:00:32.000><c> also</c><00:00:32.320><c> highlighted</c>
+
+00:00:32.870 --> 00:00:32.880 align:start position:0%
+2.2 animate where I also highlighted
+ 
+
+00:00:32.880 --> 00:00:35.430 align:start position:0%
+2.2 animate where I also highlighted
+some<00:00:33.200><c> quality</c><00:00:33.600><c> issues</c><00:00:34.079><c> and</c><00:00:34.320><c> limitations</c><00:00:35.120><c> that</c>
+
+00:00:35.430 --> 00:00:35.440 align:start position:0%
+some quality issues and limitations that
+ 
+
+00:00:35.440 --> 00:00:38.069 align:start position:0%
+some quality issues and limitations that
+many<00:00:35.680><c> of</c><00:00:35.920><c> you</c><00:00:36.239><c> also</c><00:00:36.640><c> noticed.</c><00:00:37.440><c> Today,</c><00:00:37.760><c> we</c><00:00:37.920><c> will</c>
+
+00:00:38.069 --> 00:00:38.079 align:start position:0%
+many of you also noticed. Today, we will
+ 
+
+00:00:38.079 --> 00:00:40.310 align:start position:0%
+many of you also noticed. Today, we will
+use<00:00:38.239><c> a</c><00:00:38.480><c> different</c><00:00:38.800><c> workflow</c><00:00:39.280><c> to</c><00:00:39.520><c> optimize</c><00:00:40.079><c> the</c>
+
+00:00:40.310 --> 00:00:40.320 align:start position:0%
+use a different workflow to optimize the
+ 
+
+00:00:40.320 --> 00:00:43.030 align:start position:0%
+use a different workflow to optimize the
+output.<00:00:40.879><c> I</c><00:00:41.120><c> ran</c><00:00:41.440><c> several</c><00:00:42.000><c> tests</c><00:00:42.480><c> and</c><00:00:42.800><c> found</c>
+
+00:00:43.030 --> 00:00:43.040 align:start position:0%
+output. I ran several tests and found
+ 
+
+00:00:43.040 --> 00:00:45.910 align:start position:0%
+output. I ran several tests and found
+that<00:00:43.440><c> one</c><00:00:43.760><c> 2.2</c><00:00:44.320><c> animate</c><00:00:44.879><c> is</c><00:00:45.200><c> very</c><00:00:45.440><c> good</c><00:00:45.680><c> with</c>
+
+00:00:45.910 --> 00:00:45.920 align:start position:0%
+that one 2.2 animate is very good with
+ 
+
+00:00:45.920 --> 00:00:48.310 align:start position:0%
+that one 2.2 animate is very good with
+physics.<00:00:46.640><c> It's</c><00:00:46.879><c> also</c><00:00:47.200><c> good</c><00:00:47.360><c> at</c><00:00:47.600><c> maintaining</c>
+
+00:00:48.310 --> 00:00:48.320 align:start position:0%
+physics. It's also good at maintaining
+ 
+
+00:00:48.320 --> 00:00:50.790 align:start position:0%
+physics. It's also good at maintaining
+character<00:00:48.800><c> consistency</c><00:00:49.680><c> even</c><00:00:49.920><c> when</c><00:00:50.239><c> subjects</c>
+
+00:00:50.790 --> 00:00:50.800 align:start position:0%
+character consistency even when subjects
+ 
+
+00:00:50.800 --> 00:00:52.950 align:start position:0%
+character consistency even when subjects
+spin<00:00:51.120><c> around.</c><00:00:51.520><c> I've</c><00:00:51.840><c> successfully</c><00:00:52.480><c> replaced</c>
+
+00:00:52.950 --> 00:00:52.960 align:start position:0%
+spin around. I've successfully replaced
+ 
+
+00:00:52.960 --> 00:00:54.869 align:start position:0%
+spin around. I've successfully replaced
+characters<00:00:53.440><c> who</c><00:00:53.680><c> were</c><00:00:54.000><c> holding</c><00:00:54.480><c> or</c>
+
+00:00:54.869 --> 00:00:54.879 align:start position:0%
+characters who were holding or
+ 
+
+00:00:54.879 --> 00:00:57.110 align:start position:0%
+characters who were holding or
+interacting<00:00:55.440><c> with</c><00:00:55.680><c> objects</c><00:00:56.160><c> in</c><00:00:56.399><c> the</c><00:00:56.559><c> scene,</c>
+
+00:00:57.110 --> 00:00:57.120 align:start position:0%
+interacting with objects in the scene,
+ 
+
+00:00:57.120 --> 00:00:59.270 align:start position:0%
+interacting with objects in the scene,
+which<00:00:57.360><c> shows</c><00:00:57.760><c> how</c><00:00:58.239><c> powerful</c><00:00:58.640><c> the</c><00:00:58.960><c> subject</c>
+
+00:00:59.270 --> 00:00:59.280 align:start position:0%
+which shows how powerful the subject
+ 
+
+00:00:59.280 --> 00:01:01.910 align:start position:0%
+which shows how powerful the subject
+detection<00:00:59.920><c> really</c><00:01:00.320><c> is</c><00:01:00.719><c> in</c><00:01:00.960><c> this</c><00:01:01.120><c> workflow.</c><00:01:01.680><c> To</c>
+
+00:01:01.910 --> 00:01:01.920 align:start position:0%
+detection really is in this workflow. To
+ 
+
+00:01:01.920 --> 00:01:03.990 align:start position:0%
+detection really is in this workflow. To
+get<00:01:02.079><c> started,</c><00:01:02.640><c> you</c><00:01:02.879><c> need</c><00:01:02.960><c> to</c><00:01:03.120><c> install</c><00:01:03.600><c> Comfy</c>
+
+00:01:03.990 --> 00:01:04.000 align:start position:0%
+get started, you need to install Comfy
+ 
+
+00:01:04.000 --> 00:01:06.390 align:start position:0%
+get started, you need to install Comfy
+UI<00:01:04.320><c> on</c><00:01:04.559><c> your</c><00:01:04.799><c> computer.</c><00:01:05.439><c> You</c><00:01:05.680><c> can</c><00:01:05.840><c> download</c><00:01:06.159><c> it</c>
+
+00:01:06.390 --> 00:01:06.400 align:start position:0%
+UI on your computer. You can download it
+ 
+
+00:01:06.400 --> 00:01:09.190 align:start position:0%
+UI on your computer. You can download it
+from<00:01:06.640><c> comfy.org.</c><00:01:08.080><c> Simply</c><00:01:08.479><c> choose</c><00:01:08.640><c> an</c><00:01:08.880><c> option</c>
+
+00:01:09.190 --> 00:01:09.200 align:start position:0%
+from comfy.org. Simply choose an option
+ 
+
+00:01:09.200 --> 00:01:11.109 align:start position:0%
+from comfy.org. Simply choose an option
+based<00:01:09.439><c> on</c><00:01:09.600><c> your</c><00:01:09.840><c> system,</c><00:01:10.560><c> open</c><00:01:10.880><c> the</c>
+
+00:01:11.109 --> 00:01:11.119 align:start position:0%
+based on your system, open the
+ 
+
+00:01:11.119 --> 00:01:12.870 align:start position:0%
+based on your system, open the
+downloaded<00:01:11.680><c> file,</c><00:01:12.080><c> and</c><00:01:12.400><c> follow</c><00:01:12.640><c> the</c>
+
+00:01:12.870 --> 00:01:12.880 align:start position:0%
+downloaded file, and follow the
+ 
+
+00:01:12.880 --> 00:01:15.429 align:start position:0%
+downloaded file, and follow the
+installation<00:01:13.439><c> steps.</c><00:01:14.080><c> The</c><00:01:14.320><c> process</c><00:01:14.720><c> is</c><00:01:15.040><c> very</c>
+
+00:01:15.429 --> 00:01:15.439 align:start position:0%
+installation steps. The process is very
+ 
+
+00:01:15.439 --> 00:01:17.670 align:start position:0%
+installation steps. The process is very
+easy<00:01:15.840><c> and</c><00:01:16.159><c> straightforward.</c><00:01:16.960><c> It's</c><00:01:17.360><c> important</c>
+
+00:01:17.670 --> 00:01:17.680 align:start position:0%
+easy and straightforward. It's important
+ 
+
+00:01:17.680 --> 00:01:20.390 align:start position:0%
+easy and straightforward. It's important
+to<00:01:17.920><c> note</c><00:01:18.240><c> that</c><00:01:18.560><c> Comfy</c><00:01:19.040><c> UI</c><00:01:19.439><c> works</c><00:01:19.680><c> best</c><00:01:20.000><c> on</c>
+
+00:01:20.390 --> 00:01:20.400 align:start position:0%
+to note that Comfy UI works best on
+ 
+
+00:01:20.400 --> 00:01:23.670 align:start position:0%
+to note that Comfy UI works best on
+Windows<00:01:21.040><c> with</c><00:01:21.200><c> an</c><00:01:21.520><c> Nvidia</c><00:01:22.159><c> GPU</c><00:01:22.880><c> and</c><00:01:23.200><c> running</c>
+
+00:01:23.670 --> 00:01:23.680 align:start position:0%
+Windows with an Nvidia GPU and running
+ 
+
+00:01:23.680 --> 00:01:27.749 align:start position:0%
+Windows with an Nvidia GPU and running
+one<00:01:24.000><c> 2.2</c><00:01:24.560><c> Animate</c><00:01:25.200><c> requires</c><00:01:25.920><c> at</c><00:01:26.080><c> least</c><00:01:26.720><c> 24</c><00:01:27.200><c> GB</c>
+
+00:01:27.749 --> 00:01:27.759 align:start position:0%
+one 2.2 Animate requires at least 24 GB
+ 
+
+00:01:27.759 --> 00:01:30.870 align:start position:0%
+one 2.2 Animate requires at least 24 GB
+of<00:01:28.000><c> GPU</c><00:01:28.560><c> VRAM.</c><00:01:29.200><c> The</c><00:01:29.360><c> more</c><00:01:29.600><c> VRAM</c><00:01:30.159><c> you</c><00:01:30.400><c> have,</c><00:01:30.720><c> the</c>
+
+00:01:30.870 --> 00:01:30.880 align:start position:0%
+of GPU VRAM. The more VRAM you have, the
+ 
+
+00:01:30.880 --> 00:01:33.109 align:start position:0%
+of GPU VRAM. The more VRAM you have, the
+faster<00:01:31.280><c> your</c><00:01:31.600><c> generations</c><00:01:32.159><c> will</c><00:01:32.400><c> process.</c>
+
+00:01:33.109 --> 00:01:33.119 align:start position:0%
+faster your generations will process.
+ 
+
+00:01:33.119 --> 00:01:35.109 align:start position:0%
+faster your generations will process.
+However,<00:01:33.520><c> if</c><00:01:33.759><c> you</c><00:01:34.000><c> don't</c><00:01:34.240><c> have</c><00:01:34.400><c> the</c><00:01:34.640><c> required</c>
+
+00:01:35.109 --> 00:01:35.119 align:start position:0%
+However, if you don't have the required
+ 
+
+00:01:35.119 --> 00:01:37.350 align:start position:0%
+However, if you don't have the required
+hardware,<00:01:35.759><c> don't</c><00:01:36.079><c> worry.</c><00:01:36.720><c> You</c><00:01:36.960><c> can</c><00:01:37.040><c> simply</c>
+
+00:01:37.350 --> 00:01:37.360 align:start position:0%
+hardware, don't worry. You can simply
+ 
+
+00:01:37.360 --> 00:01:39.910 align:start position:0%
+hardware, don't worry. You can simply
+run<00:01:37.600><c> Comfy</c><00:01:38.320><c> online</c><00:01:38.799><c> and</c><00:01:39.119><c> get</c><00:01:39.360><c> access</c><00:01:39.680><c> to</c>
+
+00:01:39.910 --> 00:01:39.920 align:start position:0%
+run Comfy online and get access to
+ 
+
+00:01:39.920 --> 00:01:42.789 align:start position:0%
+run Comfy online and get access to
+higherend<00:01:40.640><c> GPUs</c><00:01:41.280><c> with</c><00:01:41.680><c> various</c><00:01:42.159><c> VRAM</c>
+
+00:01:42.789 --> 00:01:42.799 align:start position:0%
+higherend GPUs with various VRAM
+ 
+
+00:01:42.799 --> 00:01:44.710 align:start position:0%
+higherend GPUs with various VRAM
+options.<00:01:43.360><c> I</c><00:01:43.600><c> will</c><00:01:43.759><c> leave</c><00:01:43.920><c> links</c><00:01:44.240><c> to</c><00:01:44.479><c> my</c>
+
+00:01:44.710 --> 00:01:44.720 align:start position:0%
+options. I will leave links to my
+ 
+
+00:01:44.720 --> 00:01:46.389 align:start position:0%
+options. I will leave links to my
+favorite<00:01:45.119><c> websites</c><00:01:45.600><c> where</c><00:01:45.840><c> you</c><00:01:46.000><c> can</c><00:01:46.159><c> run</c>
+
+00:01:46.389 --> 00:01:46.399 align:start position:0%
+favorite websites where you can run
+ 
+
+00:01:46.399 --> 00:01:48.710 align:start position:0%
+favorite websites where you can run
+Comfy<00:01:46.799><c> UI</c><00:01:47.280><c> in</c><00:01:47.520><c> the</c><00:01:47.680><c> description</c><00:01:48.079><c> box.</c><00:01:48.560><c> Once</c>
+
+00:01:48.710 --> 00:01:48.720 align:start position:0%
+Comfy UI in the description box. Once
+ 
+
+00:01:48.720 --> 00:01:50.870 align:start position:0%
+Comfy UI in the description box. Once
+Confiu<00:01:49.360><c> is</c><00:01:49.520><c> installed,</c><00:01:50.079><c> it</c><00:01:50.320><c> will</c><00:01:50.560><c> launch</c>
+
+00:01:50.870 --> 00:01:50.880 align:start position:0%
+Confiu is installed, it will launch
+ 
+
+00:01:50.880 --> 00:01:52.630 align:start position:0%
+Confiu is installed, it will launch
+automatically.<00:01:51.840><c> Next,</c><00:01:52.079><c> you</c><00:01:52.320><c> need</c><00:01:52.399><c> to</c>
+
+00:01:52.630 --> 00:01:52.640 align:start position:0%
+automatically. Next, you need to
+ 
+
+00:01:52.640 --> 00:01:55.590 align:start position:0%
+automatically. Next, you need to
+download<00:01:52.960><c> the</c><00:01:53.280><c> necessary</c><00:01:54.159><c> one</c><00:01:54.560><c> 2.2</c><00:01:55.119><c> Animate</c>
+
+00:01:55.590 --> 00:01:55.600 align:start position:0%
+download the necessary one 2.2 Animate
+ 
+
+00:01:55.600 --> 00:01:58.069 align:start position:0%
+download the necessary one 2.2 Animate
+models.<00:01:56.079><c> I've</c><00:01:56.320><c> included</c><00:01:56.799><c> a</c><00:01:57.119><c> detailed</c><00:01:57.680><c> guide</c>
+
+00:01:58.069 --> 00:01:58.079 align:start position:0%
+models. I've included a detailed guide
+ 
+
+00:01:58.079 --> 00:02:00.550 align:start position:0%
+models. I've included a detailed guide
+below<00:01:58.640><c> with</c><00:01:58.960><c> all</c><00:01:59.200><c> the</c><00:01:59.439><c> links</c><00:01:59.920><c> and</c><00:02:00.159><c> exact</c>
+
+00:02:00.550 --> 00:02:00.560 align:start position:0%
+below with all the links and exact
+ 
+
+00:02:00.560 --> 00:02:02.389 align:start position:0%
+below with all the links and exact
+folders<00:02:01.119><c> where</c><00:02:01.439><c> you</c><00:02:01.600><c> should</c><00:02:01.840><c> save</c><00:02:02.079><c> these</c>
+
+00:02:02.389 --> 00:02:02.399 align:start position:0%
+folders where you should save these
+ 
+
+00:02:02.399 --> 00:02:04.709 align:start position:0%
+folders where you should save these
+models.<00:02:03.040><c> Also,</c><00:02:03.520><c> in</c><00:02:03.759><c> the</c><00:02:03.920><c> description</c><00:02:04.320><c> box,</c>
+
+00:02:04.709 --> 00:02:04.719 align:start position:0%
+models. Also, in the description box,
+ 
+
+00:02:04.719 --> 00:02:07.270 align:start position:0%
+models. Also, in the description box,
+you<00:02:04.960><c> can</c><00:02:05.040><c> download</c><00:02:05.520><c> the</c><00:02:05.840><c> one</c><00:02:06.159><c> 2.2</c><00:02:06.880><c> Animate</c>
+
+00:02:07.270 --> 00:02:07.280 align:start position:0%
+you can download the one 2.2 Animate
+ 
+
+00:02:07.280 --> 00:02:09.669 align:start position:0%
+you can download the one 2.2 Animate
+workflow.<00:02:08.000><c> Simply</c><00:02:08.399><c> drag</c><00:02:08.640><c> and</c><00:02:08.879><c> drop</c><00:02:09.039><c> the</c><00:02:09.280><c> file</c>
+
+00:02:09.669 --> 00:02:09.679 align:start position:0%
+workflow. Simply drag and drop the file
+ 
+
+00:02:09.679 --> 00:02:12.309 align:start position:0%
+workflow. Simply drag and drop the file
+into<00:02:10.000><c> Comfy</c><00:02:10.479><c> UI</c><00:02:10.800><c> to</c><00:02:11.039><c> load</c><00:02:11.200><c> it.</c><00:02:11.599><c> Once</c><00:02:11.920><c> you</c><00:02:12.160><c> do</c>
+
+00:02:12.309 --> 00:02:12.319 align:start position:0%
+into Comfy UI to load it. Once you do
+ 
+
+00:02:12.319 --> 00:02:14.309 align:start position:0%
+into Comfy UI to load it. Once you do
+that,<00:02:12.800><c> you</c><00:02:12.959><c> will</c><00:02:13.120><c> get</c><00:02:13.280><c> a</c><00:02:13.440><c> window</c><00:02:13.840><c> telling</c><00:02:14.160><c> you</c>
+
+00:02:14.309 --> 00:02:14.319 align:start position:0%
+that, you will get a window telling you
+ 
+
+00:02:14.319 --> 00:02:16.630 align:start position:0%
+that, you will get a window telling you
+that<00:02:14.480><c> the</c><00:02:14.720><c> workflow</c><00:02:15.280><c> requires</c><00:02:15.840><c> nodes</c><00:02:16.319><c> not</c>
+
+00:02:16.630 --> 00:02:16.640 align:start position:0%
+that the workflow requires nodes not
+ 
+
+00:02:16.640 --> 00:02:19.270 align:start position:0%
+that the workflow requires nodes not
+installed<00:02:17.120><c> on</c><00:02:17.440><c> your</c><00:02:17.680><c> computer.</c><00:02:18.160><c> To</c><00:02:18.400><c> fix</c><00:02:18.640><c> this,</c>
+
+00:02:19.270 --> 00:02:19.280 align:start position:0%
+installed on your computer. To fix this,
+ 
+
+00:02:19.280 --> 00:02:22.309 align:start position:0%
+installed on your computer. To fix this,
+go<00:02:19.440><c> to</c><00:02:19.680><c> manager</c><00:02:20.560><c> and</c><00:02:20.879><c> click</c><00:02:21.200><c> on</c><00:02:21.680><c> install</c>
+
+00:02:22.309 --> 00:02:22.319 align:start position:0%
+go to manager and click on install
+ 
+
+00:02:22.319 --> 00:02:25.030 align:start position:0%
+go to manager and click on install
+missing<00:02:22.879><c> custom</c><00:02:23.280><c> nodes.</c><00:02:24.080><c> Install</c><00:02:24.560><c> all</c><00:02:24.800><c> the</c>
+
+00:02:25.030 --> 00:02:25.040 align:start position:0%
+missing custom nodes. Install all the
+ 
+
+00:02:25.040 --> 00:02:27.430 align:start position:0%
+missing custom nodes. Install all the
+nodes<00:02:25.360><c> in</c><00:02:25.520><c> this</c><00:02:25.760><c> list</c><00:02:26.080><c> one</c><00:02:26.319><c> by</c><00:02:26.560><c> one.</c><00:02:27.120><c> After</c>
+
+00:02:27.430 --> 00:02:27.440 align:start position:0%
+nodes in this list one by one. After
+ 
+
+00:02:27.440 --> 00:02:30.229 align:start position:0%
+nodes in this list one by one. After
+that,<00:02:27.760><c> you</c><00:02:28.000><c> will</c><00:02:28.239><c> need</c><00:02:28.400><c> to</c><00:02:28.640><c> restart</c><00:02:29.280><c> Confui.</c>
+
+00:02:30.229 --> 00:02:30.239 align:start position:0%
+that, you will need to restart Confui.
+ 
+
+00:02:30.239 --> 00:02:33.350 align:start position:0%
+that, you will need to restart Confui.
+And<00:02:30.480><c> now</c><00:02:30.720><c> you</c><00:02:30.959><c> can</c><00:02:31.120><c> start</c><00:02:31.440><c> using</c><00:02:31.840><c> the</c><00:02:32.319><c> one</c><00:02:32.640><c> 2.2</c>
+
+00:02:33.350 --> 00:02:33.360 align:start position:0%
+And now you can start using the one 2.2
+ 
+
+00:02:33.360 --> 00:02:35.270 align:start position:0%
+And now you can start using the one 2.2
+animate<00:02:33.840><c> workflow.</c><00:02:34.480><c> It</c><00:02:34.640><c> might</c><00:02:34.800><c> look</c><00:02:34.959><c> a</c><00:02:35.120><c> bit</c>
+
+00:02:35.270 --> 00:02:35.280 align:start position:0%
+animate workflow. It might look a bit
+ 
+
+00:02:35.280 --> 00:02:37.270 align:start position:0%
+animate workflow. It might look a bit
+overwhelming<00:02:35.760><c> at</c><00:02:36.080><c> first,</c><00:02:36.400><c> but</c><00:02:36.640><c> don't</c><00:02:36.879><c> worry.</c>
+
+00:02:37.270 --> 00:02:37.280 align:start position:0%
+overwhelming at first, but don't worry.
+ 
+
+00:02:37.280 --> 00:02:39.030 align:start position:0%
+overwhelming at first, but don't worry.
+I'll<00:02:37.519><c> guide</c><00:02:37.760><c> you</c><00:02:37.920><c> through</c><00:02:38.160><c> the</c><00:02:38.400><c> process</c><00:02:38.720><c> and</c>
+
+00:02:39.030 --> 00:02:39.040 align:start position:0%
+I'll guide you through the process and
+ 
+
+00:02:39.040 --> 00:02:41.350 align:start position:0%
+I'll guide you through the process and
+settings<00:02:39.519><c> step</c><00:02:39.840><c> by</c><00:02:40.080><c> step.</c><00:02:40.400><c> And</c><00:02:40.640><c> by</c><00:02:40.800><c> the</c><00:02:40.879><c> way,</c><00:02:41.120><c> I</c>
+
+00:02:41.350 --> 00:02:41.360 align:start position:0%
+settings step by step. And by the way, I
+ 
+
+00:02:41.360 --> 00:02:43.509 align:start position:0%
+settings step by step. And by the way, I
+want<00:02:41.440><c> to</c><00:02:41.519><c> give</c><00:02:41.680><c> a</c><00:02:41.920><c> shout</c><00:02:42.000><c> out</c><00:02:42.239><c> to</c><00:02:42.480><c> Kiji,</c><00:02:43.200><c> one</c><00:02:43.440><c> of</c>
+
+00:02:43.509 --> 00:02:43.519 align:start position:0%
+want to give a shout out to Kiji, one of
+ 
+
+00:02:43.519 --> 00:02:45.589 align:start position:0%
+want to give a shout out to Kiji, one of
+the<00:02:43.680><c> most</c><00:02:44.000><c> respected</c><00:02:44.640><c> individuals</c><00:02:45.280><c> in</c><00:02:45.440><c> the</c>
+
+00:02:45.589 --> 00:02:45.599 align:start position:0%
+the most respected individuals in the
+ 
+
+00:02:45.599 --> 00:02:47.990 align:start position:0%
+the most respected individuals in the
+Comfy<00:02:46.080><c> UI</c><00:02:46.400><c> community.</c><00:02:47.040><c> He</c><00:02:47.360><c> created</c><00:02:47.680><c> this</c>
+
+00:02:47.990 --> 00:02:48.000 align:start position:0%
+Comfy UI community. He created this
+ 
+
+00:02:48.000 --> 00:02:50.150 align:start position:0%
+Comfy UI community. He created this
+workflow,<00:02:48.400><c> but</c><00:02:48.640><c> I've</c><00:02:48.879><c> modified</c><00:02:49.360><c> it</c><00:02:49.599><c> slightly</c>
+
+00:02:50.150 --> 00:02:50.160 align:start position:0%
+workflow, but I've modified it slightly
+ 
+
+00:02:50.160 --> 00:02:52.630 align:start position:0%
+workflow, but I've modified it slightly
+to<00:02:50.480><c> make</c><00:02:50.640><c> it</c><00:02:50.879><c> easier</c><00:02:51.200><c> to</c><00:02:51.519><c> get</c><00:02:51.680><c> started</c><00:02:52.400><c> and</c>
+
+00:02:52.630 --> 00:02:52.640 align:start position:0%
+to make it easier to get started and
+ 
+
+00:02:52.640 --> 00:02:55.030 align:start position:0%
+to make it easier to get started and
+ended<00:02:52.959><c> up</c><00:02:53.200><c> with</c><00:02:53.440><c> this</c><00:02:53.760><c> version</c><00:02:54.239><c> right</c><00:02:54.560><c> here.</c>
+
+00:02:55.030 --> 00:02:55.040 align:start position:0%
+ended up with this version right here.
+ 
+
+00:02:55.040 --> 00:02:56.949 align:start position:0%
+ended up with this version right here.
+Okay,<00:02:55.280><c> let's</c><00:02:55.599><c> get</c><00:02:55.760><c> started.</c><00:02:56.239><c> Click</c><00:02:56.560><c> here</c><00:02:56.720><c> to</c>
+
+00:02:56.949 --> 00:02:56.959 align:start position:0%
+Okay, let's get started. Click here to
+ 
+
+00:02:56.959 --> 00:02:59.030 align:start position:0%
+Okay, let's get started. Click here to
+upload<00:02:57.200><c> a</c><00:02:57.440><c> video</c><00:02:57.680><c> of</c><00:02:58.000><c> the</c><00:02:58.239><c> character</c><00:02:58.720><c> or</c>
+
+00:02:59.030 --> 00:02:59.040 align:start position:0%
+upload a video of the character or
+ 
+
+00:02:59.040 --> 00:03:00.949 align:start position:0%
+upload a video of the character or
+person<00:02:59.440><c> that</c><00:02:59.680><c> you</c><00:02:59.920><c> want</c><00:03:00.000><c> to</c><00:03:00.160><c> replace.</c><00:03:00.720><c> I</c>
+
+00:03:00.949 --> 00:03:00.959 align:start position:0%
+person that you want to replace. I
+ 
+
+00:03:00.959 --> 00:03:03.110 align:start position:0%
+person that you want to replace. I
+recommend<00:03:01.280><c> using</c><00:03:01.519><c> a</c><00:03:01.760><c> video</c><00:03:02.080><c> no</c><00:03:02.400><c> larger</c><00:03:02.800><c> than</c>
+
+00:03:03.110 --> 00:03:03.120 align:start position:0%
+recommend using a video no larger than
+ 
+
+00:03:03.120 --> 00:03:05.910 align:start position:0%
+recommend using a video no larger than
+1080p<00:03:03.840><c> resolution.</c><00:03:04.720><c> Both</c><00:03:05.120><c> vertical</c><00:03:05.599><c> and</c>
+
+00:03:05.910 --> 00:03:05.920 align:start position:0%
+1080p resolution. Both vertical and
+ 
+
+00:03:05.920 --> 00:03:08.309 align:start position:0%
+1080p resolution. Both vertical and
+landscape<00:03:06.480><c> formats</c><00:03:07.040><c> work</c><00:03:07.360><c> well.</c><00:03:07.760><c> Here</c><00:03:08.080><c> you</c>
+
+00:03:08.309 --> 00:03:08.319 align:start position:0%
+landscape formats work well. Here you
+ 
+
+00:03:08.319 --> 00:03:10.390 align:start position:0%
+landscape formats work well. Here you
+can<00:03:08.480><c> choose</c><00:03:08.720><c> how</c><00:03:09.040><c> many</c><00:03:09.200><c> frames</c><00:03:09.599><c> of</c><00:03:09.840><c> your</c><00:03:10.080><c> video</c>
+
+00:03:10.390 --> 00:03:10.400 align:start position:0%
+can choose how many frames of your video
+ 
+
+00:03:10.400 --> 00:03:12.390 align:start position:0%
+can choose how many frames of your video
+you<00:03:10.640><c> want</c><00:03:10.720><c> to</c><00:03:10.959><c> run</c><00:03:11.200><c> through</c><00:03:11.440><c> the</c><00:03:11.599><c> workflow.</c>
+
+00:03:12.390 --> 00:03:12.400 align:start position:0%
+you want to run through the workflow.
+ 
+
+00:03:12.400 --> 00:03:14.630 align:start position:0%
+you want to run through the workflow.
+And<00:03:12.640><c> usually</c><00:03:13.200><c> not</c><00:03:13.519><c> being</c><00:03:13.760><c> able</c><00:03:14.000><c> to</c><00:03:14.159><c> generate</c>
+
+00:03:14.630 --> 00:03:14.640 align:start position:0%
+And usually not being able to generate
+ 
+
+00:03:14.640 --> 00:03:17.110 align:start position:0%
+And usually not being able to generate
+long<00:03:14.879><c> videos</c><00:03:15.280><c> is</c><00:03:15.440><c> a</c><00:03:15.680><c> common</c><00:03:16.000><c> limitations</c><00:03:16.720><c> of</c>
+
+00:03:17.110 --> 00:03:17.120 align:start position:0%
+long videos is a common limitations of
+ 
+
+00:03:17.120 --> 00:03:19.350 align:start position:0%
+long videos is a common limitations of
+open-source<00:03:17.760><c> video</c><00:03:18.159><c> models.</c><00:03:18.800><c> But</c><00:03:18.959><c> with</c><00:03:19.120><c> this,</c>
+
+00:03:19.350 --> 00:03:19.360 align:start position:0%
+open-source video models. But with this,
+ 
+
+00:03:19.360 --> 00:03:22.949 align:start position:0%
+open-source video models. But with this,
+I<00:03:19.680><c> managed</c><00:03:20.000><c> to</c><00:03:20.239><c> run</c><00:03:20.640><c> 300</c><00:03:21.440><c> and</c><00:03:21.680><c> 400</c><00:03:22.159><c> frames</c><00:03:22.640><c> with</c>
+
+00:03:22.949 --> 00:03:22.959 align:start position:0%
+I managed to run 300 and 400 frames with
+ 
+
+00:03:22.959 --> 00:03:25.270 align:start position:0%
+I managed to run 300 and 400 frames with
+no<00:03:23.280><c> issues.</c><00:03:23.840><c> But</c><00:03:23.920><c> it</c><00:03:24.080><c> will</c><00:03:24.319><c> probably</c><00:03:24.879><c> depend</c>
+
+00:03:25.270 --> 00:03:25.280 align:start position:0%
+no issues. But it will probably depend
+ 
+
+00:03:25.280 --> 00:03:27.589 align:start position:0%
+no issues. But it will probably depend
+on<00:03:25.519><c> the</c><00:03:25.680><c> video.</c><00:03:26.080><c> If</c><00:03:26.319><c> you</c><00:03:26.400><c> have</c><00:03:26.560><c> more</c><00:03:26.879><c> VRAM</c><00:03:27.440><c> than</c>
+
+00:03:27.589 --> 00:03:27.599 align:start position:0%
+on the video. If you have more VRAM than
+ 
+
+00:03:27.599 --> 00:03:30.309 align:start position:0%
+on the video. If you have more VRAM than
+me<00:03:27.920><c> or</c><00:03:28.239><c> use</c><00:03:28.480><c> Comfy</c><00:03:28.879><c> UI</c><00:03:29.200><c> on</c><00:03:29.360><c> the</c><00:03:29.440><c> cloud,</c><00:03:29.920><c> you</c><00:03:30.080><c> can</c>
+
+00:03:30.309 --> 00:03:30.319 align:start position:0%
+me or use Comfy UI on the cloud, you can
+ 
+
+00:03:30.319 --> 00:03:33.270 align:start position:0%
+me or use Comfy UI on the cloud, you can
+probably<00:03:30.799><c> process</c><00:03:31.440><c> even</c><00:03:32.000><c> longer</c><00:03:32.480><c> videos.</c><00:03:32.959><c> I'm</c>
+
+00:03:33.270 --> 00:03:33.280 align:start position:0%
+probably process even longer videos. I'm
+ 
+
+00:03:33.280 --> 00:03:36.390 align:start position:0%
+probably process even longer videos. I'm
+going<00:03:33.360><c> to</c><00:03:33.519><c> input</c><00:03:34.799><c> 125</c><00:03:35.360><c> frames,</c><00:03:36.000><c> which</c><00:03:36.239><c> is</c>
+
+00:03:36.390 --> 00:03:36.400 align:start position:0%
+going to input 125 frames, which is
+ 
+
+00:03:36.400 --> 00:03:38.550 align:start position:0%
+going to input 125 frames, which is
+around<00:03:36.799><c> 5</c><00:03:37.040><c> seconds</c><00:03:37.440><c> long.</c><00:03:37.920><c> Here</c><00:03:38.159><c> you</c><00:03:38.400><c> can</c>
+
+00:03:38.550 --> 00:03:38.560 align:start position:0%
+around 5 seconds long. Here you can
+ 
+
+00:03:38.560 --> 00:03:40.550 align:start position:0%
+around 5 seconds long. Here you can
+choose<00:03:38.879><c> the</c><00:03:39.120><c> dimensions</c><00:03:39.680><c> of</c><00:03:39.920><c> your</c><00:03:40.080><c> output</c>
+
+00:03:40.550 --> 00:03:40.560 align:start position:0%
+choose the dimensions of your output
+ 
+
+00:03:40.560 --> 00:03:42.470 align:start position:0%
+choose the dimensions of your output
+video.<00:03:41.120><c> Keep</c><00:03:41.360><c> in</c><00:03:41.599><c> mind</c><00:03:41.680><c> that</c><00:03:42.080><c> higher</c>
+
+00:03:42.470 --> 00:03:42.480 align:start position:0%
+video. Keep in mind that higher
+ 
+
+00:03:42.480 --> 00:03:44.869 align:start position:0%
+video. Keep in mind that higher
+resolution<00:03:43.360><c> requires</c><00:03:44.080><c> more</c><00:03:44.400><c> time</c><00:03:44.640><c> and</c>
+
+00:03:44.869 --> 00:03:44.879 align:start position:0%
+resolution requires more time and
+ 
+
+00:03:44.879 --> 00:03:47.589 align:start position:0%
+resolution requires more time and
+resources.<00:03:45.680><c> I</c><00:03:45.920><c> want</c><00:03:46.080><c> to</c><00:03:46.239><c> match</c><00:03:46.560><c> the</c><00:03:46.959><c> original</c>
+
+00:03:47.589 --> 00:03:47.599 align:start position:0%
+resources. I want to match the original
+ 
+
+00:03:47.599 --> 00:03:51.270 align:start position:0%
+resources. I want to match the original
+aspect<00:03:48.080><c> ratio</c><00:03:48.560><c> of</c><00:03:48.879><c> my</c><00:03:49.120><c> video,</c><00:03:49.519><c> which</c><00:03:49.760><c> is</c><00:03:50.000><c> 9x6.</c>
+
+00:03:51.270 --> 00:03:51.280 align:start position:0%
+aspect ratio of my video, which is 9x6.
+ 
+
+00:03:51.280 --> 00:03:54.710 align:start position:0%
+aspect ratio of my video, which is 9x6.
+So,<00:03:51.440><c> I'm</c><00:03:51.680><c> setting</c><00:03:52.000><c> the</c><00:03:52.239><c> dimensions</c><00:03:52.720><c> to</c><00:03:53.120><c> 576x</c>
+
+00:03:54.710 --> 00:03:54.720 align:start position:0%
+So, I'm setting the dimensions to 576x
+ 
+
+00:03:54.720 --> 00:03:57.350 align:start position:0%
+So, I'm setting the dimensions to 576x
+1024.<00:03:55.840><c> This</c><00:03:56.000><c> is</c><00:03:56.159><c> high</c><00:03:56.319><c> enough</c><00:03:56.640><c> for</c><00:03:56.879><c> decent</c>
+
+00:03:57.350 --> 00:03:57.360 align:start position:0%
+1024. This is high enough for decent
+ 
+
+00:03:57.360 --> 00:03:59.830 align:start position:0%
+1024. This is high enough for decent
+quality,<00:03:58.000><c> but</c><00:03:58.319><c> low</c><00:03:58.640><c> enough</c><00:03:58.959><c> for</c><00:03:59.200><c> my</c><00:03:59.519><c> machine</c>
+
+00:03:59.830 --> 00:03:59.840 align:start position:0%
+quality, but low enough for my machine
+ 
+
+00:03:59.840 --> 00:04:01.910 align:start position:0%
+quality, but low enough for my machine
+to<00:04:00.080><c> handle.</c><00:04:00.560><c> And</c><00:04:00.720><c> I</c><00:04:00.879><c> will</c><00:04:01.040><c> show</c><00:04:01.200><c> you</c><00:04:01.360><c> later</c><00:04:01.680><c> how</c>
+
+00:04:01.910 --> 00:04:01.920 align:start position:0%
+to handle. And I will show you later how
+ 
+
+00:04:01.920 --> 00:04:04.470 align:start position:0%
+to handle. And I will show you later how
+you<00:04:02.159><c> can</c><00:04:02.319><c> quickly</c><00:04:02.959><c> increase</c><00:04:03.280><c> this</c><00:04:03.599><c> resolution</c>
+
+00:04:04.470 --> 00:04:04.480 align:start position:0%
+you can quickly increase this resolution
+ 
+
+00:04:04.480 --> 00:04:06.630 align:start position:0%
+you can quickly increase this resolution
+after<00:04:04.879><c> generating.</c><00:04:05.599><c> Just</c><00:04:05.840><c> below</c><00:04:06.319><c> you</c><00:04:06.480><c> can</c>
+
+00:04:06.630 --> 00:04:06.640 align:start position:0%
+after generating. Just below you can
+ 
+
+00:04:06.640 --> 00:04:09.110 align:start position:0%
+after generating. Just below you can
+click<00:04:06.959><c> here</c><00:04:07.200><c> to</c><00:04:07.439><c> upload</c><00:04:07.840><c> a</c><00:04:08.159><c> picture</c><00:04:08.640><c> of</c><00:04:08.879><c> the</c>
+
+00:04:09.110 --> 00:04:09.120 align:start position:0%
+click here to upload a picture of the
+ 
+
+00:04:09.120 --> 00:04:10.630 align:start position:0%
+click here to upload a picture of the
+character<00:04:09.439><c> you</c><00:04:09.680><c> want</c><00:04:09.840><c> to</c><00:04:10.000><c> replace</c><00:04:10.319><c> the</c>
+
+00:04:10.630 --> 00:04:10.640 align:start position:0%
+character you want to replace the
+ 
+
+00:04:10.640 --> 00:04:13.110 align:start position:0%
+character you want to replace the
+original<00:04:11.200><c> with.</c><00:04:11.760><c> You</c><00:04:12.000><c> actually</c><00:04:12.400><c> have</c><00:04:12.720><c> two</c>
+
+00:04:13.110 --> 00:04:13.120 align:start position:0%
+original with. You actually have two
+ 
+
+00:04:13.120 --> 00:04:15.670 align:start position:0%
+original with. You actually have two
+options<00:04:13.599><c> here.</c><00:04:14.239><c> You</c><00:04:14.480><c> can</c><00:04:14.640><c> either</c><00:04:14.959><c> upload</c><00:04:15.360><c> a</c>
+
+00:04:15.670 --> 00:04:15.680 align:start position:0%
+options here. You can either upload a
+ 
+
+00:04:15.680 --> 00:04:18.150 align:start position:0%
+options here. You can either upload a
+completely<00:04:16.320><c> new</c><00:04:16.639><c> character</c><00:04:17.120><c> that's</c><00:04:17.600><c> totally</c>
+
+00:04:18.150 --> 00:04:18.160 align:start position:0%
+completely new character that's totally
+ 
+
+00:04:18.160 --> 00:04:20.469 align:start position:0%
+completely new character that's totally
+different<00:04:18.639><c> from</c><00:04:18.959><c> your</c><00:04:19.280><c> original.</c><00:04:20.079><c> Just</c><00:04:20.320><c> make</c>
+
+00:04:20.469 --> 00:04:20.479 align:start position:0%
+different from your original. Just make
+ 
+
+00:04:20.479 --> 00:04:21.990 align:start position:0%
+different from your original. Just make
+sure<00:04:20.639><c> you</c><00:04:20.799><c> choose</c><00:04:21.040><c> an</c><00:04:21.280><c> image</c><00:04:21.519><c> where</c><00:04:21.759><c> the</c>
+
+00:04:21.990 --> 00:04:22.000 align:start position:0%
+sure you choose an image where the
+ 
+
+00:04:22.000 --> 00:04:24.550 align:start position:0%
+sure you choose an image where the
+character<00:04:22.400><c> is</c><00:04:22.720><c> clearly</c><00:04:23.199><c> visible</c><00:04:23.680><c> and</c><00:04:24.000><c> not</c><00:04:24.240><c> too</c>
+
+00:04:24.550 --> 00:04:24.560 align:start position:0%
+character is clearly visible and not too
+ 
+
+00:04:24.560 --> 00:04:26.870 align:start position:0%
+character is clearly visible and not too
+far<00:04:24.880><c> from</c><00:04:25.120><c> the</c><00:04:25.360><c> camera.</c><00:04:25.840><c> It</c><00:04:26.080><c> also</c><00:04:26.320><c> works</c><00:04:26.560><c> fine</c>
+
+00:04:26.870 --> 00:04:26.880 align:start position:0%
+far from the camera. It also works fine
+ 
+
+00:04:26.880 --> 00:04:29.590 align:start position:0%
+far from the camera. It also works fine
+if<00:04:27.120><c> the</c><00:04:27.360><c> new</c><00:04:27.600><c> character's</c><00:04:28.160><c> body</c><00:04:28.560><c> is</c><00:04:28.880><c> not</c><00:04:29.199><c> fully</c>
+
+00:04:29.590 --> 00:04:29.600 align:start position:0%
+if the new character's body is not fully
+ 
+
+00:04:29.600 --> 00:04:32.230 align:start position:0%
+if the new character's body is not fully
+visible<00:04:30.080><c> in</c><00:04:30.320><c> the</c><00:04:30.479><c> frame.</c><00:04:31.040><c> Your</c><00:04:31.360><c> second</c><00:04:31.759><c> option</c>
+
+00:04:32.230 --> 00:04:32.240 align:start position:0%
+visible in the frame. Your second option
+ 
+
+00:04:32.240 --> 00:04:34.870 align:start position:0%
+visible in the frame. Your second option
+is<00:04:32.400><c> to</c><00:04:32.639><c> upload</c><00:04:33.040><c> a</c><00:04:33.280><c> stylized</c><00:04:34.000><c> version</c><00:04:34.320><c> of</c><00:04:34.639><c> the</c>
+
+00:04:34.870 --> 00:04:34.880 align:start position:0%
+is to upload a stylized version of the
+ 
+
+00:04:34.880 --> 00:04:36.629 align:start position:0%
+is to upload a stylized version of the
+same<00:04:35.120><c> character.</c><00:04:35.840><c> This</c><00:04:36.080><c> way</c><00:04:36.240><c> you</c><00:04:36.479><c> can</c>
+
+00:04:36.629 --> 00:04:36.639 align:start position:0%
+same character. This way you can
+ 
+
+00:04:36.639 --> 00:04:39.030 align:start position:0%
+same character. This way you can
+transform<00:04:37.120><c> your</c><00:04:37.440><c> video</c><00:04:37.759><c> into</c><00:04:38.160><c> any</c><00:04:38.560><c> visual</c>
+
+00:04:39.030 --> 00:04:39.040 align:start position:0%
+transform your video into any visual
+ 
+
+00:04:39.040 --> 00:04:41.990 align:start position:0%
+transform your video into any visual
+style<00:04:39.520><c> such</c><00:04:39.759><c> as</c><00:04:40.080><c> anime,</c><00:04:40.639><c> claimation,</c><00:04:41.600><c> 3D</c>
+
+00:04:41.990 --> 00:04:42.000 align:start position:0%
+style such as anime, claimation, 3D
+ 
+
+00:04:42.000 --> 00:04:44.790 align:start position:0%
+style such as anime, claimation, 3D
+animation,<00:04:42.880><c> and</c><00:04:43.199><c> more.</c><00:04:43.680><c> To</c><00:04:43.919><c> do</c><00:04:44.080><c> this,</c><00:04:44.400><c> first</c>
+
+00:04:44.790 --> 00:04:44.800 align:start position:0%
+animation, and more. To do this, first
+ 
+
+00:04:44.800 --> 00:04:47.189 align:start position:0%
+animation, and more. To do this, first
+export<00:04:45.360><c> one</c><00:04:45.680><c> frame</c><00:04:46.080><c> from</c><00:04:46.400><c> your</c><00:04:46.720><c> original</c>
+
+00:04:47.189 --> 00:04:47.199 align:start position:0%
+export one frame from your original
+ 
+
+00:04:47.199 --> 00:04:49.430 align:start position:0%
+export one frame from your original
+video.<00:04:47.840><c> Ideally,</c><00:04:48.320><c> when</c><00:04:48.560><c> your</c><00:04:48.800><c> character</c><00:04:49.199><c> is</c>
+
+00:04:49.430 --> 00:04:49.440 align:start position:0%
+video. Ideally, when your character is
+ 
+
+00:04:49.440 --> 00:04:51.749 align:start position:0%
+video. Ideally, when your character is
+most<00:04:49.759><c> visible,</c><00:04:50.479><c> then</c><00:04:50.720><c> you</c><00:04:50.880><c> need</c><00:04:51.040><c> to</c><00:04:51.199><c> turn</c><00:04:51.440><c> that</c>
+
+00:04:51.749 --> 00:04:51.759 align:start position:0%
+most visible, then you need to turn that
+ 
+
+00:04:51.759 --> 00:04:54.390 align:start position:0%
+most visible, then you need to turn that
+single<00:04:52.240><c> image</c><00:04:52.639><c> into</c><00:04:53.120><c> any</c><00:04:53.440><c> style</c><00:04:53.759><c> you</c><00:04:54.000><c> want.</c>
+
+00:04:54.390 --> 00:04:54.400 align:start position:0%
+single image into any style you want.
+ 
+
+00:04:54.400 --> 00:04:56.310 align:start position:0%
+single image into any style you want.
+And<00:04:54.639><c> I'm</c><00:04:54.880><c> going</c><00:04:54.960><c> to</c><00:04:55.120><c> do</c><00:04:55.280><c> that</c><00:04:55.680><c> using</c>
+
+00:04:56.310 --> 00:04:56.320 align:start position:0%
+And I'm going to do that using
+ 
+
+00:04:56.320 --> 00:04:58.230 align:start position:0%
+And I'm going to do that using
+artlist.io.
+
+00:04:58.230 --> 00:04:58.240 align:start position:0%
+artlist.io.
+ 
+
+00:04:58.240 --> 00:05:00.870 align:start position:0%
+artlist.io.
+Go<00:04:58.400><c> to</c><00:04:58.639><c> AI</c><00:04:59.040><c> image</c><00:04:59.360><c> and</c><00:04:59.600><c> video.</c><00:05:00.320><c> Switch</c><00:05:00.639><c> to</c>
+
+00:05:00.870 --> 00:05:00.880 align:start position:0%
+Go to AI image and video. Switch to
+ 
+
+00:05:00.880 --> 00:05:04.150 align:start position:0%
+Go to AI image and video. Switch to
+image<00:05:01.360><c> to</c><00:05:01.600><c> image</c><00:05:02.160><c> and</c><00:05:02.479><c> upload</c><00:05:02.880><c> that</c><00:05:03.280><c> frame.</c><00:05:03.919><c> In</c>
+
+00:05:04.150 --> 00:05:04.160 align:start position:0%
+image to image and upload that frame. In
+ 
+
+00:05:04.160 --> 00:05:06.710 align:start position:0%
+image to image and upload that frame. In
+the<00:05:04.240><c> prompt</c><00:05:04.639><c> box,</c><00:05:05.040><c> just</c><00:05:05.280><c> describe</c><00:05:05.680><c> the</c><00:05:06.000><c> style.</c>
+
+00:05:06.710 --> 00:05:06.720 align:start position:0%
+the prompt box, just describe the style.
+ 
+
+00:05:06.720 --> 00:05:09.909 align:start position:0%
+the prompt box, just describe the style.
+For<00:05:06.800><c> example,</c><00:05:07.520><c> you</c><00:05:07.759><c> can</c><00:05:07.919><c> say</c><00:05:08.560><c> turn</c><00:05:08.880><c> this</c><00:05:09.280><c> into</c>
+
+00:05:09.909 --> 00:05:09.919 align:start position:0%
+For example, you can say turn this into
+ 
+
+00:05:09.919 --> 00:05:12.870 align:start position:0%
+For example, you can say turn this into
+anime<00:05:10.320><c> style.</c><00:05:11.199><c> Then</c><00:05:11.520><c> pick</c><00:05:11.759><c> a</c><00:05:11.919><c> model.</c><00:05:12.639><c> You've</c>
+
+00:05:12.870 --> 00:05:12.880 align:start position:0%
+anime style. Then pick a model. You've
+ 
+
+00:05:12.880 --> 00:05:15.590 align:start position:0%
+anime style. Then pick a model. You've
+got<00:05:13.039><c> options</c><00:05:13.520><c> like</c><00:05:13.840><c> Cadream,</c><00:05:14.639><c> Nano</c><00:05:15.039><c> Banana,</c>
+
+00:05:15.590 --> 00:05:15.600 align:start position:0%
+got options like Cadream, Nano Banana,
+ 
+
+00:05:15.600 --> 00:05:18.070 align:start position:0%
+got options like Cadream, Nano Banana,
+or<00:05:15.840><c> Flux.</c><00:05:16.400><c> I</c><00:05:16.560><c> will</c><00:05:16.639><c> go</c><00:05:16.800><c> with</c><00:05:17.039><c> Cadream</c><00:05:17.680><c> for</c><00:05:17.919><c> this</c>
+
+00:05:18.070 --> 00:05:18.080 align:start position:0%
+or Flux. I will go with Cadream for this
+ 
+
+00:05:18.080 --> 00:05:20.870 align:start position:0%
+or Flux. I will go with Cadream for this
+one.<00:05:18.800><c> Hit</c><00:05:19.120><c> generate.</c><00:05:19.840><c> And</c><00:05:20.000><c> in</c><00:05:20.240><c> just</c><00:05:20.400><c> a</c><00:05:20.639><c> few</c>
+
+00:05:20.870 --> 00:05:20.880 align:start position:0%
+one. Hit generate. And in just a few
+ 
+
+00:05:20.880 --> 00:05:22.790 align:start position:0%
+one. Hit generate. And in just a few
+seconds,<00:05:21.280><c> you</c><00:05:21.520><c> will</c><00:05:21.680><c> get</c><00:05:21.919><c> your</c><00:05:22.160><c> stylized</c>
+
+00:05:22.790 --> 00:05:22.800 align:start position:0%
+seconds, you will get your stylized
+ 
+
+00:05:22.800 --> 00:05:25.189 align:start position:0%
+seconds, you will get your stylized
+image.<00:05:23.280><c> Now,</c><00:05:23.520><c> Art</c><00:05:23.840><c> List</c><00:05:24.160><c> is</c><00:05:24.400><c> the</c><00:05:24.560><c> sponsor</c><00:05:24.960><c> of</c>
+
+00:05:25.189 --> 00:05:25.199 align:start position:0%
+image. Now, Art List is the sponsor of
+ 
+
+00:05:25.199 --> 00:05:27.189 align:start position:0%
+image. Now, Art List is the sponsor of
+today's<00:05:25.600><c> video,</c><00:05:26.000><c> and</c><00:05:26.160><c> it's</c><00:05:26.400><c> way</c><00:05:26.720><c> more</c><00:05:26.960><c> than</c>
+
+00:05:27.189 --> 00:05:27.199 align:start position:0%
+today's video, and it's way more than
+ 
+
+00:05:27.199 --> 00:05:29.749 align:start position:0%
+today's video, and it's way more than
+just<00:05:27.360><c> a</c><00:05:27.680><c> place</c><00:05:27.919><c> for</c><00:05:28.160><c> stylizing</c><00:05:28.880><c> images</c><00:05:29.440><c> using</c>
+
+00:05:29.749 --> 00:05:29.759 align:start position:0%
+just a place for stylizing images using
+ 
+
+00:05:29.759 --> 00:05:32.230 align:start position:0%
+just a place for stylizing images using
+AI.<00:05:30.320><c> You</c><00:05:30.560><c> can</c><00:05:30.639><c> generate</c><00:05:31.039><c> videos</c><00:05:31.520><c> directly</c><00:05:32.000><c> on</c>
+
+00:05:32.230 --> 00:05:32.240 align:start position:0%
+AI. You can generate videos directly on
+ 
+
+00:05:32.240 --> 00:05:34.870 align:start position:0%
+AI. You can generate videos directly on
+the<00:05:32.479><c> site</c><00:05:32.800><c> using</c><00:05:33.199><c> some</c><00:05:33.520><c> of</c><00:05:33.600><c> the</c><00:05:33.840><c> best</c><00:05:34.160><c> AI</c><00:05:34.560><c> video</c>
+
+00:05:34.870 --> 00:05:34.880 align:start position:0%
+the site using some of the best AI video
+ 
+
+00:05:34.880 --> 00:05:37.270 align:start position:0%
+the site using some of the best AI video
+models<00:05:35.280><c> out</c><00:05:35.520><c> there,</c><00:05:35.919><c> including</c><00:05:36.400><c> Google's</c><00:05:36.800><c> Veo</c>
+
+00:05:37.270 --> 00:05:37.280 align:start position:0%
+models out there, including Google's Veo
+ 
+
+00:05:37.280 --> 00:05:40.390 align:start position:0%
+models out there, including Google's Veo
+3<00:05:37.520><c> and</c><00:05:37.919><c> even</c><00:05:38.400><c> Sora,</c><00:05:38.960><c> too.</c><00:05:39.360><c> It's</c><00:05:39.600><c> a</c><00:05:39.840><c> one-stop</c>
+
+00:05:40.390 --> 00:05:40.400 align:start position:0%
+3 and even Sora, too. It's a one-stop
+ 
+
+00:05:40.400 --> 00:05:41.909 align:start position:0%
+3 and even Sora, too. It's a one-stop
+shop<00:05:40.639><c> where</c><00:05:40.960><c> you</c><00:05:41.120><c> can</c><00:05:41.280><c> also</c><00:05:41.600><c> create</c>
+
+00:05:41.909 --> 00:05:41.919 align:start position:0%
+shop where you can also create
+ 
+
+00:05:41.919 --> 00:05:43.909 align:start position:0%
+shop where you can also create
+voiceovers<00:05:42.560><c> and</c><00:05:42.720><c> dialogues</c><00:05:43.280><c> in</c><00:05:43.520><c> multiple</c>
+
+00:05:43.909 --> 00:05:43.919 align:start position:0%
+voiceovers and dialogues in multiple
+ 
+
+00:05:43.919 --> 00:05:46.070 align:start position:0%
+voiceovers and dialogues in multiple
+languages,<00:05:44.479><c> change</c><00:05:44.800><c> existing</c><00:05:45.280><c> voices,</c><00:05:45.840><c> and</c>
+
+00:05:46.070 --> 00:05:46.080 align:start position:0%
+languages, change existing voices, and
+ 
+
+00:05:46.080 --> 00:05:48.710 align:start position:0%
+languages, change existing voices, and
+of<00:05:46.240><c> course,</c><00:05:46.639><c> access</c><00:05:47.199><c> art</c><00:05:47.440><c> lists,</c><00:05:48.000><c> legendary</c>
+
+00:05:48.710 --> 00:05:48.720 align:start position:0%
+of course, access art lists, legendary
+ 
+
+00:05:48.720 --> 00:05:51.189 align:start position:0%
+of course, access art lists, legendary
+music<00:05:49.039><c> library,</c><00:05:49.759><c> sound</c><00:05:50.000><c> effects,</c><00:05:50.720><c> cinematic</c>
+
+00:05:51.189 --> 00:05:51.199 align:start position:0%
+music library, sound effects, cinematic
+ 
+
+00:05:51.199 --> 00:05:53.510 align:start position:0%
+music library, sound effects, cinematic
+stock<00:05:51.520><c> footage,</c><00:05:52.000><c> and</c><00:05:52.240><c> even</c><00:05:52.720><c> motion</c><00:05:53.120><c> graphic</c>
+
+00:05:53.510 --> 00:05:53.520 align:start position:0%
+stock footage, and even motion graphic
+ 
+
+00:05:53.520 --> 00:05:55.350 align:start position:0%
+stock footage, and even motion graphic
+templates.<00:05:54.240><c> Basically,</c><00:05:54.720><c> everything</c><00:05:55.120><c> you</c>
+
+00:05:55.350 --> 00:05:55.360 align:start position:0%
+templates. Basically, everything you
+ 
+
+00:05:55.360 --> 00:05:57.670 align:start position:0%
+templates. Basically, everything you
+need<00:05:55.520><c> to</c><00:05:55.759><c> bring</c><00:05:56.080><c> your</c><00:05:56.320><c> ideas</c><00:05:56.720><c> to</c><00:05:56.960><c> life.</c><00:05:57.360><c> So,</c><00:05:57.520><c> if</c>
+
+00:05:57.670 --> 00:05:57.680 align:start position:0%
+need to bring your ideas to life. So, if
+ 
+
+00:05:57.680 --> 00:05:59.350 align:start position:0%
+need to bring your ideas to life. So, if
+you<00:05:57.759><c> want</c><00:05:57.919><c> the</c><00:05:58.160><c> best</c><00:05:58.320><c> of</c><00:05:58.560><c> both</c><00:05:58.960><c> creative</c>
+
+00:05:59.350 --> 00:05:59.360 align:start position:0%
+you want the best of both creative
+ 
+
+00:05:59.360 --> 00:06:01.830 align:start position:0%
+you want the best of both creative
+assets<00:05:59.840><c> and</c><00:06:00.160><c> AI</c><00:06:00.560><c> creation</c><00:06:00.960><c> tools</c><00:06:01.360><c> in</c><00:06:01.600><c> one</c>
+
+00:06:01.830 --> 00:06:01.840 align:start position:0%
+assets and AI creation tools in one
+ 
+
+00:06:01.840 --> 00:06:04.469 align:start position:0%
+assets and AI creation tools in one
+place,<00:06:02.240><c> Art</c><00:06:02.479><c> List</c><00:06:02.880><c> is</c><00:06:03.039><c> a</c><00:06:03.280><c> no-brainer.</c><00:06:04.000><c> Use</c><00:06:04.240><c> the</c>
+
+00:06:04.469 --> 00:06:04.479 align:start position:0%
+place, Art List is a no-brainer. Use the
+ 
+
+00:06:04.479 --> 00:06:06.309 align:start position:0%
+place, Art List is a no-brainer. Use the
+link<00:06:04.639><c> in</c><00:06:04.800><c> the</c><00:06:04.960><c> description</c><00:06:05.360><c> box</c><00:06:05.600><c> to</c><00:06:05.840><c> get</c><00:06:06.080><c> two</c>
+
+00:06:06.309 --> 00:06:06.319 align:start position:0%
+link in the description box to get two
+ 
+
+00:06:06.319 --> 00:06:08.710 align:start position:0%
+link in the description box to get two
+extra<00:06:06.720><c> months</c><00:06:07.199><c> for</c><00:06:07.520><c> free</c><00:06:07.840><c> when</c><00:06:08.160><c> subscribing</c>
+
+00:06:08.710 --> 00:06:08.720 align:start position:0%
+extra months for free when subscribing
+ 
+
+00:06:08.720 --> 00:06:12.070 align:start position:0%
+extra months for free when subscribing
+to<00:06:08.960><c> artlist.io.</c><00:06:10.319><c> Now</c><00:06:10.639><c> back</c><00:06:10.800><c> to</c><00:06:11.120><c> Comfy</c><00:06:11.520><c> UI.</c>
+
+00:06:12.070 --> 00:06:12.080 align:start position:0%
+to artlist.io. Now back to Comfy UI.
+ 
+
+00:06:12.080 --> 00:06:14.629 align:start position:0%
+to artlist.io. Now back to Comfy UI.
+Down<00:06:12.319><c> below</c><00:06:12.800><c> you</c><00:06:13.039><c> can</c><00:06:13.199><c> find</c><00:06:13.440><c> the</c><00:06:13.840><c> one</c><00:06:14.160><c> video</c>
+
+00:06:14.629 --> 00:06:14.639 align:start position:0%
+Down below you can find the one video
+ 
+
+00:06:14.639 --> 00:06:16.710 align:start position:0%
+Down below you can find the one video
+torch<00:06:15.039><c> compile</c><00:06:15.520><c> settings</c><00:06:15.919><c> node.</c><00:06:16.479><c> It's</c>
+
+00:06:16.710 --> 00:06:16.720 align:start position:0%
+torch compile settings node. It's
+ 
+
+00:06:16.720 --> 00:06:18.790 align:start position:0%
+torch compile settings node. It's
+currently<00:06:17.039><c> bypassed</c><00:06:17.759><c> as</c><00:06:17.919><c> you</c><00:06:18.080><c> can</c><00:06:18.240><c> see.</c><00:06:18.639><c> If</c>
+
+00:06:18.790 --> 00:06:18.800 align:start position:0%
+currently bypassed as you can see. If
+ 
+
+00:06:18.800 --> 00:06:20.950 align:start position:0%
+currently bypassed as you can see. If
+you<00:06:18.960><c> unbypass</c><00:06:19.759><c> this</c><00:06:20.160><c> and</c><00:06:20.479><c> change</c><00:06:20.720><c> the</c>
+
+00:06:20.950 --> 00:06:20.960 align:start position:0%
+you unbypass this and change the
+ 
+
+00:06:20.960 --> 00:06:23.270 align:start position:0%
+you unbypass this and change the
+attention<00:06:21.440><c> mode</c><00:06:21.680><c> to</c><00:06:22.000><c> Sage</c><00:06:22.400><c> Attention,</c><00:06:23.039><c> it</c>
+
+00:06:23.270 --> 00:06:23.280 align:start position:0%
+attention mode to Sage Attention, it
+ 
+
+00:06:23.280 --> 00:06:25.590 align:start position:0%
+attention mode to Sage Attention, it
+will<00:06:23.520><c> supposedly</c><00:06:24.160><c> speed</c><00:06:24.479><c> up</c><00:06:24.720><c> the</c><00:06:24.880><c> generation.</c>
+
+00:06:25.590 --> 00:06:25.600 align:start position:0%
+will supposedly speed up the generation.
+ 
+
+00:06:25.600 --> 00:06:27.270 align:start position:0%
+will supposedly speed up the generation.
+However,<00:06:26.160><c> you</c><00:06:26.319><c> will</c><00:06:26.479><c> need</c><00:06:26.639><c> to</c><00:06:26.800><c> have</c><00:06:27.039><c> both</c>
+
+00:06:27.270 --> 00:06:27.280 align:start position:0%
+However, you will need to have both
+ 
+
+00:06:27.280 --> 00:06:29.590 align:start position:0%
+However, you will need to have both
+Torch<00:06:27.840><c> and</c><00:06:28.080><c> Sage</c><00:06:28.639><c> installed</c><00:06:29.120><c> on</c><00:06:29.360><c> your</c>
+
+00:06:29.590 --> 00:06:29.600 align:start position:0%
+Torch and Sage installed on your
+ 
+
+00:06:29.600 --> 00:06:32.150 align:start position:0%
+Torch and Sage installed on your
+computer.<00:06:30.400><c> This</c><00:06:30.800><c> hasn't</c><00:06:31.199><c> worked</c><00:06:31.600><c> very</c><00:06:31.919><c> well</c>
+
+00:06:32.150 --> 00:06:32.160 align:start position:0%
+computer. This hasn't worked very well
+ 
+
+00:06:32.160 --> 00:06:34.230 align:start position:0%
+computer. This hasn't worked very well
+for<00:06:32.400><c> me,</c><00:06:32.800><c> but</c><00:06:32.960><c> I</c><00:06:33.120><c> will</c><00:06:33.280><c> leave</c><00:06:33.440><c> an</c><00:06:33.680><c> installation</c>
+
+00:06:34.230 --> 00:06:34.240 align:start position:0%
+for me, but I will leave an installation
+ 
+
+00:06:34.240 --> 00:06:36.150 align:start position:0%
+for me, but I will leave an installation
+guide<00:06:34.560><c> in</c><00:06:34.800><c> the</c><00:06:34.960><c> description</c><00:06:35.520><c> in</c><00:06:35.759><c> case</c><00:06:35.919><c> you</c>
+
+00:06:36.150 --> 00:06:36.160 align:start position:0%
+guide in the description in case you
+ 
+
+00:06:36.160 --> 00:06:38.710 align:start position:0%
+guide in the description in case you
+want<00:06:36.319><c> to</c><00:06:36.400><c> try</c><00:06:36.560><c> it</c><00:06:36.720><c> out.</c><00:06:37.199><c> Next,</c><00:06:37.680><c> move</c><00:06:38.000><c> over</c><00:06:38.240><c> here</c>
+
+00:06:38.710 --> 00:06:38.720 align:start position:0%
+want to try it out. Next, move over here
+ 
+
+00:06:38.720 --> 00:06:41.510 align:start position:0%
+want to try it out. Next, move over here
+and<00:06:38.960><c> find</c><00:06:39.280><c> the</c><00:06:39.520><c> grow</c><00:06:39.840><c> mask</c><00:06:40.240><c> with</c><00:06:40.479><c> blur</c><00:06:40.880><c> node,</c>
+
+00:06:41.510 --> 00:06:41.520 align:start position:0%
+and find the grow mask with blur node,
+ 
+
+00:06:41.520 --> 00:06:43.830 align:start position:0%
+and find the grow mask with blur node,
+specifically<00:06:42.080><c> the</c><00:06:42.400><c> expand</c><00:06:42.960><c> value.</c><00:06:43.600><c> This</c>
+
+00:06:43.830 --> 00:06:43.840 align:start position:0%
+specifically the expand value. This
+ 
+
+00:06:43.840 --> 00:06:46.790 align:start position:0%
+specifically the expand value. This
+setting<00:06:44.319><c> is</c><00:06:44.639><c> crucial.</c><00:06:45.520><c> It's</c><00:06:45.759><c> set</c><00:06:46.000><c> to</c><00:06:46.160><c> 10</c><00:06:46.479><c> by</c>
+
+00:06:46.790 --> 00:06:46.800 align:start position:0%
+setting is crucial. It's set to 10 by
+ 
+
+00:06:46.800 --> 00:06:49.110 align:start position:0%
+setting is crucial. It's set to 10 by
+default,<00:06:47.360><c> which</c><00:06:47.600><c> means</c><00:06:47.840><c> the</c><00:06:48.000><c> mask</c><00:06:48.400><c> will</c><00:06:48.720><c> only</c>
+
+00:06:49.110 --> 00:06:49.120 align:start position:0%
+default, which means the mask will only
+ 
+
+00:06:49.120 --> 00:06:51.749 align:start position:0%
+default, which means the mask will only
+be<00:06:49.360><c> 10</c><00:06:49.680><c> pixels</c><00:06:50.319><c> larger</c><00:06:50.880><c> than</c><00:06:51.120><c> the</c><00:06:51.360><c> selected</c>
+
+00:06:51.749 --> 00:06:51.759 align:start position:0%
+be 10 pixels larger than the selected
+ 
+
+00:06:51.759 --> 00:06:53.830 align:start position:0%
+be 10 pixels larger than the selected
+subject.<00:06:52.319><c> This</c><00:06:52.560><c> works</c><00:06:52.800><c> fine</c><00:06:53.039><c> for</c><00:06:53.360><c> characters</c>
+
+00:06:53.830 --> 00:06:53.840 align:start position:0%
+subject. This works fine for characters
+ 
+
+00:06:53.840 --> 00:06:56.070 align:start position:0%
+subject. This works fine for characters
+that<00:06:54.080><c> are</c><00:06:54.240><c> the</c><00:06:54.479><c> same</c><00:06:54.720><c> size</c><00:06:55.039><c> as</c><00:06:55.280><c> your</c><00:06:55.600><c> original</c>
+
+00:06:56.070 --> 00:06:56.080 align:start position:0%
+that are the same size as your original
+ 
+
+00:06:56.080 --> 00:06:58.150 align:start position:0%
+that are the same size as your original
+one,<00:06:56.639><c> but</c><00:06:56.800><c> if</c><00:06:56.960><c> your</c><00:06:57.199><c> new</c><00:06:57.440><c> character</c><00:06:57.840><c> is</c>
+
+00:06:58.150 --> 00:06:58.160 align:start position:0%
+one, but if your new character is
+ 
+
+00:06:58.160 --> 00:07:00.070 align:start position:0%
+one, but if your new character is
+larger,<00:06:58.800><c> you</c><00:06:59.039><c> might</c><00:06:59.199><c> need</c><00:06:59.280><c> to</c><00:06:59.520><c> increase</c><00:06:59.840><c> this</c>
+
+00:07:00.070 --> 00:07:00.080 align:start position:0%
+larger, you might need to increase this
+ 
+
+00:07:00.080 --> 00:07:02.550 align:start position:0%
+larger, you might need to increase this
+value<00:07:00.400><c> to</c><00:07:00.720><c> allow</c><00:07:01.120><c> more</c><00:07:01.520><c> space</c><00:07:01.919><c> for</c><00:07:02.160><c> the</c><00:07:02.400><c> new</c>
+
+00:07:02.550 --> 00:07:02.560 align:start position:0%
+value to allow more space for the new
+ 
+
+00:07:02.560 --> 00:07:05.430 align:start position:0%
+value to allow more space for the new
+character.<00:07:03.039><c> I'm</c><00:07:03.280><c> setting</c><00:07:03.520><c> mine</c><00:07:03.840><c> to</c><00:07:04.160><c> 25.</c><00:07:05.199><c> Now,</c>
+
+00:07:05.430 --> 00:07:05.440 align:start position:0%
+character. I'm setting mine to 25. Now,
+ 
+
+00:07:05.440 --> 00:07:07.270 align:start position:0%
+character. I'm setting mine to 25. Now,
+let's<00:07:05.759><c> move</c><00:07:05.919><c> to</c><00:07:06.160><c> the</c><00:07:06.319><c> character</c><00:07:06.720><c> replacement</c>
+
+00:07:07.270 --> 00:07:07.280 align:start position:0%
+let's move to the character replacement
+ 
+
+00:07:07.280 --> 00:07:09.350 align:start position:0%
+let's move to the character replacement
+group<00:07:07.520><c> of</c><00:07:07.680><c> nodes.</c><00:07:08.240><c> By</c><00:07:08.560><c> default,</c><00:07:09.120><c> the</c>
+
+00:07:09.350 --> 00:07:09.360 align:start position:0%
+group of nodes. By default, the
+ 
+
+00:07:09.360 --> 00:07:11.350 align:start position:0%
+group of nodes. By default, the
+generated<00:07:09.840><c> video</c><00:07:10.240><c> will</c><00:07:10.560><c> use</c><00:07:10.800><c> the</c><00:07:11.120><c> same</c>
+
+00:07:11.350 --> 00:07:11.360 align:start position:0%
+generated video will use the same
+ 
+
+00:07:11.360 --> 00:07:13.589 align:start position:0%
+generated video will use the same
+background<00:07:11.840><c> from</c><00:07:12.160><c> your</c><00:07:12.479><c> original</c><00:07:12.960><c> video</c><00:07:13.360><c> and</c>
+
+00:07:13.589 --> 00:07:13.599 align:start position:0%
+background from your original video and
+ 
+
+00:07:13.599 --> 00:07:15.350 align:start position:0%
+background from your original video and
+simply<00:07:14.000><c> replace</c><00:07:14.240><c> the</c><00:07:14.479><c> character</c><00:07:14.800><c> with</c><00:07:15.039><c> a</c><00:07:15.199><c> new</c>
+
+00:07:15.350 --> 00:07:15.360 align:start position:0%
+simply replace the character with a new
+ 
+
+00:07:15.360 --> 00:07:17.189 align:start position:0%
+simply replace the character with a new
+one.<00:07:15.759><c> However,</c><00:07:16.240><c> if</c><00:07:16.479><c> you</c><00:07:16.560><c> want</c><00:07:16.720><c> to</c><00:07:16.880><c> take</c><00:07:17.039><c> the</c>
+
+00:07:17.189 --> 00:07:17.199 align:start position:0%
+one. However, if you want to take the
+ 
+
+00:07:17.199 --> 00:07:19.589 align:start position:0%
+one. However, if you want to take the
+movement<00:07:17.599><c> from</c><00:07:17.840><c> your</c><00:07:18.080><c> video</c><00:07:18.639><c> and</c><00:07:18.880><c> apply</c><00:07:19.280><c> it</c><00:07:19.440><c> to</c>
+
+00:07:19.589 --> 00:07:19.599 align:start position:0%
+movement from your video and apply it to
+ 
+
+00:07:19.599 --> 00:07:21.670 align:start position:0%
+movement from your video and apply it to
+the<00:07:19.840><c> reference</c><00:07:20.240><c> picture</c><00:07:20.880><c> and</c><00:07:21.199><c> drive</c><00:07:21.440><c> the</c>
+
+00:07:21.670 --> 00:07:21.680 align:start position:0%
+the reference picture and drive the
+ 
+
+00:07:21.680 --> 00:07:23.670 align:start position:0%
+the reference picture and drive the
+motion<00:07:22.080><c> of</c><00:07:22.319><c> the</c><00:07:22.479><c> new</c><00:07:22.800><c> character,</c><00:07:23.360><c> which</c><00:07:23.520><c> means</c>
+
+00:07:23.670 --> 00:07:23.680 align:start position:0%
+motion of the new character, which means
+ 
+
+00:07:23.680 --> 00:07:25.430 align:start position:0%
+motion of the new character, which means
+the<00:07:23.919><c> background</c><00:07:24.319><c> from</c><00:07:24.560><c> the</c><00:07:24.720><c> reference</c><00:07:25.120><c> image</c>
+
+00:07:25.430 --> 00:07:25.440 align:start position:0%
+the background from the reference image
+ 
+
+00:07:25.440 --> 00:07:27.670 align:start position:0%
+the background from the reference image
+will<00:07:25.759><c> be</c><00:07:25.919><c> retained</c><00:07:26.319><c> in</c><00:07:26.560><c> your</c><00:07:26.720><c> output</c><00:07:27.120><c> video.</c>
+
+00:07:27.670 --> 00:07:27.680 align:start position:0%
+will be retained in your output video.
+ 
+
+00:07:27.680 --> 00:07:29.830 align:start position:0%
+will be retained in your output video.
+Simply<00:07:28.160><c> disconnect</c><00:07:28.720><c> the</c><00:07:28.880><c> background</c><00:07:29.360><c> image</c>
+
+00:07:29.830 --> 00:07:29.840 align:start position:0%
+Simply disconnect the background image
+ 
+
+00:07:29.840 --> 00:07:32.390 align:start position:0%
+Simply disconnect the background image
+and<00:07:30.160><c> mask</c><00:07:30.560><c> nodes</c><00:07:31.120><c> from</c><00:07:31.280><c> the</c><00:07:31.599><c> one</c><00:07:32.000><c> video</c>
+
+00:07:32.390 --> 00:07:32.400 align:start position:0%
+and mask nodes from the one video
+ 
+
+00:07:32.400 --> 00:07:34.550 align:start position:0%
+and mask nodes from the one video
+animate<00:07:33.039><c> embeds</c><00:07:33.599><c> node.</c><00:07:34.000><c> I'll</c><00:07:34.240><c> keep</c><00:07:34.400><c> the</c>
+
+00:07:34.550 --> 00:07:34.560 align:start position:0%
+animate embeds node. I'll keep the
+ 
+
+00:07:34.560 --> 00:07:36.790 align:start position:0%
+animate embeds node. I'll keep the
+default<00:07:34.960><c> connections</c><00:07:35.599><c> for</c><00:07:35.919><c> now</c><00:07:36.319><c> because</c><00:07:36.560><c> I</c>
+
+00:07:36.790 --> 00:07:36.800 align:start position:0%
+default connections for now because I
+ 
+
+00:07:36.800 --> 00:07:38.550 align:start position:0%
+default connections for now because I
+want<00:07:36.960><c> to</c><00:07:37.120><c> use</c><00:07:37.360><c> this</c><00:07:37.680><c> as</c><00:07:37.919><c> a</c><00:07:38.160><c> character</c>
+
+00:07:38.550 --> 00:07:38.560 align:start position:0%
+want to use this as a character
+ 
+
+00:07:38.560 --> 00:07:40.790 align:start position:0%
+want to use this as a character
+replacement<00:07:39.120><c> workflow.</c><00:07:39.840><c> Let's</c><00:07:40.160><c> move</c><00:07:40.400><c> over</c><00:07:40.639><c> to</c>
+
+00:07:40.790 --> 00:07:40.800 align:start position:0%
+replacement workflow. Let's move over to
+ 
+
+00:07:40.800 --> 00:07:43.029 align:start position:0%
+replacement workflow. Let's move over to
+the<00:07:40.960><c> prompt</c><00:07:41.360><c> box</c><00:07:41.919><c> here.</c><00:07:42.319><c> All</c><00:07:42.479><c> you</c><00:07:42.639><c> need</c><00:07:42.800><c> to</c><00:07:42.960><c> do</c>
+
+00:07:43.029 --> 00:07:43.039 align:start position:0%
+the prompt box here. All you need to do
+ 
+
+00:07:43.039 --> 00:07:45.430 align:start position:0%
+the prompt box here. All you need to do
+is<00:07:43.280><c> input</c><00:07:43.759><c> a</c><00:07:44.000><c> simple</c><00:07:44.319><c> description</c><00:07:44.880><c> of</c><00:07:45.039><c> what's</c>
+
+00:07:45.430 --> 00:07:45.440 align:start position:0%
+is input a simple description of what's
+ 
+
+00:07:45.440 --> 00:07:47.110 align:start position:0%
+is input a simple description of what's
+happening<00:07:45.680><c> in</c><00:07:45.919><c> the</c><00:07:46.080><c> video</c><00:07:46.400><c> in</c><00:07:46.639><c> a</c><00:07:46.880><c> short</c>
+
+00:07:47.110 --> 00:07:47.120 align:start position:0%
+happening in the video in a short
+ 
+
+00:07:47.120 --> 00:07:49.670 align:start position:0%
+happening in the video in a short
+sentence.<00:07:47.840><c> For</c><00:07:47.919><c> example,</c><00:07:48.319><c> I</c><00:07:48.560><c> wrote</c><00:07:49.039><c> female</c>
+
+00:07:49.670 --> 00:07:49.680 align:start position:0%
+sentence. For example, I wrote female
+ 
+
+00:07:49.680 --> 00:07:52.790 align:start position:0%
+sentence. For example, I wrote female
+clown<00:07:50.319><c> talking.</c><00:07:51.199><c> That's</c><00:07:51.440><c> it.</c><00:07:52.000><c> By</c><00:07:52.240><c> default,</c>
+
+00:07:52.790 --> 00:07:52.800 align:start position:0%
+clown talking. That's it. By default,
+ 
+
+00:07:52.800 --> 00:07:55.830 align:start position:0%
+clown talking. That's it. By default,
+one<00:07:53.120><c> 2.2</c><00:07:53.680><c> animate</c><00:07:54.240><c> generates</c><00:07:54.800><c> videos</c><00:07:55.120><c> at</c><00:07:55.520><c> 16</c>
+
+00:07:55.830 --> 00:07:55.840 align:start position:0%
+one 2.2 animate generates videos at 16
+ 
+
+00:07:55.840 --> 00:07:57.909 align:start position:0%
+one 2.2 animate generates videos at 16
+frames<00:07:56.160><c> per</c><00:07:56.400><c> second,</c><00:07:56.960><c> but</c><00:07:57.199><c> you</c><00:07:57.360><c> can</c><00:07:57.440><c> match</c><00:07:57.680><c> the</c>
+
+00:07:57.909 --> 00:07:57.919 align:start position:0%
+frames per second, but you can match the
+ 
+
+00:07:57.919 --> 00:07:59.990 align:start position:0%
+frames per second, but you can match the
+original<00:07:58.400><c> frame</c><00:07:58.639><c> rate</c><00:07:58.879><c> of</c><00:07:59.039><c> your</c><00:07:59.280><c> video</c><00:07:59.680><c> in</c>
+
+00:07:59.990 --> 00:08:00.000 align:start position:0%
+original frame rate of your video in
+ 
+
+00:08:00.000 --> 00:08:02.070 align:start position:0%
+original frame rate of your video in
+both<00:08:00.479><c> video</c><00:08:00.879><c> combined</c><00:08:01.280><c> nodes.</c><00:08:01.680><c> Once</c><00:08:01.919><c> you're</c>
+
+00:08:02.070 --> 00:08:02.080 align:start position:0%
+both video combined nodes. Once you're
+ 
+
+00:08:02.080 --> 00:08:03.670 align:start position:0%
+both video combined nodes. Once you're
+done<00:08:02.240><c> with</c><00:08:02.400><c> the</c><00:08:02.560><c> settings,</c><00:08:03.039><c> click</c><00:08:03.280><c> here</c><00:08:03.440><c> to</c>
+
+00:08:03.670 --> 00:08:03.680 align:start position:0%
+done with the settings, click here to
+ 
+
+00:08:03.680 --> 00:08:05.830 align:start position:0%
+done with the settings, click here to
+run<00:08:03.840><c> the</c><00:08:04.080><c> workflow</c><00:08:04.639><c> and</c><00:08:04.879><c> start</c><00:08:05.199><c> generating.</c>
+
+00:08:05.830 --> 00:08:05.840 align:start position:0%
+run the workflow and start generating.
+ 
+
+00:08:05.840 --> 00:08:07.430 align:start position:0%
+run the workflow and start generating.
+And<00:08:06.080><c> by</c><00:08:06.160><c> the</c><00:08:06.319><c> way,</c><00:08:06.400><c> if</c><00:08:06.560><c> you</c><00:08:06.639><c> want</c><00:08:06.800><c> to</c><00:08:06.960><c> try</c><00:08:07.120><c> other</c>
+
+00:08:07.430 --> 00:08:07.440 align:start position:0%
+And by the way, if you want to try other
+ 
+
+00:08:07.440 --> 00:08:09.110 align:start position:0%
+And by the way, if you want to try other
+creative<00:08:07.840><c> workflows,</c><00:08:08.560><c> make</c><00:08:08.800><c> sure</c><00:08:08.879><c> you</c>
+
+00:08:09.110 --> 00:08:09.120 align:start position:0%
+creative workflows, make sure you
+ 
+
+00:08:09.120 --> 00:08:10.710 align:start position:0%
+creative workflows, make sure you
+subscribe<00:08:09.440><c> to</c><00:08:09.680><c> the</c><00:08:09.840><c> channel</c><00:08:10.160><c> so</c><00:08:10.400><c> you</c><00:08:10.560><c> don't</c>
+
+00:08:10.710 --> 00:08:10.720 align:start position:0%
+subscribe to the channel so you don't
+ 
+
+00:08:10.720 --> 00:08:12.869 align:start position:0%
+subscribe to the channel so you don't
+miss<00:08:10.879><c> out</c><00:08:11.039><c> on</c><00:08:11.280><c> future</c><00:08:11.680><c> videos.</c><00:08:12.160><c> I</c><00:08:12.400><c> also</c><00:08:12.639><c> invite</c>
+
+00:08:12.869 --> 00:08:12.879 align:start position:0%
+miss out on future videos. I also invite
+ 
+
+00:08:12.879 --> 00:08:14.950 align:start position:0%
+miss out on future videos. I also invite
+you<00:08:13.039><c> to</c><00:08:13.280><c> check</c><00:08:13.440><c> out</c><00:08:13.599><c> my</c><00:08:13.840><c> Patreon</c><00:08:14.479><c> where</c><00:08:14.720><c> you</c>
+
+00:08:14.950 --> 00:08:14.960 align:start position:0%
+you to check out my Patreon where you
+ 
+
+00:08:14.960 --> 00:08:17.430 align:start position:0%
+you to check out my Patreon where you
+can<00:08:15.120><c> unlock</c><00:08:15.680><c> exclusive</c><00:08:16.400><c> workflows,</c><00:08:17.039><c> project</c>
+
+00:08:17.430 --> 00:08:17.440 align:start position:0%
+can unlock exclusive workflows, project
+ 
+
+00:08:17.440 --> 00:08:19.749 align:start position:0%
+can unlock exclusive workflows, project
+files,<00:08:17.919><c> and</c><00:08:18.240><c> advanced</c><00:08:18.720><c> tutorials.</c><00:08:19.440><c> After</c>
+
+00:08:19.749 --> 00:08:19.759 align:start position:0%
+files, and advanced tutorials. After
+ 
+
+00:08:19.759 --> 00:08:21.589 align:start position:0%
+files, and advanced tutorials. After
+processing,<00:08:20.400><c> you</c><00:08:20.560><c> will</c><00:08:20.720><c> be</c><00:08:20.879><c> able</c><00:08:21.039><c> to</c><00:08:21.199><c> preview</c>
+
+00:08:21.589 --> 00:08:21.599 align:start position:0%
+processing, you will be able to preview
+ 
+
+00:08:21.599 --> 00:08:23.430 align:start position:0%
+processing, you will be able to preview
+your<00:08:21.919><c> final</c><00:08:22.240><c> video</c><00:08:22.560><c> with</c><00:08:22.800><c> the</c><00:08:23.039><c> swapped</c>
+
+00:08:23.430 --> 00:08:23.440 align:start position:0%
+your final video with the swapped
+ 
+
+00:08:23.440 --> 00:08:25.990 align:start position:0%
+your final video with the swapped
+character<00:08:24.160><c> in</c><00:08:24.479><c> this</c><00:08:24.639><c> node.</c><00:08:25.360><c> And</c><00:08:25.680><c> look</c><00:08:25.840><c> at</c>
+
+00:08:25.990 --> 00:08:26.000 align:start position:0%
+character in this node. And look at
+ 
+
+00:08:26.000 --> 00:08:29.270 align:start position:0%
+character in this node. And look at
+that.<00:08:26.560><c> The</c><00:08:26.720><c> replacement</c><00:08:27.440><c> looks</c><00:08:28.000><c> very</c><00:08:28.560><c> clean.</c>
+
+00:08:29.270 --> 00:08:29.280 align:start position:0%
+that. The replacement looks very clean.
+ 
+
+00:08:29.280 --> 00:08:31.430 align:start position:0%
+that. The replacement looks very clean.
+While<00:08:29.599><c> there</c><00:08:29.759><c> are</c><00:08:30.000><c> some</c><00:08:30.319><c> imperfections</c><00:08:31.120><c> and</c>
+
+00:08:31.430 --> 00:08:31.440 align:start position:0%
+While there are some imperfections and
+ 
+
+00:08:31.440 --> 00:08:33.430 align:start position:0%
+While there are some imperfections and
+weird<00:08:31.840><c> glitches</c><00:08:32.240><c> around</c><00:08:32.560><c> the</c><00:08:32.719><c> edges,</c><00:08:33.200><c> the</c>
+
+00:08:33.430 --> 00:08:33.440 align:start position:0%
+weird glitches around the edges, the
+ 
+
+00:08:33.440 --> 00:08:35.829 align:start position:0%
+weird glitches around the edges, the
+replacement<00:08:34.159><c> looks</c><00:08:34.640><c> almost</c><00:08:35.120><c> seamless.</c><00:08:35.680><c> And</c>
+
+00:08:35.829 --> 00:08:35.839 align:start position:0%
+replacement looks almost seamless. And
+ 
+
+00:08:35.839 --> 00:08:38.389 align:start position:0%
+replacement looks almost seamless. And
+remember,<00:08:36.320><c> this</c><00:08:36.560><c> technology</c><00:08:37.200><c> is</c><00:08:37.599><c> only</c><00:08:38.080><c> going</c>
+
+00:08:38.389 --> 00:08:38.399 align:start position:0%
+remember, this technology is only going
+ 
+
+00:08:38.399 --> 00:08:40.870 align:start position:0%
+remember, this technology is only going
+to<00:08:38.560><c> get</c><00:08:38.880><c> better.</c><00:08:39.440><c> The</c><00:08:39.680><c> lip</c><00:08:39.919><c> syncing</c><00:08:40.479><c> is</c>
+
+00:08:40.870 --> 00:08:40.880 align:start position:0%
+to get better. The lip syncing is
+ 
+
+00:08:40.880 --> 00:08:43.190 align:start position:0%
+to get better. The lip syncing is
+impressive.<00:08:41.599><c> The</c><00:08:41.760><c> body</c><00:08:42.080><c> movement</c><00:08:42.560><c> is</c><00:08:42.880><c> pretty</c>
+
+00:08:43.190 --> 00:08:43.200 align:start position:0%
+impressive. The body movement is pretty
+ 
+
+00:08:43.200 --> 00:08:45.750 align:start position:0%
+impressive. The body movement is pretty
+much<00:08:43.680><c> identical</c><00:08:44.159><c> to</c><00:08:44.399><c> the</c><00:08:44.640><c> original</c><00:08:45.040><c> video.</c>
+
+00:08:45.750 --> 00:08:45.760 align:start position:0%
+much identical to the original video.
+ 
+
+00:08:45.760 --> 00:08:48.790 align:start position:0%
+much identical to the original video.
+Also,<00:08:46.240><c> the</c><00:08:46.480><c> color</c><00:08:46.880><c> and</c><00:08:47.279><c> light</c><00:08:47.600><c> matching</c><00:08:48.320><c> looks</c>
+
+00:08:48.790 --> 00:08:48.800 align:start position:0%
+Also, the color and light matching looks
+ 
+
+00:08:48.800 --> 00:08:50.870 align:start position:0%
+Also, the color and light matching looks
+really<00:08:49.120><c> good.</c><00:08:49.519><c> Keep</c><00:08:49.760><c> in</c><00:08:49.920><c> mind</c><00:08:50.080><c> that</c><00:08:50.399><c> results</c>
+
+00:08:50.870 --> 00:08:50.880 align:start position:0%
+really good. Keep in mind that results
+ 
+
+00:08:50.880 --> 00:08:53.030 align:start position:0%
+really good. Keep in mind that results
+will<00:08:51.120><c> vary</c><00:08:51.600><c> depending</c><00:08:52.080><c> on</c><00:08:52.320><c> your</c><00:08:52.560><c> choice</c><00:08:52.800><c> of</c>
+
+00:08:53.030 --> 00:08:53.040 align:start position:0%
+will vary depending on your choice of
+ 
+
+00:08:53.040 --> 00:08:55.509 align:start position:0%
+will vary depending on your choice of
+video<00:08:53.519><c> and</c><00:08:53.839><c> character.</c><00:08:54.480><c> So,</c><00:08:54.720><c> this</c><00:08:54.880><c> is</c><00:08:55.120><c> where</c>
+
+00:08:55.509 --> 00:08:55.519 align:start position:0%
+video and character. So, this is where
+ 
+
+00:08:55.519 --> 00:08:57.990 align:start position:0%
+video and character. So, this is where
+experimenting<00:08:56.399><c> with</c><00:08:56.720><c> inputs</c><00:08:57.279><c> and</c><00:08:57.600><c> settings</c>
+
+00:08:57.990 --> 00:08:58.000 align:start position:0%
+experimenting with inputs and settings
+ 
+
+00:08:58.000 --> 00:09:00.310 align:start position:0%
+experimenting with inputs and settings
+comes<00:08:58.320><c> in.</c><00:08:58.640><c> I</c><00:08:58.959><c> highly</c><00:08:59.360><c> encourage</c><00:08:59.760><c> you</c><00:08:59.920><c> to</c><00:09:00.080><c> try</c>
+
+00:09:00.310 --> 00:09:00.320 align:start position:0%
+comes in. I highly encourage you to try
+ 
+
+00:09:00.320 --> 00:09:01.910 align:start position:0%
+comes in. I highly encourage you to try
+out<00:09:00.560><c> different</c><00:09:00.880><c> combinations</c><00:09:01.680><c> because</c>
+
+00:09:01.910 --> 00:09:01.920 align:start position:0%
+out different combinations because
+ 
+
+00:09:01.920 --> 00:09:04.230 align:start position:0%
+out different combinations because
+experimenting<00:09:02.720><c> is</c><00:09:03.040><c> truly</c><00:09:03.440><c> the</c><00:09:03.680><c> best</c><00:09:03.839><c> way</c><00:09:04.000><c> to</c>
+
+00:09:04.230 --> 00:09:04.240 align:start position:0%
+experimenting is truly the best way to
+ 
+
+00:09:04.240 --> 00:09:06.230 align:start position:0%
+experimenting is truly the best way to
+learn.<00:09:04.640><c> If</c><00:09:04.800><c> you</c><00:09:04.959><c> feel</c><00:09:05.120><c> the</c><00:09:05.360><c> generated</c><00:09:05.839><c> video</c>
+
+00:09:06.230 --> 00:09:06.240 align:start position:0%
+learn. If you feel the generated video
+ 
+
+00:09:06.240 --> 00:09:08.470 align:start position:0%
+learn. If you feel the generated video
+could<00:09:06.480><c> look</c><00:09:06.720><c> better</c><00:09:07.040><c> and</c><00:09:07.279><c> the</c><00:09:07.519><c> quality</c><00:09:08.000><c> isn't</c>
+
+00:09:08.470 --> 00:09:08.480 align:start position:0%
+could look better and the quality isn't
+ 
+
+00:09:08.480 --> 00:09:10.230 align:start position:0%
+could look better and the quality isn't
+up<00:09:08.720><c> to</c><00:09:08.880><c> your</c><00:09:09.040><c> standards,</c><00:09:09.680><c> you</c><00:09:09.839><c> can</c><00:09:10.000><c> use</c>
+
+00:09:10.230 --> 00:09:10.240 align:start position:0%
+up to your standards, you can use
+ 
+
+00:09:10.240 --> 00:09:12.310 align:start position:0%
+up to your standards, you can use
+upscaling<00:09:10.959><c> software</c><00:09:11.360><c> to</c><00:09:11.519><c> enhance</c><00:09:11.920><c> it.</c>
+
+00:09:12.310 --> 00:09:12.320 align:start position:0%
+upscaling software to enhance it.
+ 
+
+00:09:12.320 --> 00:09:14.870 align:start position:0%
+upscaling software to enhance it.
+Personally,<00:09:12.880><c> my</c><00:09:13.120><c> go-to</c><00:09:13.600><c> option</c><00:09:13.920><c> is</c><00:09:14.320><c> top</c><00:09:14.640><c> as</c>
+
+00:09:14.870 --> 00:09:14.880 align:start position:0%
+Personally, my go-to option is top as
+ 
+
+00:09:14.880 --> 00:09:16.949 align:start position:0%
+Personally, my go-to option is top as
+video.<00:09:15.279><c> To</c><00:09:15.440><c> find</c><00:09:15.600><c> your</c><00:09:15.839><c> generated</c><00:09:16.320><c> video,</c><00:09:16.720><c> go</c>
+
+00:09:16.949 --> 00:09:16.959 align:start position:0%
+video. To find your generated video, go
+ 
+
+00:09:16.959 --> 00:09:19.269 align:start position:0%
+video. To find your generated video, go
+to<00:09:17.040><c> your</c><00:09:17.279><c> Comfy</c><00:09:17.920><c> folder,</c><00:09:18.399><c> open</c><00:09:18.640><c> the</c><00:09:18.800><c> output</c>
+
+00:09:19.269 --> 00:09:19.279 align:start position:0%
+to your Comfy folder, open the output
+ 
+
+00:09:19.279 --> 00:09:21.110 align:start position:0%
+to your Comfy folder, open the output
+folder,<00:09:19.680><c> and</c><00:09:19.920><c> you</c><00:09:20.080><c> will</c><00:09:20.240><c> find</c><00:09:20.560><c> all</c><00:09:20.880><c> your</c>
+
+00:09:21.110 --> 00:09:21.120 align:start position:0%
+folder, and you will find all your
+ 
+
+00:09:21.120 --> 00:09:23.030 align:start position:0%
+folder, and you will find all your
+generated<00:09:21.680><c> videos</c><00:09:22.080><c> there.</c><00:09:22.560><c> All</c><00:09:22.720><c> you</c><00:09:22.800><c> need</c><00:09:22.959><c> to</c>
+
+00:09:23.030 --> 00:09:23.040 align:start position:0%
+generated videos there. All you need to
+ 
+
+00:09:23.040 --> 00:09:25.509 align:start position:0%
+generated videos there. All you need to
+do<00:09:23.200><c> is</c><00:09:23.440><c> drag</c><00:09:23.760><c> and</c><00:09:24.000><c> drop</c><00:09:24.160><c> your</c><00:09:24.480><c> video</c><00:09:24.800><c> here</c><00:09:25.279><c> and</c>
+
+00:09:25.509 --> 00:09:25.519 align:start position:0%
+do is drag and drop your video here and
+ 
+
+00:09:25.519 --> 00:09:27.829 align:start position:0%
+do is drag and drop your video here and
+click<00:09:25.920><c> start</c><00:09:26.320><c> editing.</c><00:09:26.880><c> I</c><00:09:27.120><c> usually</c><00:09:27.440><c> enable</c>
+
+00:09:27.829 --> 00:09:27.839 align:start position:0%
+click start editing. I usually enable
+ 
+
+00:09:27.839 --> 00:09:30.710 align:start position:0%
+click start editing. I usually enable
+enhancement<00:09:28.720><c> and</c><00:09:28.959><c> upscale</c><00:09:29.519><c> the</c><00:09:29.680><c> video</c><00:09:30.000><c> by</c><00:09:30.320><c> two</c>
+
+00:09:30.710 --> 00:09:30.720 align:start position:0%
+enhancement and upscale the video by two
+ 
+
+00:09:30.720 --> 00:09:33.509 align:start position:0%
+enhancement and upscale the video by two
+or<00:09:30.959><c> four</c><00:09:31.279><c> times</c><00:09:31.600><c> the</c><00:09:31.839><c> original</c><00:09:32.320><c> size.</c><00:09:32.880><c> Each</c><00:09:33.120><c> AI</c>
+
+00:09:33.509 --> 00:09:33.519 align:start position:0%
+or four times the original size. Each AI
+ 
+
+00:09:33.519 --> 00:09:35.750 align:start position:0%
+or four times the original size. Each AI
+model<00:09:33.920><c> inside</c><00:09:34.480><c> topaz</c><00:09:34.959><c> video</c><00:09:35.360><c> offers</c>
+
+00:09:35.750 --> 00:09:35.760 align:start position:0%
+model inside topaz video offers
+ 
+
+00:09:35.760 --> 00:09:37.670 align:start position:0%
+model inside topaz video offers
+different<00:09:36.080><c> results.</c><00:09:36.560><c> For</c><00:09:36.800><c> AI</c><00:09:37.200><c> generated</c>
+
+00:09:37.670 --> 00:09:37.680 align:start position:0%
+different results. For AI generated
+ 
+
+00:09:37.680 --> 00:09:40.230 align:start position:0%
+different results. For AI generated
+videos,<00:09:38.000><c> I</c><00:09:38.240><c> typically</c><00:09:38.640><c> use</c><00:09:38.959><c> the</c><00:09:39.200><c> rhea</c><00:09:39.760><c> model.</c>
+
+00:09:40.230 --> 00:09:40.240 align:start position:0%
+videos, I typically use the rhea model.
+ 
+
+00:09:40.240 --> 00:09:42.550 align:start position:0%
+videos, I typically use the rhea model.
+You<00:09:40.480><c> can</c><00:09:40.560><c> also</c><00:09:40.800><c> enable</c><00:09:41.279><c> frame</c><00:09:41.600><c> interpolation.</c>
+
+00:09:42.550 --> 00:09:42.560 align:start position:0%
+You can also enable frame interpolation.
+ 
+
+00:09:42.560 --> 00:09:44.230 align:start position:0%
+You can also enable frame interpolation.
+This<00:09:42.720><c> is</c><00:09:42.880><c> useful</c><00:09:43.200><c> if</c><00:09:43.519><c> your</c><00:09:43.680><c> video</c><00:09:44.000><c> was</c>
+
+00:09:44.230 --> 00:09:44.240 align:start position:0%
+This is useful if your video was
+ 
+
+00:09:44.240 --> 00:09:47.110 align:start position:0%
+This is useful if your video was
+generated<00:09:44.800><c> at</c><00:09:45.040><c> a</c><00:09:45.279><c> low</c><00:09:45.519><c> frame</c><00:09:45.760><c> rate</c><00:09:46.320><c> like</c><00:09:46.720><c> 16</c>
+
+00:09:47.110 --> 00:09:47.120 align:start position:0%
+generated at a low frame rate like 16
+ 
+
+00:09:47.120 --> 00:09:49.829 align:start position:0%
+generated at a low frame rate like 16
+fps<00:09:47.760><c> for</c><00:09:47.920><c> example.</c><00:09:48.399><c> Topaz</c><00:09:49.040><c> video</c><00:09:49.279><c> will</c><00:09:49.600><c> fill</c>
+
+00:09:49.829 --> 00:09:49.839 align:start position:0%
+fps for example. Topaz video will fill
+ 
+
+00:09:49.839 --> 00:09:52.389 align:start position:0%
+fps for example. Topaz video will fill
+in<00:09:50.080><c> the</c><00:09:50.320><c> missing</c><00:09:50.640><c> frames</c><00:09:51.120><c> to</c><00:09:51.440><c> create</c><00:09:51.920><c> smoother</c>
+
+00:09:52.389 --> 00:09:52.399 align:start position:0%
+in the missing frames to create smoother
+ 
+
+00:09:52.399 --> 00:09:53.829 align:start position:0%
+in the missing frames to create smoother
+motion.<00:09:52.880><c> Once</c><00:09:53.120><c> you're</c><00:09:53.279><c> happy</c><00:09:53.440><c> with</c><00:09:53.600><c> the</c>
+
+00:09:53.829 --> 00:09:53.839 align:start position:0%
+motion. Once you're happy with the
+ 
+
+00:09:53.839 --> 00:09:56.550 align:start position:0%
+motion. Once you're happy with the
+settings,<00:09:54.320><c> just</c><00:09:54.560><c> click</c><00:09:55.120><c> quick</c><00:09:55.519><c> export</c><00:09:56.240><c> and</c>
+
+00:09:56.550 --> 00:09:56.560 align:start position:0%
+settings, just click quick export and
+ 
+
+00:09:56.560 --> 00:09:58.630 align:start position:0%
+settings, just click quick export and
+you're<00:09:56.880><c> good</c><00:09:57.040><c> to</c><00:09:57.279><c> go.</c><00:09:57.760><c> On</c><00:09:57.920><c> my</c><00:09:58.160><c> machine,</c><00:09:58.399><c> the</c>
+
+00:09:58.630 --> 00:09:58.640 align:start position:0%
+you're good to go. On my machine, the
+ 
+
+00:09:58.640 --> 00:10:00.790 align:start position:0%
+you're good to go. On my machine, the
+upscaling<00:09:59.279><c> usually</c><00:09:59.680><c> takes</c><00:10:00.000><c> about</c><00:10:00.240><c> a</c><00:10:00.480><c> minute.</c>
+
+00:10:00.790 --> 00:10:00.800 align:start position:0%
+upscaling usually takes about a minute.
+ 
+
+00:10:00.800 --> 00:10:02.710 align:start position:0%
+upscaling usually takes about a minute.
+And<00:10:00.959><c> as</c><00:10:01.120><c> you</c><00:10:01.279><c> can</c><00:10:01.360><c> see,</c><00:10:01.600><c> the</c><00:10:01.920><c> details</c><00:10:02.399><c> on</c><00:10:02.560><c> the</c>
+
+00:10:02.710 --> 00:10:02.720 align:start position:0%
+And as you can see, the details on the
+ 
+
+00:10:02.720 --> 00:10:05.509 align:start position:0%
+And as you can see, the details on the
+upscaled<00:10:03.360><c> video</c><00:10:03.839><c> are</c><00:10:04.160><c> way</c><00:10:04.480><c> sharper.</c><00:10:05.120><c> And</c><00:10:05.360><c> the</c>
+
+00:10:05.509 --> 00:10:05.519 align:start position:0%
+upscaled video are way sharper. And the
+ 
+
+00:10:05.519 --> 00:10:08.310 align:start position:0%
+upscaled video are way sharper. And the
+overall<00:10:06.000><c> image</c><00:10:06.560><c> just</c><00:10:07.040><c> looks</c><00:10:07.440><c> cleaner,</c><00:10:07.920><c> but</c><00:10:08.080><c> it</c>
+
+00:10:08.310 --> 00:10:08.320 align:start position:0%
+overall image just looks cleaner, but it
+ 
+
+00:10:08.320 --> 00:10:10.550 align:start position:0%
+overall image just looks cleaner, but it
+doesn't<00:10:08.480><c> feel</c><00:10:08.800><c> oversharpened</c><00:10:09.760><c> or</c><00:10:10.080><c> weird,</c>
+
+00:10:10.550 --> 00:10:10.560 align:start position:0%
+doesn't feel oversharpened or weird,
+ 
+
+00:10:10.560 --> 00:10:13.110 align:start position:0%
+doesn't feel oversharpened or weird,
+which<00:10:10.800><c> is</c><00:10:10.880><c> why</c><00:10:11.040><c> I</c><00:10:11.360><c> love</c><00:10:11.600><c> using</c><00:10:12.080><c> Topas</c><00:10:12.640><c> Video.</c>
+
+00:10:13.110 --> 00:10:13.120 align:start position:0%
+which is why I love using Topas Video.
+ 
+
+00:10:13.120 --> 00:10:15.110 align:start position:0%
+which is why I love using Topas Video.
+If<00:10:13.279><c> you</c><00:10:13.360><c> have</c><00:10:13.519><c> any</c><00:10:13.839><c> questions</c><00:10:14.160><c> or</c><00:10:14.480><c> requests,</c>
+
+00:10:15.110 --> 00:10:15.120 align:start position:0%
+If you have any questions or requests,
+ 
+
+00:10:15.120 --> 00:10:17.110 align:start position:0%
+If you have any questions or requests,
+please<00:10:15.360><c> drop</c><00:10:15.600><c> them</c><00:10:15.839><c> in</c><00:10:16.079><c> the</c><00:10:16.240><c> comments</c><00:10:16.560><c> below.</c>
+
+00:10:17.110 --> 00:10:17.120 align:start position:0%
+please drop them in the comments below.
+ 
+
+00:10:17.120 --> 00:10:19.269 align:start position:0%
+please drop them in the comments below.
+Stay<00:10:17.360><c> creative,</c><00:10:17.920><c> and</c><00:10:18.079><c> I'll</c><00:10:18.320><c> see</c><00:10:18.480><c> you</c><00:10:18.880><c> in</c><00:10:19.120><c> the</c>
+
+00:10:19.269 --> 00:10:19.279 align:start position:0%
+Stay creative, and I'll see you in the
+ 
+
+00:10:19.279 --> 00:10:21.440 align:start position:0%
+Stay creative, and I'll see you in the
+next<00:10:19.519><c> video.</c><00:10:20.320><c> Peace.</c>
+
+00:10:21.440 --> 00:10:21.450 align:start position:0%
+next video. Peace.
+ 
+
+00:10:21.450 --> 00:10:28.580 align:start position:0%
+next video. Peace.
+[Music]
+

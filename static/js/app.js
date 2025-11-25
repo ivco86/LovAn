@@ -130,10 +130,18 @@ async function loadImages(filters = {}) {
     try {
         const params = new URLSearchParams(filters);
         const data = await apiCall(`/images?${params}`);
-        state.images = data.images;
-        return data.images;
+        
+        // Ensure images is always an array
+        if (data && Array.isArray(data.images)) {
+            state.images = data.images;
+        } else {
+            state.images = [];
+        }
+        
+        return state.images;
     } catch (error) {
         console.error('Failed to load images:', error);
+        state.images = [];
         return [];
     }
 }
@@ -932,19 +940,30 @@ function renderImages() {
     const grid = document.getElementById('imageGrid');
     const emptyState = document.getElementById('emptyState');
 
-    if (state.images.length === 0) {
+    if (!grid || !emptyState) {
+        console.error('Image grid or empty state element not found');
+        return;
+    }
+
+    if (!state.images || state.images.length === 0) {
         grid.style.display = 'none';
         emptyState.style.display = 'flex';
         return;
     }
 
+    // Ensure grid is visible before rendering
     grid.style.display = 'block';
     emptyState.style.display = 'none';
 
-    // Sort images before rendering
-    const sortedImages = sortImages([...state.images], state.imageSort);
-
-    grid.innerHTML = sortedImages.map(image => createImageCard(image)).join('');
+    try {
+        // Sort images before rendering
+        const sortedImages = sortImages([...state.images], state.imageSort);
+        grid.innerHTML = sortedImages.map(image => createImageCard(image)).join('');
+    } catch (error) {
+        console.error('Error rendering images:', error);
+        grid.style.display = 'none';
+        emptyState.style.display = 'flex';
+    }
 }
 
 function sortImages(images, sortType) {
@@ -1154,19 +1173,28 @@ function createBoardOption(board, prefix = '') {
 }
 
 function updateCounts() {
-    document.getElementById('allCount').textContent = state.stats.total_images || 0;
-    document.getElementById('favCount').textContent = state.stats.favorite_images || 0;
-    document.getElementById('unanalyzedCount').textContent = state.stats.unanalyzed_images || 0;
-    document.getElementById('videosCount').textContent = state.stats.video_count || 0;
+    const allCount = document.getElementById('allCount');
+    const favCount = document.getElementById('favCount');
+    const unanalyzedCount = document.getElementById('unanalyzedCount');
+    const videosCount = document.getElementById('videosCount');
+    const statTotal = document.getElementById('statTotal');
+    const statAnalyzed = document.getElementById('statAnalyzed');
+    const statBoards = document.getElementById('statBoards');
 
-    document.getElementById('statTotal').textContent = state.stats.total_images || 0;
-    document.getElementById('statAnalyzed').textContent = state.stats.analyzed_images || 0;
-    document.getElementById('statBoards').textContent = state.stats.total_boards || 0;
+    if (allCount) allCount.textContent = state.stats.total_images || 0;
+    if (favCount) favCount.textContent = state.stats.favorite_images || 0;
+    if (unanalyzedCount) unanalyzedCount.textContent = state.stats.unanalyzed_images || 0;
+    if (videosCount) videosCount.textContent = state.stats.video_count || 0;
+    if (statTotal) statTotal.textContent = state.stats.total_images || 0;
+    if (statAnalyzed) statAnalyzed.textContent = state.stats.analyzed_images || 0;
+    if (statBoards) statBoards.textContent = state.stats.total_boards || 0;
 }
 
 function updateBreadcrumb(text) {
     const breadcrumb = document.getElementById('breadcrumb');
-    breadcrumb.innerHTML = `<span class="breadcrumb-item">${escapeHtml(text)}</span>`;
+    if (breadcrumb) {
+        breadcrumb.innerHTML = `<span class="breadcrumb-item">${escapeHtml(text)}</span>`;
+    }
 }
 
 // ============ View Switching ============
@@ -1176,6 +1204,11 @@ async function switchView(view, param = null) {
     state.currentBoard = null;
     state.searchQuery = '';
 
+    // Update active state for category pills
+    document.querySelectorAll('.category-pill').forEach(pill => {
+        pill.classList.remove('active');
+    });
+    
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
     });
@@ -1219,6 +1252,13 @@ async function switchView(view, param = null) {
                 break;
         }
 
+        // Always render images, even if empty
+        renderImages();
+    } catch (error) {
+        console.error('Error switching view:', error);
+        showToast('Failed to load view: ' + error.message, 'error');
+        // Ensure we show something even on error
+        state.images = [];
         renderImages();
     } finally {
         hideLoading();
@@ -1818,14 +1858,21 @@ function attachEventListeners() {
     });
     if (settingsBtnMenu) settingsBtnMenu.addEventListener('click', openSettingsModal);
 
-    // Category pills
+    // Category pills - handle clicks separately to update active state
     const categoryPills = document.querySelectorAll('.category-pill');
     categoryPills.forEach(pill => {
-        pill.addEventListener('click', (e) => {
+        pill.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent other event listeners from firing
+            
+            // Update active state immediately
             categoryPills.forEach(p => p.classList.remove('active'));
             pill.classList.add('active');
+            
             const view = pill.dataset.view;
-            switchView(view);
+            if (view) {
+                await switchView(view);
+            }
         });
     });
 
@@ -1883,12 +1930,14 @@ function attachEventListeners() {
         });
     }
 
-    // View navigation
-    document.querySelectorAll('[data-view]').forEach(item => {
-        item.addEventListener('click', (e) => {
+    // View navigation - exclude category pills (they have their own handler)
+    document.querySelectorAll('[data-view]:not(.category-pill)').forEach(item => {
+        item.addEventListener('click', async (e) => {
             e.preventDefault();
             const view = item.dataset.view;
-            switchView(view);
+            if (view) {
+                await switchView(view);
+            }
         });
     });
 
@@ -4765,10 +4814,20 @@ async function downloadYouTubeVideo() {
         downloadBtn.textContent = 'Done';
         showToast('Video downloaded successfully!', 'success');
 
-        // Reload gallery
+        // Close modal after short delay
         setTimeout(() => {
-            loadImages();
-        }, 1000);
+            closeYouTubeModal();
+        }, 2000);
+
+        // Reload gallery and refresh view immediately
+        setTimeout(async () => {
+            await loadImages();
+            await updateStats();
+            renderImages();
+            
+            // Show the new video in the gallery
+            showToast('Video added to gallery!', 'success', 3000);
+        }, 1500);
 
     } catch (error) {
         console.error('Error downloading video:', error);

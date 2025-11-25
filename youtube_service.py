@@ -10,6 +10,8 @@ import re
 import json
 import subprocess
 import logging
+import shutil
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
@@ -17,9 +19,17 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 # Configuration
-VIDEOS_DIR = os.getenv('VIDEOS_DIR', 'videos')
-KEYFRAMES_DIR = os.getenv('KEYFRAMES_DIR', 'keyframes')
-SUBTITLES_DIR = os.getenv('SUBTITLES_DIR', 'subtitles')
+# Import PHOTOS_DIR after checking for circular import
+try:
+    from shared import PHOTOS_DIR as SHARED_PHOTOS_DIR
+except ImportError:
+    # Fallback if shared not available
+    SHARED_PHOTOS_DIR = os.getenv('PHOTOS_DIR', './photos')
+
+# Use PHOTOS_DIR for videos so they appear in the gallery
+VIDEOS_DIR = os.getenv('VIDEOS_DIR', None) or SHARED_PHOTOS_DIR
+KEYFRAMES_DIR = os.getenv('KEYFRAMES_DIR', os.path.join('data', 'youtube_keyframes'))
+SUBTITLES_DIR = os.getenv('SUBTITLES_DIR', os.path.join('data', 'youtube_subtitles'))
 PREFERRED_FORMAT = os.getenv('YT_FORMAT', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]')
 KEYFRAME_INTERVAL = int(os.getenv('KEYFRAME_INTERVAL', '30'))  # seconds between keyframes
 
@@ -36,6 +46,24 @@ class YouTubeService:
         self.videos_dir = VIDEOS_DIR
         self.keyframes_dir = KEYFRAMES_DIR
         self.subtitles_dir = SUBTITLES_DIR
+        self.ytdlp_command = self._find_ytdlp_command()
+    
+    def _find_ytdlp_command(self) -> list:
+        """Find yt-dlp executable or use python -m yt_dlp"""
+        # First try to find yt-dlp in PATH
+        ytdlp_path = shutil.which('yt-dlp')
+        if ytdlp_path:
+            return [ytdlp_path]
+        
+        # Check for yt-dlp.exe in Python Scripts directory (Windows)
+        if sys.platform == 'win32':
+            scripts_dir = os.path.join(sys.prefix, 'Scripts')
+            ytdlp_exe = os.path.join(scripts_dir, 'yt-dlp.exe')
+            if os.path.exists(ytdlp_exe):
+                return [ytdlp_exe]
+        
+        # Fallback to python -m yt_dlp
+        return [sys.executable, '-m', 'yt_dlp']
 
     def extract_youtube_id(self, url: str) -> Optional[str]:
         """Extract YouTube video ID from various URL formats"""
@@ -67,16 +95,41 @@ class YouTubeService:
         """
         youtube_id = self.extract_youtube_id(url)
         if not youtube_id:
-            logger.error(f"Invalid YouTube URL: {url}")
-            return None
+            error_msg = (
+                f"Invalid YouTube URL: '{url}'\n"
+                "Моля въведете пълен YouTube URL, например:\n"
+                "  https://www.youtube.com/watch?v=VIDEO_ID\n"
+                "  https://youtu.be/VIDEO_ID"
+            )
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        # Check if yt-dlp is available using the found command
+        try:
+            result = subprocess.run(
+                self.ytdlp_command + ['--version'],
+                capture_output=True,
+                timeout=10,
+                text=True
+            )
+            if result.returncode != 0:
+                logger.warning(f"yt-dlp version check failed: {result.stderr}")
+                # Don't raise error, try to continue anyway
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError) as e:
+            logger.warning(f"Could not verify yt-dlp installation: {e}")
+            # Don't raise error immediately, try to use it anyway
 
         try:
-            result = subprocess.run([
-                'yt-dlp',
-                '--dump-json',
-                '--no-download',
-                f'https://www.youtube.com/watch?v={youtube_id}'
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                self.ytdlp_command + [
+                    '--dump-json',
+                    '--no-download',
+                    f'https://www.youtube.com/watch?v={youtube_id}'
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
 
             if result.returncode != 0:
                 logger.error(f"yt-dlp error: {result.stderr}")
@@ -166,8 +219,8 @@ class YouTubeService:
         if progress_callback:
             progress_callback('download', 10, f'Downloading: {info["title"]}')
 
-        # Create video-specific directories
-        video_dir = os.path.join(self.videos_dir, youtube_id)
+        # Create directories - save video directly in PHOTOS_DIR
+        video_dir = self.videos_dir  # Use PHOTOS_DIR directly (no subdirectory)
         keyframe_dir = os.path.join(self.keyframes_dir, youtube_id)
         subtitle_dir = os.path.join(self.subtitles_dir, youtube_id)
 
@@ -175,25 +228,34 @@ class YouTubeService:
         os.makedirs(keyframe_dir, exist_ok=True)
         os.makedirs(subtitle_dir, exist_ok=True)
 
-        # Build yt-dlp command
-        output_template = os.path.join(video_dir, '%(id)s.%(ext)s')
-        cmd = [
-            'yt-dlp',
+        # Build yt-dlp command - save directly to PHOTOS_DIR with descriptive name
+        # Use title for filename (sanitized)
+        safe_title = re.sub(r'[^\w\s-]', '', info.get('title', youtube_id)).strip()[:100]
+        safe_title = re.sub(r'[-\s]+', '_', safe_title)
+        output_template = os.path.join(video_dir, f'{safe_title}_{youtube_id}.%(ext)s')
+        cmd = self.ytdlp_command + [
             '-f', PREFERRED_FORMAT,
             '--merge-output-format', 'mp4',
             '-o', output_template,
             '--no-playlist',
         ]
 
-        # Add subtitle options
+        # Add subtitle options (but make them non-blocking)
         if download_subtitles:
             cmd.extend([
                 '--write-subs',
                 '--write-auto-subs',
-                '--sub-langs', 'en,bg,ru,de,fr,es,it,pt,ja,ko,zh',
+                '--sub-langs', 'en',  # Start with just English to avoid rate limiting
                 '--sub-format', 'vtt/srt/best',
                 '--convert-subs', 'vtt',
             ])
+        
+        # Add options to handle YouTube restrictions better
+        cmd.extend([
+            '--extractor-args', 'youtube:player_client=android',  # Use android client (more reliable)
+            '--retries', '3',
+            '--fragment-retries', '3',
+        ])
 
         cmd.append(f'https://www.youtube.com/watch?v={youtube_id}')
 
@@ -201,20 +263,38 @@ class YouTubeService:
             # Run yt-dlp
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
 
-            if result.returncode != 0:
-                logger.error(f"yt-dlp download failed: {result.stderr}")
-                return None
-
-            # Find the downloaded video file
+            # Find the downloaded video file first (might have been downloaded despite errors)
             video_file = None
-            for file in os.listdir(video_dir):
-                if file.endswith(('.mp4', '.mkv', '.webm')):
-                    video_file = os.path.join(video_dir, file)
-                    break
+            downloaded_files = []
+            if os.path.exists(video_dir):
+                for file in os.listdir(video_dir):
+                    if file.endswith(('.mp4', '.mkv', '.webm', '.webp')):
+                        full_path = os.path.join(video_dir, file)
+                        if os.path.isfile(full_path):
+                            downloaded_files.append(full_path)
+                            if not video_file:  # Take the first one
+                                video_file = full_path
 
-            if not video_file:
-                logger.error("Video file not found after download")
+            # Check if download succeeded or if video file exists despite errors
+            if result.returncode != 0:
+                if video_file and os.path.exists(video_file):
+                    # Video was downloaded, but some operations (like subtitles) failed
+                    # This is acceptable - we can continue without subtitles
+                    logger.warning(f"Video downloaded but some operations failed: {result.stderr[:200]}")
+                else:
+                    # No video file found, this is a real error
+                    logger.error(f"yt-dlp download failed: {result.stderr}")
+                    logger.error(f"Looked in directory: {video_dir}")
+                    logger.error(f"Files in directory: {os.listdir(video_dir) if os.path.exists(video_dir) else 'Directory does not exist'}")
+                    return None
+            elif not video_file:
+                # Command succeeded but no video file found - strange
+                logger.error("Video file not found after successful download")
+                logger.error(f"Looked in directory: {video_dir}")
+                logger.error(f"Files in directory: {os.listdir(video_dir) if os.path.exists(video_dir) else 'Directory does not exist'}")
                 return None
+            
+            logger.info(f"Video file found: {video_file}")
 
             if progress_callback:
                 progress_callback('download', 50, 'Video downloaded successfully')
@@ -269,15 +349,38 @@ class YouTubeService:
             }
 
             if self.db:
-                # Add to images table first
+                # Calculate relative path from PHOTOS_DIR for database storage
+                # Use just filename (relative to PHOTOS_DIR) like other images
+                filename_only = os.path.basename(video_file)
+                
+                logger.info(f"Adding video to database: filepath={filename_only}, filename={filename_only}, video_file={video_file}")
+                
+                # Add to images table with just filename (like upload/scan functions do)
                 image_id = self.db.add_image(
-                    filepath=video_file,
-                    filename=os.path.basename(video_file),
+                    filepath=filename_only,
+                    filename=filename_only,
                     width=width,
                     height=height,
                     file_size=file_size,
                     media_type='video'
                 )
+                
+                if image_id:
+                    logger.info(f"✅ Video added to database with image_id: {image_id}, filepath: {filename_only}")
+                else:
+                    logger.error(f"❌ Failed to add video to database - may already exist")
+                    # Try to get existing image_id
+                    try:
+                        conn = self.db.get_connection()
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT id FROM images WHERE filepath = ? OR filename = ?", (filename_only, filename_only))
+                        result = cursor.fetchone()
+                        if result:
+                            image_id = result['id']
+                            logger.info(f"Video already exists in database with image_id: {image_id}")
+                        conn.close()
+                    except Exception as e:
+                        logger.error(f"Error checking existing video: {e}")
 
                 if image_id:
                     # Add YouTube metadata
