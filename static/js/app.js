@@ -1422,6 +1422,16 @@ function updateModal() {
     const modal = document.getElementById('imageModal');
     const modalBody = modal.querySelector('.modal-body');
 
+    // IMPORTANT: Clean up any existing video before replacing content to prevent memory leaks
+    const existingVideo = modalBody.querySelector('video');
+    if (existingVideo) {
+        existingVideo.pause();
+        existingVideo.removeAttribute('src');
+        existingVideo.load();
+        // Remove track elements
+        existingVideo.querySelectorAll('track').forEach(t => t.remove());
+    }
+
     const statusText = image.analyzed_at ? 'Analyzed' : 'Pending Analysis';
     const statusIcon = image.analyzed_at ? '✅' : '⏳';
     const isVideo = image.media_type === 'video';
@@ -1765,6 +1775,18 @@ function closeModal(modalId, resetCallback = null) {
 function closeImageModal() {
     // Clean up subtitle sync before closing
     cleanupSubtitleSync();
+
+    // IMPORTANT: Clean up video element to prevent memory leaks
+    const videoElement = document.getElementById('modalVideoPlayer');
+    if (videoElement) {
+        videoElement.pause();
+        videoElement.removeAttribute('src');
+        videoElement.load(); // Reset the video element
+
+        // Remove all track elements (subtitles)
+        const tracks = videoElement.querySelectorAll('track');
+        tracks.forEach(track => track.remove());
+    }
 
     closeModal('imageModal', () => {
         state.currentImage = null;
@@ -5309,8 +5331,18 @@ function cleanupSubtitleSync() {
         clearInterval(subtitleData.syncInterval);
         subtitleData.syncInterval = null;
     }
+
+    // Remove event listeners from video element to prevent memory leaks
+    if (subtitleData.videoElement) {
+        subtitleData.videoElement.removeEventListener('timeupdate', updateActiveSubtitle);
+        subtitleData.videoElement.removeEventListener('seeked', updateActiveSubtitle);
+    }
+
     subtitleData.subtitles = [];
+    subtitleData.languages = [];
+    subtitleData.currentLang = null;
     subtitleData.videoElement = null;
+    subtitleData.teleprompterMode = false;
 }
 
 // ============================================================================
