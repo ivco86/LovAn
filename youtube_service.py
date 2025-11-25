@@ -305,17 +305,17 @@ class YouTubeService:
             if result.stderr:
                 logger.warning(f"yt-dlp stderr: {result.stderr[:2000]}")
 
-            # Find the downloaded video file first (might have been downloaded despite errors)
+            # Find the downloaded video file - MUST contain the youtube_id in filename
             video_file = None
-            downloaded_files = []
             if os.path.exists(video_dir):
                 for file in os.listdir(video_dir):
-                    if file.endswith(('.mp4', '.mkv', '.webm', '.webp')):
+                    # Only match files that contain the youtube_id (our naming convention)
+                    if youtube_id in file and file.endswith(('.mp4', '.mkv', '.webm')):
                         full_path = os.path.join(video_dir, file)
                         if os.path.isfile(full_path):
-                            downloaded_files.append(full_path)
-                            if not video_file:  # Take the first one
-                                video_file = full_path
+                            video_file = full_path
+                            print(f"[YT DEBUG] Found matching video file: {file}")
+                            break
 
             # Check if download succeeded or if video file exists despite errors
             if result.returncode != 0:
