@@ -5833,6 +5833,8 @@ async function uploadFilesDirectly(files) {
 
     let successCount = 0;
     let failCount = 0;
+    let duplicateCount = 0;
+    const uploadedImageIds = [];
 
     for (const file of files) {
         const formData = new FormData();
@@ -5848,6 +5850,14 @@ async function uploadFilesDirectly(files) {
 
             if (response.ok && data.success) {
                 successCount++;
+                if (data.image_id) {
+                    uploadedImageIds.push(data.image_id);
+                }
+                // Check for duplicate warning
+                if (data.is_duplicate) {
+                    duplicateCount++;
+                    showToast(`⚠️ "${file.name}" is duplicate of "${data.duplicate_of.filename}"`, 'warning');
+                }
             } else {
                 failCount++;
                 console.error(`Failed to upload ${file.name}:`, data.error);
@@ -5859,18 +5869,189 @@ async function uploadFilesDirectly(files) {
     }
 
     // Show result
+    let message = `Uploaded ${successCount} file(s)`;
+    if (duplicateCount > 0) {
+        message += ` (${duplicateCount} duplicates)`;
+    }
+    if (failCount > 0) {
+        message += `, ${failCount} failed`;
+    }
+
     if (successCount > 0 && failCount === 0) {
-        showToast(`Uploaded ${successCount} file(s) successfully!`, 'success');
+        showToast(message, duplicateCount > 0 ? 'warning' : 'success');
     } else if (successCount > 0 && failCount > 0) {
-        showToast(`Uploaded ${successCount} file(s), ${failCount} failed`, 'warning');
+        showToast(message, 'warning');
     } else {
         showToast('Upload failed', 'error');
     }
 
     // Reload gallery
     if (successCount > 0) {
-        loadImages();
+        await loadImages();
+
+        // Auto-analyze uploaded images with AI
+        if (uploadedImageIds.length > 0) {
+            showToast(`🤖 Auto-analyzing ${uploadedImageIds.length} uploaded file(s)...`, 'info');
+
+            for (const imageId of uploadedImageIds) {
+                try {
+                    await analyzeImage(imageId, 'classic', null);
+                } catch (error) {
+                    console.error(`Auto-analysis failed for image ${imageId}:`, error);
+                }
+            }
+        }
     }
+}
+
+// ============================================================================
+// Duplicate Detection Functions
+// ============================================================================
+
+async function findDuplicates() {
+    showToast('🔍 Searching for duplicates...', 'info');
+
+    try {
+        const response = await fetch('/api/duplicates');
+        const data = await response.json();
+
+        if (data.success) {
+            if (data.duplicate_groups === 0) {
+                showToast('✅ No duplicates found!', 'success');
+            } else {
+                showToast(`Found ${data.duplicate_groups} duplicate group(s)`, 'warning');
+                showDuplicatesModal(data.duplicates);
+            }
+        } else {
+            showToast('Failed to find duplicates', 'error');
+        }
+    } catch (error) {
+        console.error('Error finding duplicates:', error);
+        showToast('Error finding duplicates', 'error');
+    }
+}
+
+async function computeMissingHashes() {
+    showToast('🔄 Computing hashes for images...', 'info');
+
+    try {
+        const response = await fetch('/api/duplicates/compute-hashes?limit=500', {
+            method: 'POST'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            let message = `Computed ${data.computed} hashes`;
+            if (data.failed > 0) {
+                message += `, ${data.failed} failed`;
+            }
+            if (data.remaining > 0) {
+                message += `. ${data.remaining} remaining.`;
+            }
+            showToast(message, data.remaining > 0 ? 'warning' : 'success');
+        } else {
+            showToast('Failed to compute hashes', 'error');
+        }
+    } catch (error) {
+        console.error('Error computing hashes:', error);
+        showToast('Error computing hashes', 'error');
+    }
+}
+
+function showDuplicatesModal(duplicates) {
+    // Create modal HTML
+    const modalHtml = `
+        <div class="modal" id="duplicatesModal" style="display: block;">
+            <div class="modal-overlay" onclick="closeDuplicatesModal()"></div>
+            <div class="modal-content" style="max-width: 900px;">
+                <button class="modal-close" onclick="closeDuplicatesModal()">&times;</button>
+                <div class="modal-body">
+                    <h2>🔍 Duplicate Images Found</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: var(--spacing-lg);">
+                        Found ${duplicates.length} groups of duplicate images.
+                        The first image in each group is the original (oldest).
+                    </p>
+                    <div class="duplicates-list">
+                        ${duplicates.map((group, idx) => `
+                            <div class="duplicate-group">
+                                <h4>Group ${idx + 1} (${group.count} images)</h4>
+                                <div class="duplicate-images">
+                                    ${group.images.map((img, imgIdx) => `
+                                        <div class="duplicate-image ${imgIdx === 0 ? 'original' : 'duplicate'}">
+                                            <img src="/api/images/${img.id}/thumbnail" alt="${img.filename}">
+                                            <div class="duplicate-info">
+                                                <span class="duplicate-filename">${img.filename}</span>
+                                                <span class="duplicate-badge">${imgIdx === 0 ? 'Original' : 'Duplicate'}</span>
+                                                ${imgIdx > 0 ? `<button class="btn btn-sm btn-danger" onclick="confirmDeleteImage(${img.id}, '${img.filename.replace(/'/g, "\\'")}')">Delete</button>` : ''}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add styles if not already added
+    if (!document.getElementById('duplicatesStyles')) {
+        const styles = document.createElement('style');
+        styles.id = 'duplicatesStyles';
+        styles.textContent = `
+            .duplicates-list { max-height: 60vh; overflow-y: auto; }
+            .duplicate-group {
+                background: var(--bg-tertiary);
+                border-radius: var(--radius-md);
+                padding: var(--spacing-md);
+                margin-bottom: var(--spacing-md);
+            }
+            .duplicate-group h4 { margin-bottom: var(--spacing-sm); color: var(--text-primary); }
+            .duplicate-images { display: flex; gap: var(--spacing-sm); flex-wrap: wrap; }
+            .duplicate-image {
+                width: 150px;
+                background: var(--bg-secondary);
+                border-radius: var(--radius-sm);
+                overflow: hidden;
+                border: 2px solid var(--border-color);
+            }
+            .duplicate-image.original { border-color: var(--success); }
+            .duplicate-image.duplicate { border-color: var(--warning); }
+            .duplicate-image img { width: 100%; height: 120px; object-fit: cover; }
+            .duplicate-info { padding: var(--spacing-xs); text-align: center; }
+            .duplicate-filename {
+                display: block;
+                font-size: 10px;
+                color: var(--text-muted);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .duplicate-badge {
+                display: inline-block;
+                font-size: 9px;
+                padding: 2px 6px;
+                border-radius: 10px;
+                margin: 4px 0;
+            }
+            .duplicate-image.original .duplicate-badge { background: var(--success); color: white; }
+            .duplicate-image.duplicate .duplicate-badge { background: var(--warning); color: white; }
+        `;
+        document.head.appendChild(styles);
+    }
+
+    // Remove existing modal if any
+    const existingModal = document.getElementById('duplicatesModal');
+    if (existingModal) existingModal.remove();
+
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeDuplicatesModal() {
+    const modal = document.getElementById('duplicatesModal');
+    if (modal) modal.remove();
 }
 
 // Initialize fullscreen drop zone on page load
