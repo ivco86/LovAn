@@ -1428,10 +1428,11 @@ function updateModal() {
 
     // Media viewer (image or video)
     const mediaViewer = isVideo
-        ? `<video controls style="width: 100%; max-height: 86vh; object-fit: contain;">
+        ? `<video controls id="modalVideoPlayer" style="width: 100%; max-height: 86vh; object-fit: contain;">
                <source src="/api/images/${image.id}/file" type="video/mp4">
                Your browser does not support video playback.
-           </video>`
+           </video>
+           <div id="subtitlePanelContainer"></div>`
         : `<img src="/api/images/${image.id}/file" alt="${escapeHtml(image.filename)}">`;
 
     const mediaTypeIcon = isVideo ? '🎬' : '📄';
@@ -1586,9 +1587,51 @@ function updateModal() {
     }
 
     loadSimilarImages(image.id);
-    
+
     // Load EXIF data if available
     loadImageEXIF(image.id);
+
+    // Load subtitles for YouTube videos
+    if (isVideo) {
+        loadAndInitSubtitles(image.id);
+    }
+}
+
+// Load subtitles and initialize sync for YouTube videos
+async function loadAndInitSubtitles(imageId) {
+    // Clean up previous subtitle sync
+    cleanupSubtitleSync();
+
+    const container = document.getElementById('subtitlePanelContainer');
+    if (!container) return;
+
+    // Show loading state
+    container.innerHTML = '<div class="subtitle-panel"><div class="no-subtitles">Loading subtitles...</div></div>';
+
+    try {
+        const data = await loadSubtitlesForVideo(imageId);
+
+        if (data && data.subtitles && data.subtitles.length > 0) {
+            subtitleData.subtitles = data.subtitles;
+            subtitleData.languages = data.languages;
+            subtitleData.currentLang = data.languages[0];
+
+            container.innerHTML = createSubtitlePanel(data.subtitles, data.languages);
+
+            // Initialize video sync
+            const videoElement = document.getElementById('modalVideoPlayer');
+            if (videoElement) {
+                initSubtitleSync(videoElement);
+                attachSubtitleClickHandlers();
+            }
+        } else {
+            // No subtitles - hide the panel or show message
+            container.innerHTML = '';
+        }
+    } catch (error) {
+        console.error('Error loading subtitles:', error);
+        container.innerHTML = '';
+    }
 }
 
 // Load and display EXIF data for an image
@@ -1685,6 +1728,9 @@ function closeModal(modalId, resetCallback = null) {
 }
 
 function closeImageModal() {
+    // Clean up subtitle sync before closing
+    cleanupSubtitleSync();
+
     closeModal('imageModal', () => {
         state.currentImage = null;
     });
@@ -4990,6 +5036,247 @@ async function downloadYouTubeVideo() {
 
 // Initialize YouTube modal on page load
 document.addEventListener('DOMContentLoaded', initYouTubeModal);
+
+// ============================================================================
+// Karaoke Subtitle Panel
+// ============================================================================
+
+let subtitleData = {
+    subtitles: [],
+    languages: [],
+    currentLang: null,
+    videoElement: null,
+    syncInterval: null,
+    teleprompterMode: false
+};
+
+async function loadSubtitlesForVideo(imageId) {
+    try {
+        const response = await fetch(`/api/images/${imageId}/subtitles`);
+        if (!response.ok) {
+            return null;
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error loading subtitles:', error);
+        return null;
+    }
+}
+
+function createSubtitlePanel(subtitles, languages) {
+    if (!subtitles || subtitles.length === 0) {
+        return `
+            <div class="subtitle-panel">
+                <div class="no-subtitles">
+                    <p>No subtitles available for this video</p>
+                </div>
+            </div>
+        `;
+    }
+
+    const langOptions = languages.map(lang =>
+        `<option value="${lang}">${lang.toUpperCase()}</option>`
+    ).join('');
+
+    const subtitleLines = subtitles.map((sub, idx) => {
+        const startTime = formatSubtitleTime(sub.start_time_ms);
+        return `
+            <div class="subtitle-line" data-index="${idx}" data-start="${sub.start_time_ms}" data-end="${sub.end_time_ms}">
+                <span class="timestamp">${startTime}</span>
+                <span class="text">${escapeHtml(sub.text)}</span>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="subtitle-panel" id="subtitlePanel">
+            <div class="subtitle-panel-header">
+                <h4>🎤 Subtitles</h4>
+                <select class="subtitle-lang-select" id="subtitleLangSelect" onchange="changeSubtitleLanguage(this.value)">
+                    ${langOptions}
+                </select>
+            </div>
+            <div class="subtitle-content" id="subtitleContent">
+                ${subtitleLines}
+            </div>
+            <div class="subtitle-panel-controls">
+                <button onclick="toggleTeleprompterMode()" id="teleprompterBtn">Teleprompter</button>
+                <button onclick="toggleAutoScroll()" id="autoScrollBtn" class="active">Auto-scroll</button>
+                <button onclick="jumpToCurrentSubtitle()">Jump to current</button>
+            </div>
+        </div>
+    `;
+}
+
+function formatSubtitleTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function initSubtitleSync(videoElement) {
+    subtitleData.videoElement = videoElement;
+
+    // Clear any existing interval
+    if (subtitleData.syncInterval) {
+        clearInterval(subtitleData.syncInterval);
+    }
+
+    // Sync every 100ms for smooth updates
+    subtitleData.syncInterval = setInterval(() => {
+        updateActiveSubtitle();
+    }, 100);
+
+    // Also update on video events
+    videoElement.addEventListener('timeupdate', updateActiveSubtitle);
+    videoElement.addEventListener('seeked', updateActiveSubtitle);
+
+    // Clean up on video end or close
+    videoElement.addEventListener('ended', () => {
+        if (subtitleData.syncInterval) {
+            clearInterval(subtitleData.syncInterval);
+        }
+    });
+}
+
+function updateActiveSubtitle() {
+    if (!subtitleData.videoElement || !subtitleData.subtitles.length) return;
+
+    const currentTimeMs = subtitleData.videoElement.currentTime * 1000;
+    const subtitleContent = document.getElementById('subtitleContent');
+    if (!subtitleContent) return;
+
+    const lines = subtitleContent.querySelectorAll('.subtitle-line');
+    let activeIdx = -1;
+
+    lines.forEach((line, idx) => {
+        const start = parseInt(line.dataset.start);
+        const end = parseInt(line.dataset.end);
+
+        line.classList.remove('active', 'upcoming');
+
+        if (currentTimeMs >= start && currentTimeMs <= end) {
+            line.classList.add('active');
+            activeIdx = idx;
+
+            // Karaoke word highlighting
+            highlightWords(line, currentTimeMs, start, end);
+        } else if (currentTimeMs < start) {
+            line.classList.add('upcoming');
+        }
+    });
+
+    // Auto-scroll to active subtitle
+    if (activeIdx >= 0 && document.getElementById('autoScrollBtn')?.classList.contains('active')) {
+        const activeLine = lines[activeIdx];
+        if (activeLine) {
+            activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+}
+
+function highlightWords(line, currentTimeMs, startMs, endMs) {
+    const textSpan = line.querySelector('.text');
+    if (!textSpan) return;
+
+    const text = textSpan.textContent;
+    const words = text.split(/\s+/);
+    const duration = endMs - startMs;
+    const elapsed = currentTimeMs - startMs;
+    const progress = elapsed / duration;
+
+    const wordsToHighlight = Math.floor(words.length * progress);
+
+    const highlightedHtml = words.map((word, idx) => {
+        const isSpoken = idx < wordsToHighlight;
+        return `<span class="word ${isSpoken ? 'spoken' : ''}">${escapeHtml(word)}</span>`;
+    }).join(' ');
+
+    textSpan.innerHTML = highlightedHtml;
+}
+
+function toggleTeleprompterMode() {
+    const panel = document.getElementById('subtitlePanel');
+    const btn = document.getElementById('teleprompterBtn');
+
+    if (panel) {
+        panel.classList.toggle('teleprompter-mode');
+        subtitleData.teleprompterMode = panel.classList.contains('teleprompter-mode');
+
+        if (btn) {
+            btn.classList.toggle('active', subtitleData.teleprompterMode);
+        }
+    }
+}
+
+function toggleAutoScroll() {
+    const btn = document.getElementById('autoScrollBtn');
+    if (btn) {
+        btn.classList.toggle('active');
+    }
+}
+
+function jumpToCurrentSubtitle() {
+    const activeLine = document.querySelector('.subtitle-line.active');
+    if (activeLine) {
+        activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+async function changeSubtitleLanguage(lang) {
+    if (!state.currentImage) return;
+
+    try {
+        const response = await fetch(`/api/images/${state.currentImage.id}/subtitles?language=${lang}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        subtitleData.subtitles = data.subtitles;
+        subtitleData.currentLang = lang;
+
+        // Re-render subtitle content
+        const subtitleContent = document.getElementById('subtitleContent');
+        if (subtitleContent && data.subtitles) {
+            subtitleContent.innerHTML = data.subtitles.map((sub, idx) => {
+                const startTime = formatSubtitleTime(sub.start_time_ms);
+                return `
+                    <div class="subtitle-line" data-index="${idx}" data-start="${sub.start_time_ms}" data-end="${sub.end_time_ms}">
+                        <span class="timestamp">${startTime}</span>
+                        <span class="text">${escapeHtml(sub.text)}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Re-attach click handlers
+            attachSubtitleClickHandlers();
+        }
+    } catch (error) {
+        console.error('Error changing subtitle language:', error);
+    }
+}
+
+function attachSubtitleClickHandlers() {
+    const lines = document.querySelectorAll('.subtitle-line');
+    lines.forEach(line => {
+        line.addEventListener('click', () => {
+            const startMs = parseInt(line.dataset.start);
+            if (subtitleData.videoElement) {
+                subtitleData.videoElement.currentTime = startMs / 1000;
+            }
+        });
+    });
+}
+
+function cleanupSubtitleSync() {
+    if (subtitleData.syncInterval) {
+        clearInterval(subtitleData.syncInterval);
+        subtitleData.syncInterval = null;
+    }
+    subtitleData.subtitles = [];
+    subtitleData.videoElement = null;
+}
 
 // ============================================================================
 // Full-screen Drag & Drop Upload
