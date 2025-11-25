@@ -4539,4 +4539,247 @@ async function syncToExif(imageId) {
     }
 }
 
+// ============================================================================
+// YouTube Download Functions
+// ============================================================================
+
+let youtubeVideoData = null;
+
+function initYouTubeModal() {
+    const modal = document.getElementById('youtubeModal');
+    const overlay = document.getElementById('youtubeOverlay');
+    const closeBtn = document.getElementById('youtubeClose');
+    const cancelBtn = document.getElementById('youtubeCancelBtn');
+    const infoBtn = document.getElementById('youtubeInfoBtn');
+    const downloadBtn = document.getElementById('youtubeDownloadBtn');
+    const urlInput = document.getElementById('youtubeUrl');
+    const menuBtn = document.getElementById('youtubeDownloadBtnMenu');
+
+    // Open modal from menu
+    if (menuBtn) {
+        menuBtn.addEventListener('click', () => {
+            openYouTubeModal();
+            document.getElementById('moreMenu').classList.remove('show');
+        });
+    }
+
+    // Close handlers
+    if (closeBtn) closeBtn.addEventListener('click', closeYouTubeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeYouTubeModal);
+    if (overlay) overlay.addEventListener('click', closeYouTubeModal);
+
+    // Info button
+    if (infoBtn) {
+        infoBtn.addEventListener('click', () => {
+            const url = urlInput.value.trim();
+            if (url) {
+                fetchYouTubeInfo(url);
+            } else {
+                showToast('Please enter a YouTube URL', 'warning');
+            }
+        });
+    }
+
+    // Download button
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            if (youtubeVideoData) {
+                downloadYouTubeVideo();
+            }
+        });
+    }
+
+    // Enter key in URL input
+    if (urlInput) {
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const url = urlInput.value.trim();
+                if (url) {
+                    fetchYouTubeInfo(url);
+                }
+            }
+        });
+    }
+}
+
+function openYouTubeModal() {
+    const modal = document.getElementById('youtubeModal');
+    modal.style.display = 'block';
+    resetYouTubeModal();
+    document.getElementById('youtubeUrl').focus();
+}
+
+function closeYouTubeModal() {
+    document.getElementById('youtubeModal').style.display = 'none';
+    resetYouTubeModal();
+}
+
+function resetYouTubeModal() {
+    youtubeVideoData = null;
+    document.getElementById('youtubeUrl').value = '';
+    document.getElementById('youtubeVideoInfo').style.display = 'none';
+    document.getElementById('youtubeOptions').style.display = 'none';
+    document.getElementById('youtubeProgress').style.display = 'none';
+    document.getElementById('youtubeResult').style.display = 'none';
+    document.getElementById('youtubeExistsWarning').style.display = 'none';
+    document.getElementById('youtubeDownloadBtn').disabled = true;
+    document.getElementById('youtubeSubtitles').checked = true;
+    document.getElementById('youtubeKeyframes').checked = true;
+}
+
+async function fetchYouTubeInfo(url) {
+    const infoBtn = document.getElementById('youtubeInfoBtn');
+    const originalText = infoBtn.textContent;
+    infoBtn.textContent = '...';
+    infoBtn.disabled = true;
+
+    try {
+        const response = await fetch(`/api/videos/info?url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            showToast(data.error || 'Failed to get video info', 'error');
+            return;
+        }
+
+        youtubeVideoData = data;
+        displayYouTubeInfo(data);
+
+    } catch (error) {
+        console.error('Error fetching YouTube info:', error);
+        showToast('Failed to get video information', 'error');
+    } finally {
+        infoBtn.textContent = originalText;
+        infoBtn.disabled = false;
+    }
+}
+
+function displayYouTubeInfo(data) {
+    const infoSection = document.getElementById('youtubeVideoInfo');
+    const thumbnail = document.getElementById('youtubeThumbnail');
+    const title = document.getElementById('youtubeTitle');
+    const channel = document.getElementById('youtubeChannel');
+    const duration = document.getElementById('youtubeDuration');
+    const existsWarning = document.getElementById('youtubeExistsWarning');
+    const options = document.getElementById('youtubeOptions');
+    const downloadBtn = document.getElementById('youtubeDownloadBtn');
+
+    // Set thumbnail
+    thumbnail.src = data.thumbnail || '';
+    thumbnail.onerror = () => { thumbnail.src = ''; };
+
+    // Set text info
+    title.textContent = data.title || 'Unknown Title';
+    channel.textContent = data.channel || data.uploader || '';
+
+    // Format duration
+    if (data.duration) {
+        const mins = Math.floor(data.duration / 60);
+        const secs = data.duration % 60;
+        duration.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+    } else {
+        duration.textContent = '';
+    }
+
+    // Show exists warning
+    if (data.exists_in_gallery) {
+        existsWarning.style.display = 'block';
+        downloadBtn.textContent = 'Already Exists';
+        downloadBtn.disabled = true;
+    } else {
+        existsWarning.style.display = 'none';
+        downloadBtn.textContent = 'Download';
+        downloadBtn.disabled = false;
+    }
+
+    // Show sections
+    infoSection.style.display = 'block';
+    options.style.display = 'block';
+}
+
+async function downloadYouTubeVideo() {
+    if (!youtubeVideoData) return;
+
+    const downloadBtn = document.getElementById('youtubeDownloadBtn');
+    const progress = document.getElementById('youtubeProgress');
+    const progressText = document.getElementById('youtubeProgressText');
+    const result = document.getElementById('youtubeResult');
+    const resultText = document.getElementById('youtubeResultText');
+    const urlInput = document.getElementById('youtubeUrl');
+
+    const subtitles = document.getElementById('youtubeSubtitles').checked;
+    const keyframes = document.getElementById('youtubeKeyframes').checked;
+
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = 'Downloading...';
+    progress.style.display = 'block';
+    progressText.textContent = 'Starting download...';
+    result.style.display = 'none';
+
+    try {
+        const response = await fetch('/api/videos/download', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                url: urlInput.value.trim(),
+                subtitles: subtitles,
+                keyframes: keyframes
+            })
+        });
+
+        const data = await response.json();
+
+        progress.style.display = 'none';
+
+        if (!response.ok) {
+            showToast(data.error || 'Download failed', 'error');
+            downloadBtn.textContent = 'Download';
+            downloadBtn.disabled = false;
+            return;
+        }
+
+        // Show success
+        result.style.display = 'block';
+
+        if (data.status === 'exists') {
+            result.style.background = 'var(--warning-bg, rgba(255, 193, 7, 0.1))';
+            result.style.color = 'var(--warning-text, #ffc107)';
+            resultText.textContent = 'Video already exists in gallery';
+        } else {
+            result.style.background = 'var(--success-bg, rgba(40, 167, 69, 0.1))';
+            result.style.color = 'var(--success-text, #28a745)';
+
+            let message = `Downloaded: ${data.title || 'Video'}`;
+            if (data.keyframe_count > 0) {
+                message += ` (${data.keyframe_count} keyframes)`;
+            }
+            if (data.subtitle_languages && data.subtitle_languages.length > 0) {
+                message += ` [${data.subtitle_languages.join(', ')}]`;
+            }
+            resultText.textContent = message;
+        }
+
+        downloadBtn.textContent = 'Done';
+        showToast('Video downloaded successfully!', 'success');
+
+        // Reload gallery
+        setTimeout(() => {
+            loadImages();
+        }, 1000);
+
+    } catch (error) {
+        console.error('Error downloading video:', error);
+        showToast('Download failed', 'error');
+        progress.style.display = 'none';
+        downloadBtn.textContent = 'Download';
+        downloadBtn.disabled = false;
+    }
+}
+
+// Initialize YouTube modal on page load
+document.addEventListener('DOMContentLoaded', initYouTubeModal);
+
 console.log('AI Gallery initialized ✨');
