@@ -1288,9 +1288,11 @@ body {
 }
 
 #subtitlePanelContainer {
-    width: 100%;
+    width: 150%;
     max-height: 200px;
     overflow: visible;
+    position: relative;
+    left: -25%;
 }
 
 .image-main-view::before {
