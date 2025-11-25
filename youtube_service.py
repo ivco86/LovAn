@@ -292,9 +292,18 @@ class YouTubeService:
 
         cmd.append(f'https://www.youtube.com/watch?v={youtube_id}')
 
+        # Log the command being run
+        logger.info(f"Running yt-dlp command: {' '.join(cmd)}")
+
         try:
             # Run yt-dlp
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+
+            # Log yt-dlp output for debugging
+            if result.stdout:
+                logger.info(f"yt-dlp stdout: {result.stdout[:2000]}")
+            if result.stderr:
+                logger.warning(f"yt-dlp stderr: {result.stderr[:2000]}")
 
             # Find the downloaded video file first (might have been downloaded despite errors)
             video_file = None
@@ -337,12 +346,17 @@ class YouTubeService:
 
             # Move subtitle files to subtitle directory
             subtitle_files = []
+            logger.info(f"Looking for subtitle files in: {video_dir}")
             for file in os.listdir(video_dir):
+                logger.info(f"Found file: {file}")
                 if file.endswith('.vtt'):
                     src = os.path.join(video_dir, file)
                     dst = os.path.join(subtitle_dir, file)
                     os.rename(src, dst)
                     subtitle_files.append(dst)
+                    logger.info(f"Moved subtitle file: {file} -> {dst}")
+
+            logger.info(f"Total subtitle files found: {len(subtitle_files)}")
 
             if progress_callback:
                 progress_callback('processing', 60, 'Processing subtitles...')
@@ -351,7 +365,9 @@ class YouTubeService:
             parsed_subtitles = {}
             for sub_file in subtitle_files:
                 lang = self._extract_language_from_filename(sub_file)
+                logger.info(f"Parsing subtitle file: {sub_file}, detected language: {lang}")
                 subtitles = self._parse_vtt(sub_file)
+                logger.info(f"Parsed {len(subtitles)} subtitle entries from {sub_file}")
                 if subtitles:
                     parsed_subtitles[lang] = subtitles
 
