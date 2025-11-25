@@ -5833,6 +5833,7 @@ async function uploadFilesDirectly(files) {
 
     let successCount = 0;
     let failCount = 0;
+    const uploadedImageIds = [];
 
     for (const file of files) {
         const formData = new FormData();
@@ -5848,6 +5849,9 @@ async function uploadFilesDirectly(files) {
 
             if (response.ok && data.success) {
                 successCount++;
+                if (data.image_id) {
+                    uploadedImageIds.push(data.image_id);
+                }
             } else {
                 failCount++;
                 console.error(`Failed to upload ${file.name}:`, data.error);
@@ -5869,7 +5873,20 @@ async function uploadFilesDirectly(files) {
 
     // Reload gallery
     if (successCount > 0) {
-        loadImages();
+        await loadImages();
+
+        // Auto-analyze uploaded images with AI
+        if (uploadedImageIds.length > 0) {
+            showToast(`🤖 Auto-analyzing ${uploadedImageIds.length} uploaded file(s)...`, 'info');
+
+            for (const imageId of uploadedImageIds) {
+                try {
+                    await analyzeImage(imageId, 'classic', null);
+                } catch (error) {
+                    console.error(`Auto-analysis failed for image ${imageId}:`, error);
+                }
+            }
+        }
     }
 }
 
