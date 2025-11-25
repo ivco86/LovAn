@@ -182,6 +182,31 @@ def get_subtitles(video_id):
     })
 
 
+@videos_bp.route('/api/images/<int:image_id>/subtitles', methods=['GET'])
+def get_subtitles_by_image(image_id):
+    """Get subtitles for a YouTube video by its image_id"""
+    language = request.args.get('language')
+
+    # Get youtube video by image_id
+    video = db.get_youtube_video_by_image_id(image_id)
+    if not video:
+        return jsonify({'error': 'Not a YouTube video or subtitles not available'}), 404
+
+    subtitles = db.get_video_subtitles(video['id'], language=language)
+
+    # Get available languages
+    all_subtitles = db.get_video_subtitles(video['id'])
+    languages = list(set(sub.get('language', 'unknown') for sub in all_subtitles))
+
+    return jsonify({
+        'image_id': image_id,
+        'youtube_video_id': video['id'],
+        'subtitles': subtitles,
+        'languages': languages,
+        'count': len(subtitles)
+    })
+
+
 @videos_bp.route('/api/videos/search/subtitles', methods=['GET'])
 def search_subtitles():
     """Search across all video subtitles"""

@@ -1528,6 +1528,157 @@ body {
     transform: translateY(-1px);
 }
 
+/* ============ Karaoke Subtitle Panel ============ */
+
+.subtitle-panel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    max-height: 300px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.subtitle-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.subtitle-panel-header h4 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.subtitle-lang-select {
+    padding: 4px 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 12px;
+}
+
+.subtitle-content {
+    flex: 1;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+.subtitle-line {
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin: var(--spacing-xs) 0;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.subtitle-line:hover {
+    background: var(--bg-tertiary);
+}
+
+.subtitle-line.active {
+    background: linear-gradient(135deg, rgba(255, 0, 0, 0.15), rgba(255, 100, 100, 0.1));
+    color: var(--text-primary);
+    font-weight: 500;
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(255, 0, 0, 0.2);
+}
+
+.subtitle-line.upcoming {
+    color: var(--text-secondary);
+}
+
+.subtitle-line .timestamp {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-right: var(--spacing-sm);
+    font-family: monospace;
+}
+
+.subtitle-line.active .timestamp {
+    color: #ff4444;
+}
+
+/* Karaoke word highlighting */
+.subtitle-line .word {
+    display: inline;
+    transition: color 0.15s ease, text-shadow 0.15s ease;
+}
+
+.subtitle-line.active .word.spoken {
+    color: #ff4444;
+    text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+}
+
+/* Teleprompter mode */
+.subtitle-panel.teleprompter-mode {
+    background: #000;
+    border-color: #333;
+}
+
+.subtitle-panel.teleprompter-mode .subtitle-line {
+    color: #666;
+    font-size: 20px;
+    text-align: center;
+}
+
+.subtitle-panel.teleprompter-mode .subtitle-line.active {
+    color: #fff;
+    font-size: 24px;
+    background: transparent;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+.subtitle-panel-controls {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--border-color);
+}
+
+.subtitle-panel-controls button {
+    padding: 4px 8px;
+    font-size: 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.subtitle-panel-controls button:hover {
+    background: var(--bg-hover);
+}
+
+.subtitle-panel-controls button.active {
+    background: #ff4444;
+    color: white;
+    border-color: #ff4444;
+}
+
+/* No subtitles message */
+.no-subtitles {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--text-muted);
+}
+
 /* ============ Forms ============ */
 
 .form-group {
