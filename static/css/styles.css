@@ -943,6 +943,8 @@ body {
     display: block;
     object-fit: cover;
     border-radius: 16px 16px 0 0;
+    aspect-ratio: 3 / 4;
+    background: var(--bg-tertiary);
 }
 
 .image-card-content {
