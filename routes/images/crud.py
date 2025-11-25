@@ -30,12 +30,18 @@ def get_images():
         elif analyzed_param in ('false', '0'):
             analyzed = False
 
+    # YouTube filtering
+    youtube_only = request.args.get('youtube_only', 'false').lower() == 'true'
+    exclude_youtube = request.args.get('exclude_youtube', 'false').lower() == 'true'
+
     images = db.get_all_images(
         limit=limit,
         offset=offset,
         favorites_only=favorites_only,
         media_type=media_type,
-        analyzed=analyzed
+        analyzed=analyzed,
+        youtube_only=youtube_only,
+        exclude_youtube=exclude_youtube
     )
 
     return jsonify({

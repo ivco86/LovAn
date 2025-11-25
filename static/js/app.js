@@ -80,9 +80,9 @@ async function initializeApp() {
     // Check system health
     await checkHealth();
 
-    // Load initial data
+    // Load initial data (exclude YouTube videos from main view)
     await Promise.all([
-        loadImages(),
+        loadImages({ exclude_youtube: 'true' }),
         loadBoards(),
         loadTags(),
         loadExternalApps(),
@@ -1347,7 +1347,7 @@ async function switchView(view, param = null) {
     try {
         switch (view) {
             case 'all':
-                await loadImages();
+                await loadImages({ exclude_youtube: 'true' });
                 updateBreadcrumb('All Images');
                 const allView = document.querySelector('[data-view="all"]');
                 if (allView) allView.classList.add('active');
@@ -1368,10 +1368,17 @@ async function switchView(view, param = null) {
                 break;
 
             case 'videos':
-                await loadImages({ media_type: 'video' });
+                await loadImages({ media_type: 'video', exclude_youtube: 'true' });
                 updateBreadcrumb('Videos');
                 const videosView = document.querySelector('[data-view="videos"]');
                 if (videosView) videosView.classList.add('active');
+                break;
+
+            case 'youtube':
+                await loadImages({ media_type: 'video', youtube_only: 'true' });
+                updateBreadcrumb('YouTube Videos');
+                const youtubeView = document.querySelector('[data-view="youtube"]');
+                if (youtubeView) youtubeView.classList.add('active');
                 break;
 
             case 'board':
@@ -4732,6 +4739,14 @@ function initYouTubeModal() {
     const downloadBtn = document.getElementById('youtubeDownloadBtn');
     const urlInput = document.getElementById('youtubeUrl');
     const menuBtn = document.getElementById('youtubeDownloadBtnMenu');
+    const headerBtn = document.getElementById('youtubeHeaderBtn');
+
+    // Open modal from header button (direct access)
+    if (headerBtn) {
+        headerBtn.addEventListener('click', () => {
+            openYouTubeModal();
+        });
+    }
 
     // Open modal from menu
     if (menuBtn) {
@@ -4803,7 +4818,9 @@ function resetYouTubeModal() {
     document.getElementById('youtubeExistsWarning').style.display = 'none';
     document.getElementById('youtubeDownloadBtn').disabled = true;
     document.getElementById('youtubeSubtitles').checked = true;
+    document.getElementById('youtubeOriginalSubtitles').checked = true;
     document.getElementById('youtubeKeyframes').checked = true;
+    document.getElementById('youtubeQuality').value = '1080';
 }
 
 async function fetchYouTubeInfo(url) {
@@ -4886,8 +4903,10 @@ async function downloadYouTubeVideo() {
     const resultText = document.getElementById('youtubeResultText');
     const urlInput = document.getElementById('youtubeUrl');
 
-    const subtitles = document.getElementById('youtubeSubtitles').checked;
+    const autoSubtitles = document.getElementById('youtubeSubtitles').checked;
+    const originalSubtitles = document.getElementById('youtubeOriginalSubtitles').checked;
     const keyframes = document.getElementById('youtubeKeyframes').checked;
+    const quality = document.getElementById('youtubeQuality').value;
 
     downloadBtn.disabled = true;
     downloadBtn.textContent = 'Downloading...';
@@ -4903,8 +4922,10 @@ async function downloadYouTubeVideo() {
             },
             body: JSON.stringify({
                 url: urlInput.value.trim(),
-                subtitles: subtitles,
-                keyframes: keyframes
+                subtitles: autoSubtitles,
+                original_subtitles: originalSubtitles,
+                keyframes: keyframes,
+                quality: quality
             })
         });
 

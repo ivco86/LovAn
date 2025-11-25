@@ -190,15 +190,19 @@ class YouTubeService:
             return None
 
     def download_video(self, url: str, download_subtitles: bool = True,
+                       original_subtitles: bool = True,
                        extract_keyframes: bool = True,
+                       quality: str = '1080',
                        progress_callback=None) -> Optional[Dict]:
         """
         Download a YouTube video with metadata, subtitles, and keyframes
 
         Args:
             url: YouTube URL or video ID
-            download_subtitles: Whether to download subtitles
+            download_subtitles: Whether to download auto-generated subtitles
+            original_subtitles: Whether to download original subtitles
             extract_keyframes: Whether to extract keyframes
+            quality: Video quality (best, 1080, 720, 480, 360)
             progress_callback: Optional callback(stage, progress, message)
 
         Returns:
@@ -245,19 +249,36 @@ class YouTubeService:
         safe_title = re.sub(r'[^\w\s-]', '', info.get('title', youtube_id)).strip()[:100]
         safe_title = re.sub(r'[-\s]+', '_', safe_title)
         output_template = os.path.join(video_dir, f'{safe_title}_{youtube_id}.%(ext)s')
+
+        # Build format string based on quality setting
+        if quality == 'best':
+            format_str = 'bestvideo+bestaudio/best'
+        else:
+            height = int(quality)
+            format_str = f'bestvideo[height<={height}]+bestaudio/best[height<={height}]'
+
         cmd = self.ytdlp_command + [
-            '-f', PREFERRED_FORMAT,
+            '-f', format_str,
             '--merge-output-format', 'mp4',
             '-o', output_template,
             '--no-playlist',
         ]
 
-        # Add subtitle options (but make them non-blocking)
+        # Add subtitle options
+        sub_langs = []
         if download_subtitles:
+            # Auto-generated subtitles (usually English)
+            cmd.append('--write-auto-subs')
+            sub_langs.append('en')
+
+        if original_subtitles:
+            # Original manual subtitles in all available languages
+            cmd.append('--write-subs')
+            sub_langs.append('all')
+
+        if sub_langs:
             cmd.extend([
-                '--write-subs',
-                '--write-auto-subs',
-                '--sub-langs', 'en',  # Start with just English to avoid rate limiting
+                '--sub-langs', ','.join(set(sub_langs)),
                 '--sub-format', 'vtt/srt/best',
                 '--convert-subs', 'vtt',
             ])

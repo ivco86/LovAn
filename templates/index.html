@@ -34,6 +34,7 @@
                 <span class="icon-sun">☀</span>
                 <span class="icon-moon">☾</span>
             </button>
+            <button class="btn-icon-round youtube-btn" id="youtubeHeaderBtn" aria-label="YouTube Download" title="YouTube Download">▶</button>
             <button class="btn-icon-round" id="uploadBtn" aria-label="Upload" title="Upload">+</button>
             <button class="btn-icon-round" id="selectBtn" aria-label="Select" title="Select">☑</button>
             <div class="dropdown">
@@ -59,6 +60,7 @@
             <button class="category-pill" data-view="favorites">Favorites</button>
             <button class="category-pill" data-view="unanalyzed">Unanalyzed</button>
             <button class="category-pill" data-view="videos">Videos</button>
+            <button class="category-pill youtube-pill" data-view="youtube">YouTube</button>
         </div>
     </div>
 
@@ -969,9 +971,25 @@
                 <!-- Download Options -->
                 <div id="youtubeOptions" style="display: none; margin-top: var(--spacing-md);">
                     <div class="form-group">
+                        <label for="youtubeQuality">Video Quality</label>
+                        <select id="youtubeQuality" style="width: 100%; padding: var(--spacing-sm); background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary);">
+                            <option value="best">Best Available</option>
+                            <option value="1080" selected>1080p (Full HD)</option>
+                            <option value="720">720p (HD)</option>
+                            <option value="480">480p (SD)</option>
+                            <option value="360">360p (Low)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>
                             <input type="checkbox" id="youtubeSubtitles" checked>
-                            Download subtitles
+                            Download auto-generated subtitles
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="youtubeOriginalSubtitles" checked>
+                            Download original subtitles (if available)
                         </label>
                     </div>
                     <div class="form-group">
