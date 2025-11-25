@@ -13,10 +13,13 @@ import sqlite3
 import json
 import threading
 import time
+import logging
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 
 class TTLCache:
@@ -2085,14 +2088,18 @@ class Database:
             return cursor.lastrowid
         except sqlite3.IntegrityError as e:
             # Video already exists, get existing ID
+            logger.info(f"YouTube video already exists (IntegrityError): {e}")
             cursor.execute(
                 "SELECT id FROM youtube_videos WHERE youtube_id = ?",
                 (youtube_id,)
             )
             result = cursor.fetchone()
-            return result['id'] if result else None
+            if result:
+                logger.info(f"Found existing youtube_video with id={result['id']}")
+                return result['id']
+            return None
         except Exception as e:
-            print(f"Error adding YouTube video: {e}")
+            logger.error(f"❌ Error adding YouTube video: {e}", exc_info=True)
             return None
         finally:
             conn.close()
