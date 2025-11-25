@@ -914,13 +914,14 @@ body {
 /* ============ Image Grid ============ */
 
 .image-grid {
-    columns: 236px;
-    column-gap: var(--spacing-md);
+    /* CSS Grid layout - stable, no "snake" effect when adding items */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+    gap: var(--spacing-md);
 }
 
 .image-card {
-    break-inside: avoid;
-    margin-bottom: var(--spacing-md);
+    /* Removed break-inside since we're using grid now */
     background: var(--bg-card);
     border-radius: 16px;
     overflow: hidden;
@@ -928,6 +929,7 @@ body {
     transition: all var(--transition-normal);
     border: 1px solid var(--border-color);
     position: relative;
+    height: fit-content;
 }
 
 .image-card:hover {
@@ -2109,13 +2111,13 @@ body {
 
 @media (max-width: 1400px) {
     .image-grid {
-        columns: 250px;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     }
 }
 
 @media (max-width: 1200px) {
     .image-grid {
-        columns: 220px;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     }
 
     .image-detail-container {
@@ -2157,7 +2159,7 @@ body {
     }
 
     .image-grid {
-        columns: 180px;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     }
 
     .modal-content {
@@ -2181,7 +2183,7 @@ body {
 
 @media (max-width: 600px) {
     .image-grid {
-        columns: 1;
+        grid-template-columns: 1fr;
     }
 
     .header {
