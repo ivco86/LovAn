@@ -914,24 +914,24 @@ body {
 /* ============ Image Grid ============ */
 
 .image-grid {
-    /* CSS Grid layout - stable, no "snake" effect when adding items */
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
-    gap: var(--spacing-md);
+    /* Masonry layout using columns - Pinterest style */
+    display: block;
+    column-count: 7;
+    column-gap: var(--spacing-md);
 }
 
-/* Placeholder cards to fill empty spaces in last row */
+/* Responsive columns - increased counts to reduce card size */
+@media (max-width: 1600px) { .image-grid { column-count: 6; } }
+@media (max-width: 1200px) { .image-grid { column-count: 5; } }
+@media (max-width: 768px) { .image-grid { column-count: 4; } }
+@media (max-width: 480px) { .image-grid { column-count: 2; } }
+
+/* Placeholder cards no longer needed in Masonry */
 .image-card-placeholder {
-    background: var(--bg-tertiary);
-    border-radius: 16px;
-    border: 1px dashed var(--border-color);
-    opacity: 0.3;
-    aspect-ratio: 3 / 4;
-    pointer-events: none;
+    display: none;
 }
 
 .image-card {
-    /* Removed break-inside since we're using grid now */
     background: var(--bg-card);
     border-radius: 16px;
     overflow: hidden;
@@ -939,7 +939,12 @@ body {
     transition: all var(--transition-normal);
     border: 1px solid var(--border-color);
     position: relative;
-    height: fit-content;
+    
+    /* Masonry specific */
+    display: inline-block;
+    width: 100%;
+    margin-bottom: var(--spacing-md);
+    break-inside: avoid;
 }
 
 .image-card:hover {
@@ -953,7 +958,8 @@ body {
     display: block;
     object-fit: cover;
     border-radius: 16px 16px 0 0;
-    aspect-ratio: 3 / 4;
+    /* Allow natural aspect ratio */
+    height: auto;
     background: var(--bg-tertiary);
 }
 

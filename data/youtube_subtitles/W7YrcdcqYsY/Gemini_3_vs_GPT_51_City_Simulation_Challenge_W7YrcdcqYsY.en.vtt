@@ -1,0 +1,296 @@
+WEBVTT
+Kind: captions
+Language: en
+
+00:00:00.480 --> 00:00:06.960
+In this video, I'm going to push the two smartest&nbsp;
+AIs to their limit. Gemini 3 can create beautiful&nbsp;&nbsp;
+
+00:00:06.960 --> 00:00:13.200
+one-shot scenes, like this one it created to&nbsp;
+introduce itself. And I'll be comparing it to GPT&nbsp;&nbsp;
+
+00:00:13.200 --> 00:00:21.600
+5.1, or more specifically GPT 5.1 Codex Max (Extra&nbsp;
+High), but that's not quite as catchy. For really&nbsp;&nbsp;
+
+00:00:21.600 --> 00:00:27.600
+difficult tasks, these are apparently the two best&nbsp;
+AIs in the world. So, I'm going to test them on&nbsp;&nbsp;
+
+00:00:27.600 --> 00:00:34.880
+complex simulation tasks that require planning,&nbsp;
+testing, and iterating over time. The first is a&nbsp;&nbsp;
+
+00:00:34.880 --> 00:00:40.320
+bird flocking simulation set in a beautiful&nbsp;
+nature scene, and the second will be a full&nbsp;&nbsp;
+
+00:00:40.320 --> 00:00:47.760
+city simulation with people and traffic. First&nbsp;
+is bird flocking. It has to be a 3D simulation&nbsp;&nbsp;
+
+00:00:47.760 --> 00:00:53.840
+with realistic bird flocking behavior. I want it&nbsp;
+set in a beautiful nature scene with vegetation,&nbsp;&nbsp;
+
+00:00:53.840 --> 00:00:59.760
+trees, and any extras the model wants to add. I&nbsp;
+also want a bird view where the camera follows&nbsp;&nbsp;
+
+00:00:59.760 --> 00:01:05.120
+a bird to see what it's like to be in the flock.&nbsp;
+It has to use ThreeJS, which is the most popular&nbsp;&nbsp;
+
+00:01:05.120 --> 00:01:09.760
+JavaScript animation library. If you've seen some&nbsp;
+of my other videos, you know the models are pretty&nbsp;&nbsp;
+
+00:01:09.760 --> 00:01:15.040
+good at animating with it. They can use any other&nbsp;
+tools they like, and it has to have basic controls&nbsp;&nbsp;
+
+00:01:15.040 --> 00:01:20.080
+for looking around the simulation. That's a lot&nbsp;
+to get done all at once. So, I'm going to use&nbsp;&nbsp;
+
+00:01:20.080 --> 00:01:26.320
+agentic coding tools to let the models work for a&nbsp;
+long time on the task. I'll use Gemini 3 with the&nbsp;&nbsp;
+
+00:01:26.320 --> 00:01:34.960
+Gemini CLI and I'll use GPT 5.1 Codex Max with&nbsp;
+the Codex CLI. Both with maximum reasoning. The&nbsp;&nbsp;
+
+00:01:34.960 --> 00:01:40.000
+models have to run the simulation themselves to&nbsp;
+test it and take screenshots to view what their&nbsp;&nbsp;
+
+00:01:40.000 --> 00:01:45.440
+simulation actually looks like and see what can be&nbsp;
+improved. And I'm going to ask that every element&nbsp;&nbsp;
+
+00:01:45.440 --> 00:01:50.960
+is as detailed and realistic as possible. I'll add&nbsp;
+the full prompt in the video description if you're&nbsp;&nbsp;
+
+00:01:50.960 --> 00:01:57.680
+interested. This is Gemini 3's bird flocking&nbsp;
+simulation. We can see straight away the birds&nbsp;&nbsp;
+
+00:01:57.680 --> 00:02:03.680
+are flocking in a pretty realistic way. And the&nbsp;
+nature scene looks like a foggy river delta with&nbsp;&nbsp;
+
+00:02:03.680 --> 00:02:09.040
+3D terrain, trees, rocks, and transparent&nbsp;
+streams. Although, if you look closely,&nbsp;&nbsp;
+
+00:02:09.040 --> 00:02:14.720
+the trees don't actually touch the ground. It's&nbsp;
+quite a big world, and the birds explore a lot&nbsp;&nbsp;
+
+00:02:14.720 --> 00:02:21.280
+of it if you let it run. But they do get caught in&nbsp;
+these circles. It has the controls we asked for to&nbsp;&nbsp;
+
+00:02:21.280 --> 00:02:27.120
+tune the simulation parameters like how close the&nbsp;
+birds like to fly to each other and their speed.&nbsp;&nbsp;
+
+00:02:27.120 --> 00:02:32.800
+And if you mess with it, you can get some weird&nbsp;
+behaviors. The bird view is exactly what I wanted,&nbsp;&nbsp;
+
+00:02:32.800 --> 00:02:38.880
+but can be a bit shaky and sometimes breaks. But&nbsp;
+here we can get an idea of how the simulation&nbsp;&nbsp;
+
+00:02:38.880 --> 00:02:45.200
+works. Each bird is flying around independently&nbsp;
+based on some rules like when to turn towards or&nbsp;&nbsp;
+
+00:02:45.200 --> 00:02:51.040
+away from nearby birds. And the flocking behavior&nbsp;
+you see is emergent from these individual bird&nbsp;&nbsp;
+
+00:02:51.040 --> 00:02:56.480
+rules rather than being programmed in at a high&nbsp;
+level. Gemini didn't bother to make the birds&nbsp;&nbsp;
+
+00:02:56.480 --> 00:03:01.520
+interact with the environment and they go straight&nbsp;
+through the trees and the ground. But overall,&nbsp;&nbsp;
+
+00:03:01.520 --> 00:03:08.160
+I'm pretty impressed with Gemini getting this on&nbsp;
+its first try with no intervention from me. GPT&nbsp;&nbsp;
+
+00:03:08.160 --> 00:03:14.720
+5.1 Codex's bird flocks seem a bit more fluid and&nbsp;
+natural, but a few seconds in, they do go flying&nbsp;&nbsp;
+
+00:03:14.720 --> 00:03:20.400
+out of the world and into the abyss, but they do&nbsp;
+eventually come back. The trees meet the ground&nbsp;&nbsp;
+
+00:03:20.400 --> 00:03:25.840
+correctly for this one, but the water feature is&nbsp;
+nowhere near as good as Gemini's. The bird mode&nbsp;&nbsp;
+
+00:03:25.840 --> 00:03:31.120
+is very smooth and looks great when the birds are&nbsp;
+actually flying over the world. And the birds do&nbsp;&nbsp;
+
+00:03:31.120 --> 00:03:36.320
+hit the ground on this one, which is a bit weird,&nbsp;
+but I guess more realistic than Gemini's birds,&nbsp;&nbsp;
+
+00:03:36.320 --> 00:03:41.520
+which go straight through the ground. We have&nbsp;
+the simulation controls similar to Gemini's,&nbsp;&nbsp;
+
+00:03:41.520 --> 00:03:46.320
+which includes bird ground clearance, but even&nbsp;
+with that all the way up, they still sometimes&nbsp;&nbsp;
+
+00:03:46.320 --> 00:03:53.520
+hit the ground. If you play around with the&nbsp;
+controls, you can get some weird flocks. I found&nbsp;&nbsp;
+
+00:03:53.520 --> 00:03:59.280
+this lonely bird and managed to catch the moment.&nbsp;
+It detects a nearby flock and turns to join it.
+
+00:04:02.400 --> 00:04:07.760
+Codex's birds were much nicer to play with than&nbsp;
+Gemini's, but Codex also made the biggest mistake&nbsp;&nbsp;
+
+00:04:07.760 --> 00:04:13.120
+of letting the birds fly off the map. To me, they&nbsp;
+both did really well with different pros and cons,&nbsp;&nbsp;
+
+00:04:13.120 --> 00:04:17.920
+so I'm going to make the next challenge even more&nbsp;
+difficult to see if they can handle it. The next&nbsp;&nbsp;
+
+00:04:17.920 --> 00:04:24.000
+challenge is to build an entire city. I want it&nbsp;
+to be a 3D simulation in ThreeJS. It has to have&nbsp;&nbsp;
+
+00:04:24.000 --> 00:04:29.760
+buildings, streets, vegetation, parks, and other&nbsp;
+things that should go in a city. It needs to have&nbsp;&nbsp;
+
+00:04:29.760 --> 00:04:35.520
+people walking around and cars driving around&nbsp;
+with realistic traffic interactions. I'm going&nbsp;&nbsp;
+
+00:04:35.520 --> 00:04:40.880
+to use the agentic coding tools again to let the&nbsp;
+models run and test their code, take screenshots,&nbsp;&nbsp;
+
+00:04:40.880 --> 00:04:46.880
+and iterate based on what they see. Here is Gemini&nbsp;
+3's city. It took a few tries. It built a couple&nbsp;&nbsp;
+
+00:04:46.880 --> 00:04:51.760
+of cities that just didn't work, and it could&nbsp;
+clearly see they didn't work from the screenshots,&nbsp;&nbsp;
+
+00:04:51.760 --> 00:04:56.880
+but it just didn't care. And even after I asked&nbsp;
+Gemini to fix it, it just pretended that it was&nbsp;&nbsp;
+
+00:04:56.880 --> 00:05:02.160
+fixed. But eventually it built this city which&nbsp;
+has cars and people walking around just like I&nbsp;&nbsp;
+
+00:05:02.160 --> 00:05:07.920
+asked. These parks are scattered around and each&nbsp;
+one is a bit different. The people have a little&nbsp;&nbsp;
+
+00:05:07.920 --> 00:05:12.960
+walking animation and they walk on the sidewalks&nbsp;
+although some of the sidewalks are missing and&nbsp;&nbsp;
+
+00:05:12.960 --> 00:05:18.080
+they use the road crossings but they do not care&nbsp;
+for red lights and they walk straight through&nbsp;&nbsp;
+
+00:05:18.080 --> 00:05:24.800
+cars. The cars do drive on the road and stop at&nbsp;
+traffic lights but the rules are a bit strange.&nbsp;&nbsp;
+
+00:05:24.800 --> 00:05:29.520
+Like this car is driving on the right and then&nbsp;
+switches to the left. After about a minute, this&nbsp;&nbsp;
+
+00:05:29.520 --> 00:05:34.480
+causes the entire city to get backed up while cars&nbsp;
+wait for someone on the wrong side of the road&nbsp;&nbsp;
+
+00:05:34.480 --> 00:05:41.680
+to move. You can also change the time of day and&nbsp;
+nighttime has a very different vibe. But overall,&nbsp;&nbsp;
+
+00:05:41.680 --> 00:05:48.960
+I'm going to say this is a pretty good job from&nbsp;
+Gemini 3. Codex's city looks okay from a distance,&nbsp;&nbsp;
+
+00:05:48.960 --> 00:05:54.320
+but is full of weird issues. Half of the&nbsp;
+streets are oriented the wrong way and&nbsp;&nbsp;
+
+00:05:54.320 --> 00:05:58.240
+things just seem to be placed randomly.&nbsp;
+Like trees are in the middle of the road&nbsp;&nbsp;
+
+00:05:58.240 --> 00:06:03.600
+and traffic lights don't point the right way. I&nbsp;
+thought the cars were driving sideways at first,&nbsp;&nbsp;
+
+00:06:03.600 --> 00:06:08.800
+but the lights and everything are on the right&nbsp;
+way, so they are just very wide. The traffic&nbsp;&nbsp;
+
+00:06:08.800 --> 00:06:14.880
+only really functions for about 10 or 15 seconds.&nbsp;
+Then the cars just seem to stop and never start&nbsp;&nbsp;
+
+00:06:14.880 --> 00:06:19.920
+again. The people are also nowhere near as good&nbsp;
+as Gemini's. They kind of just float around and&nbsp;&nbsp;
+
+00:06:19.920 --> 00:06:25.200
+have no walking animation. Overall, I'm going to&nbsp;
+give Codex a fail on this one. There are just too&nbsp;&nbsp;
+
+00:06:25.200 --> 00:06:30.320
+many issues. I gave it a couple of tries, too,&nbsp;
+because Gemini had a couple of failed attempts.&nbsp;&nbsp;
+
+00:06:30.320 --> 00:06:35.040
+It was much more reliable than Gemini at getting&nbsp;
+it working, but it just couldn't get it much&nbsp;&nbsp;
+
+00:06:35.040 --> 00:06:39.920
+better than this. I think the main issue is it&nbsp;
+just doesn't look at the screenshots properly,&nbsp;&nbsp;
+
+00:06:39.920 --> 00:06:44.640
+so it just misses obvious glaring issues&nbsp;
+right in front of it. Even though I love&nbsp;&nbsp;
+
+00:06:44.640 --> 00:06:50.000
+Codex and use it everyday, I'm going to say&nbsp;
+Gemini wins this comparison. It did struggle&nbsp;&nbsp;
+
+00:06:50.000 --> 00:06:56.960
+with the agentic coding more than GPT 5.1 Codex,&nbsp;
+but its spatial reasoning is on another level.&nbsp;&nbsp;
+
+00:06:56.960 --> 00:07:04.000
+Thanks for watching. I'll put the full prompt and&nbsp;
+process I use in the video description. Cheers.
+

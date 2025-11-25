@@ -1233,6 +1233,11 @@ function createImageCard(image, useLazyLoading = false) {
 
     // OPTIMIZED: Use data-src for lazy loading with IntersectionObserver
     const thumbUrl = `/api/images/${image.id}/thumbnail?size=500`;
+    // Add aspect-ratio to style to prevent layout shift in Masonry layout
+    const styleAttr = (image.width && image.height) 
+        ? `style="aspect-ratio: ${image.width}/${image.height};"` 
+        : '';
+        
     const imgSrcAttr = useLazyLoading
         ? `data-src="${thumbUrl}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E"`
         : `src="${thumbUrl}"`;
@@ -1247,6 +1252,7 @@ function createImageCard(image, useLazyLoading = false) {
                     <img
                         class="image-card-image"
                         ${imgSrcAttr}
+                        ${styleAttr}
                         alt="${escapeHtml(image.filename)}"
                         loading="lazy"
                     >
@@ -1258,6 +1264,7 @@ function createImageCard(image, useLazyLoading = false) {
             `<img
                     class="image-card-image"
                     ${imgSrcAttr}
+                    ${styleAttr}
                     alt="${escapeHtml(image.filename)}"
                     loading="lazy"
                 >`

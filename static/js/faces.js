@@ -291,6 +291,7 @@ async function showPeopleView() {
 
         const people = data.people || [];
         const imageGrid = document.getElementById('imageGrid');
+        if (imageGrid) imageGrid.style.display = 'grid';
         const breadcrumb = document.getElementById('breadcrumb');
 
         // Update breadcrumb
@@ -392,6 +393,7 @@ async function showPersonImages(personId, personName) {
 
         const faces = data.faces || [];
         const imageGrid = document.getElementById('imageGrid');
+        if (imageGrid) imageGrid.style.display = 'grid';
         const breadcrumb = document.getElementById('breadcrumb');
 
         // Update breadcrumb

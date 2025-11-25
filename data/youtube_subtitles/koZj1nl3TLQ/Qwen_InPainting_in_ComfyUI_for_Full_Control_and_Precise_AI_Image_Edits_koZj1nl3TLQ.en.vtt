@@ -1,0 +1,1346 @@
+WEBVTT
+Kind: captions
+Language: en
+
+00:00:00.000 --> 00:00:02.922
+Hey everyone, welcome back.
+In today's video, we are going
+
+00:00:02.934 --> 00:00:05.620
+to talk about in-painting
+using the Qwen model series.
+
+00:00:05.700 --> 00:00:08.499
+Here's an example. We
+have our input image on the left
+
+00:00:08.511 --> 00:00:11.220
+side and then the in-painted
+image on the right side.
+
+00:00:11.260 --> 00:00:14.019
+Basically, in-painting
+will allow us to select
+
+00:00:14.031 --> 00:00:16.860
+an area. In this case,
+it's the chest area here.
+
+00:00:16.920 --> 00:00:22.280
+And then we tell the model to add
+or remove something from the image.
+
+00:00:22.460 --> 00:00:26.020
+In this specific case, I am
+adding a tattoo on the chest area.
+
+00:00:26.020 --> 00:00:28.839
+Now with in-painting,
+you can keep on repeating
+
+00:00:28.851 --> 00:00:31.740
+this process and you
+can get different variation.
+
+00:00:31.880 --> 00:00:35.000
+It will always be at that exact spot.
+
+00:00:35.080 --> 00:00:38.183
+So it's always here on
+the left side of the woman
+
+00:00:38.195 --> 00:00:41.060
+and the size will always
+match like this here.
+
+00:00:41.180 --> 00:00:44.378
+Here's another one. Now if
+you want to, you can increase the
+
+00:00:44.390 --> 00:00:47.600
+size as well and you get
+control over the size, the position.
+
+00:00:47.880 --> 00:00:51.181
+And you will be able to
+dictate shape. In this particular
+
+00:00:51.193 --> 00:00:54.620
+case, it's just a tattoo. So I
+can modify the shape as well.
+
+00:00:54.620 --> 00:00:57.550
+Now additionally, you
+can do stuff like this, where
+
+00:00:57.562 --> 00:01:00.560
+we have a blonde woman.
+We can change the hair color.
+
+00:01:00.660 --> 00:01:04.020
+We can add things at the back
+to give that perspective look.
+
+00:01:04.180 --> 00:01:06.941
+In this particular case,
+I am adding text on top
+
+00:01:06.953 --> 00:01:09.840
+of her, which makes it
+as if the woman is in front.
+
+00:01:09.900 --> 00:01:13.380
+Then we have a wall and then the
+text is in the middle ground there.
+
+00:01:13.660 --> 00:01:16.560
+And here's another one where
+we are changing the hair color.
+
+00:01:16.640 --> 00:01:21.000
+I would like to point out that
+in-painting is different from editing.
+
+00:01:21.000 --> 00:01:26.380
+Here's an example of editing. So this
+is my input image at the top left here.
+
+00:01:26.400 --> 00:01:31.907
+And when I am editing, even though I
+am not changing anything in the image, you
+
+00:01:31.919 --> 00:01:37.300
+can see that we have a slight, it's a
+subtle degradation of the image quality.
+
+00:01:37.700 --> 00:01:40.964
+So this one is sharp, this
+one is slightly degraded.
+
+00:01:40.976 --> 00:01:43.820
+If I zoom out, they look
+pretty much the same.
+
+00:01:43.820 --> 00:01:48.040
+On YouTube, I'm not sure if
+you're able to appreciate this subtle
+
+00:01:48.052 --> 00:01:52.220
+change, but when editing it, it
+will regenerate the entire image.
+
+00:01:52.400 --> 00:01:57.220
+When we are doing in-painting, it's only
+in-painting the area that we are marking.
+
+00:01:57.480 --> 00:02:00.963
+However, there are advantages
+to editing. For example, in this
+
+00:02:00.975 --> 00:02:04.360
+specific case here, I'm saying
+change the hair color to blue.
+
+00:02:04.480 --> 00:02:08.185
+And we can see that
+the hair style is preserved.
+
+00:02:08.197 --> 00:02:11.080
+It's only the hair
+color that changes.
+
+00:02:11.080 --> 00:02:14.053
+If you take a look at
+the in-painting example,
+
+00:02:14.065 --> 00:02:16.860
+we see that the hair
+style changes slightly.
+
+00:02:17.160 --> 00:02:20.851
+So you can take a look
+here, this side, the editing one
+
+00:02:20.863 --> 00:02:24.500
+is preserved, but in here
+we lose that original detail.
+
+00:02:24.720 --> 00:02:26.920
+There are advantages
+and disadvantages to
+
+00:02:26.932 --> 00:02:29.460
+in-painting. The same
+thing is true for editing.
+
+00:02:29.820 --> 00:02:35.440
+Today's video will focus only on image
+in-painting using the Qwen model series.
+
+00:02:35.440 --> 00:02:38.765
+I would like to shout out Franc
+Aleu for asking this question
+
+00:02:38.777 --> 00:02:42.060
+on how to do in-painting to
+change just one part of an image.
+
+00:02:42.420 --> 00:02:45.525
+Ok, first you'll need to
+make sure that you've at
+
+00:02:45.537 --> 00:02:48.840
+least updated your ComfyUI
+once after September 2025.
+
+00:02:49.020 --> 00:02:52.903
+If you have not done so, you
+can go into your ComfyUI portable
+
+00:02:52.915 --> 00:02:57.120
+folder, update folder, and in here
+just click on update_ComfyUI.BAT.
+
+00:02:57.440 --> 00:03:00.968
+Alternatively, you can also
+go into the manager at the top
+
+00:03:00.980 --> 00:03:04.340
+and then update ComfyUI
+from here, restart your ComfyUI.
+
+00:03:04.340 --> 00:03:07.413
+In the description of this
+video, you will get a GitHub
+
+00:03:07.425 --> 00:03:10.180
+repository that will take
+you to these files here.
+
+00:03:10.240 --> 00:03:13.695
+There are a couple of
+examples that I've added. You can
+
+00:03:13.707 --> 00:03:17.360
+always open them and study.
+I have one for editing as well.
+
+00:03:17.380 --> 00:03:20.184
+Now for today's video, we
+are going to use the Qwen
+
+00:03:20.196 --> 00:03:23.500
+in-painting workflow. Click
+on it, drag it inside of ComfyUI.
+
+00:03:23.620 --> 00:03:28.122
+And at this point, some of you
+may get a notification here telling
+
+00:03:28.134 --> 00:03:32.580
+you that you are missing some
+custom nodes or even missing models.
+
+00:03:32.580 --> 00:03:36.449
+If you get that notification, just click
+on the download button to download
+
+00:03:36.461 --> 00:03:40.240
+the models. If you get missing custom
+nodes, go to the manager at the top.
+
+00:03:40.360 --> 00:03:44.117
+Click on manager, then click
+on install missing custom nodes.
+
+00:03:44.129 --> 00:03:48.080
+And in here you get a list of all
+the nodes that you are missing.
+
+00:03:48.380 --> 00:03:51.355
+Click on this checkbox
+here. It will select everything.
+
+00:03:51.367 --> 00:03:54.300
+And at the bottom here,
+you will get an install button.
+
+00:03:54.380 --> 00:03:56.795
+Click on it, wait for it to
+complete. Once completed,
+
+00:03:56.807 --> 00:03:59.100
+once again, in here there
+will be a restart button.
+
+00:03:59.100 --> 00:04:02.344
+Click on it, wait for it to
+complete. And then you can come
+
+00:04:02.356 --> 00:04:05.340
+back here, close out of your
+manager, and do a refresh.
+
+00:04:05.460 --> 00:04:08.972
+Press F5, it will reload and
+everything should be good now. If
+
+00:04:08.984 --> 00:04:12.340
+you have any issues, let me
+know in the comments down below.
+
+00:04:12.420 --> 00:04:15.280
+For explanation purposes,
+I'm going to go and
+
+00:04:15.292 --> 00:04:18.600
+rebuild this workflow. I'll
+be starting from scratch.
+
+00:04:19.060 --> 00:04:22.051
+We'll double click on
+an empty space and
+
+00:04:22.063 --> 00:04:25.360
+search for gguf and add
+the UNET Loader gguf.
+
+00:04:25.360 --> 00:04:28.221
+Now because I'm using
+the gguf, I do not have the
+
+00:04:28.233 --> 00:04:31.220
+clip and VAE. I will need
+to supply them separately.
+
+00:04:31.520 --> 00:04:34.930
+Once again, I'm going to
+double click and search for load
+
+00:04:34.942 --> 00:04:38.660
+clip, Add it. And I will also add
+a load VAE node. There we go.
+
+00:04:38.680 --> 00:04:42.692
+Now this point will need to
+have a Qwen image model. We'll
+
+00:04:42.704 --> 00:04:46.660
+be using the Qwen image. I
+will be using the gguf version.
+
+00:04:46.760 --> 00:04:50.710
+This gguf version was
+specifically converted to work inside
+
+00:04:50.722 --> 00:04:54.420
+of ComfyUI. And you do
+need to install this custom node.
+
+00:04:54.420 --> 00:04:57.158
+So once you drag and
+drop the workflow inside
+
+00:04:57.170 --> 00:04:59.860
+your ComfyUI, it will
+tell you to install it.
+
+00:04:59.900 --> 00:05:03.408
+Now to download the
+model, we go into files here.
+
+00:05:03.420 --> 00:05:06.940
+And you will get the Q2
+all the way to Q8 version.
+
+00:05:07.220 --> 00:05:09.880
+The lower the number,
+the worse the quality. And
+
+00:05:09.892 --> 00:05:12.400
+the higher the number,
+the better the quality.
+
+00:05:12.540 --> 00:05:16.608
+Now I'm going to select a middle
+ground here. I'm going to go with the
+
+00:05:16.620 --> 00:05:20.700
+Q4 version. And to download it,
+you click on this download button here.
+
+00:05:20.700 --> 00:05:23.593
+Now once downloaded, it will
+be in your downloads folder.
+
+00:05:23.605 --> 00:05:26.160
+Go into your downloads
+folder, press Ctrl X to cut.
+
+00:05:26.320 --> 00:05:30.623
+Go into ComfyUI main folder,
+the models folder. And then look for
+
+00:05:30.635 --> 00:05:34.820
+unet folder. Inside it, you'll
+need to paste that model in here.
+
+00:05:34.920 --> 00:05:38.645
+Now once inside of ComfyUI,
+press R to reload the node definitions.
+
+00:05:38.657 --> 00:05:41.900
+And then you should be able
+to select your model from here.
+
+00:05:41.960 --> 00:05:44.747
+Now we'll take the
+model, drag out. And this
+
+00:05:44.759 --> 00:05:47.620
+will go inside a k-sampler.
+Add the k-sampler.
+
+00:05:47.620 --> 00:05:50.679
+For the k-sampler, we are
+missing these three inputs
+
+00:05:50.691 --> 00:05:53.820
+here. We need a positive,
+negative and a latent image.
+
+00:05:54.000 --> 00:05:57.686
+For positive, click on it, drag
+out. We will use the clip text
+
+00:05:57.698 --> 00:06:01.220
+encode. This is the default
+one that comes built in ComfyUI.
+
+00:06:01.300 --> 00:06:04.721
+I'm just going to make some
+space. By the way, shortcut here,
+
+00:06:04.733 --> 00:06:08.000
+you can press and hold Ctrl,
+drag to select multiple nodes.
+
+00:06:08.100 --> 00:06:11.583
+And then when you drag
+them, it will move as one.
+
+00:06:11.595 --> 00:06:14.740
+Now we'll duplicate
+the positive text encode.
+
+00:06:14.740 --> 00:06:18.603
+You can press and hold Alt, drag
+down, you will get a copy. Connect
+
+00:06:18.615 --> 00:06:22.660
+this one with negative. And then
+we just need to connect the clip here.
+
+00:06:22.740 --> 00:06:25.789
+Alright, now we are missing
+the latent image. And considering
+
+00:06:25.801 --> 00:06:28.960
+that we are doing inpainting, we
+need to provide an input image.
+
+00:06:29.200 --> 00:06:32.257
+To get an input image,
+we are going to double click.
+
+00:06:32.269 --> 00:06:35.280
+Search for load image.
+And we'll use this node here.
+
+00:06:35.400 --> 00:06:38.841
+However, the image cannot
+go directly inside of k-sampler.
+
+00:06:38.853 --> 00:06:41.780
+We'll need to convert the
+image to a latent space.
+
+00:06:41.780 --> 00:06:45.553
+To do this, drag the image
+out and select VAE encode.
+
+00:06:45.565 --> 00:06:48.860
+This requires the VAE.
+We'll pass it from here.
+
+00:06:49.200 --> 00:06:53.016
+And the output of this latent
+can go into k-sampler. Now we'll
+
+00:06:53.028 --> 00:06:57.160
+finish the workflow by connecting
+the output latent to a VAE decode.
+
+00:06:57.260 --> 00:07:02.120
+This requires the VAE as well.
+So take the VAE, connect it. And
+
+00:07:02.132 --> 00:07:07.080
+then the image can go out as a
+preview node or a save image node.
+
+00:07:07.080 --> 00:07:11.174
+Now at this point, all that
+we've done is create an image to
+
+00:07:11.186 --> 00:07:15.360
+image workflow. We'll need to
+add the ability to mask an area.
+
+00:07:15.420 --> 00:07:19.904
+Right now, we can go into our
+image. I'm going to select the image
+
+00:07:19.916 --> 00:07:24.480
+from the demo. We can right click
+on it, select open in mask editor.
+
+00:07:24.620 --> 00:07:27.117
+And then on the right
+side here, you will get your
+
+00:07:27.129 --> 00:07:30.080
+controls. The thickness will
+control the size of your brush.
+
+00:07:30.180 --> 00:07:33.062
+You can decrease it, get a
+smaller brush, increase it to
+
+00:07:33.074 --> 00:07:36.120
+get a bigger brush. I'm going
+to make a selection like this.
+
+00:07:36.120 --> 00:07:41.097
+Click on save. Now I have a mask in
+here. The load image will also output a
+
+00:07:41.109 --> 00:07:46.360
+mask, but I have no way of connecting
+the mask to my current workflow right now.
+
+00:07:46.420 --> 00:07:49.348
+For this, we are going
+to double click on an
+
+00:07:49.360 --> 00:07:52.300
+empty space and search
+for Alimama like this.
+
+00:07:52.500 --> 00:07:55.148
+We will add the
+controlnet inpainting
+
+00:07:55.160 --> 00:07:58.240
+Alimama apply node.
+This is a built in node.
+
+00:07:58.340 --> 00:08:02.380
+You need to make sure that you have
+your ComfyUI up to date to see this node.
+
+00:08:02.380 --> 00:08:05.649
+Look at it. We can see that
+this one has a mask input,
+
+00:08:05.661 --> 00:08:09.120
+which is perfect. So we are
+going to make some space here.
+
+00:08:09.340 --> 00:08:14.720
+This controlnet will go in between the
+clip section and the k-sampler section.
+
+00:08:14.740 --> 00:08:18.791
+We'll connect the output from
+the Alimama apply controlnet to our
+
+00:08:18.803 --> 00:08:22.620
+k-sampler. So positive goes
+to positive, negative to negative.
+
+00:08:22.880 --> 00:08:26.879
+And then the clip text encode
+positive will go here, negative
+
+00:08:26.891 --> 00:08:31.160
+here. We can connect things we
+already have. So VAE will go there.
+
+00:08:31.160 --> 00:08:34.558
+And then for our image,
+we'll have both the image and
+
+00:08:34.570 --> 00:08:37.980
+the mask. So I'm just
+going to arrange this like this.
+
+00:08:38.100 --> 00:08:40.000
+The workflow at this
+point should look like this.
+
+00:08:40.600 --> 00:08:43.331
+Now, even though
+we've added the mask, the
+
+00:08:43.343 --> 00:08:46.660
+k-sampler will actually
+regenerate the entire image.
+
+00:08:46.740 --> 00:08:51.100
+That is because we are passing the
+entire image to our k-sampler here.
+
+00:08:51.120 --> 00:08:54.967
+So we can see that the
+image node goes into this VAE
+
+00:08:54.979 --> 00:08:58.620
+encode, but there's no
+option for masking in here.
+
+00:08:58.620 --> 00:09:01.956
+We'll need to modify our
+workflow slightly to add this
+
+00:09:01.968 --> 00:09:05.560
+masking information and then
+pass it over to our k-sampler.
+
+00:09:05.660 --> 00:09:08.815
+To do this, we'll take
+the latent output from VAE
+
+00:09:08.827 --> 00:09:12.120
+encode, drag out and
+select a set latent noise mask.
+
+00:09:12.160 --> 00:09:15.840
+This one will take a latent and
+then combine it with a mask.
+
+00:09:15.980 --> 00:09:19.640
+We'll take our mask, pass it to
+our set latent noise mask node.
+
+00:09:19.740 --> 00:09:24.380
+And then the latent output from this
+node will go into the k-sampler here.
+
+00:09:24.380 --> 00:09:27.797
+This set latent noise
+mask is not going to do a
+
+00:09:27.809 --> 00:09:31.380
+hard cutoff around the
+edge of our mask like this.
+
+00:09:31.440 --> 00:09:35.200
+It will actually have a buffer
+window, something like this.
+
+00:09:35.280 --> 00:09:39.100
+This is just a representation, by the
+way, because everything is in latent space.
+
+00:09:39.200 --> 00:09:42.920
+We do have this extra information
+that we are passing to the k-sampler.
+
+00:09:43.020 --> 00:09:46.480
+This way the k-sampler
+knows what is around the area.
+
+00:09:46.500 --> 00:09:50.136
+And when it generates the
+final output, it will be able
+
+00:09:50.148 --> 00:09:53.600
+to blend the in-paint area
+with the surrounding area.
+
+00:09:53.600 --> 00:09:57.038
+Now, right now, this is the
+minimum that you will need
+
+00:09:57.050 --> 00:10:00.500
+in order to do in-painting
+using the Qwen Image series.
+
+00:10:00.540 --> 00:10:04.860
+I'm going to go ahead and in this
+case, let's just do a flower attribute.
+
+00:10:05.000 --> 00:10:10.840
+In the k-sampler here, the number of
+steps will be 20, the CFG will be 1.0.
+
+00:10:11.260 --> 00:10:16.860
+And because we are using a CFG of 1.0,
+we will not be adding any negative prompts.
+
+00:10:17.120 --> 00:10:22.400
+In the controlnet in-painting alimama
+apply, we need to add the controlnet model.
+
+00:10:22.400 --> 00:10:27.180
+So take the controlnet, drag out,
+and we'll select a load controlnet model.
+
+00:10:27.280 --> 00:10:30.594
+Now from here, we are
+going to add the Qwen Image
+
+00:10:30.606 --> 00:10:33.600
+Instant X controlnet
+in-painting.safetensors.
+
+00:10:33.720 --> 00:10:36.572
+If you do not have this
+model, you can go into
+
+00:10:36.584 --> 00:10:39.570
+manager at the top, then
+go inside model manager.
+
+00:10:40.140 --> 00:10:44.000
+In here, at the search bar here,
+we are going to search for Qwen.
+
+00:10:44.060 --> 00:10:47.740
+And then scroll down until
+you see the type controlnet.
+
+00:10:47.740 --> 00:10:54.620
+And then select the one that says
+Qwen Image Instant X controlnet in-paint.
+
+00:10:54.920 --> 00:10:56.768
+This is the one. You
+will get an install button
+
+00:10:56.780 --> 00:10:58.640
+here. Click on install,
+wait for it to complete.
+
+00:10:58.900 --> 00:11:01.820
+It will automatically place
+it in the correct folder.
+
+00:11:01.960 --> 00:11:05.602
+Once it's completed, press R
+on your keyboard, go into the
+
+00:11:05.614 --> 00:11:09.640
+drop-down, search for Qwen,
+and just select the in-paint version.
+
+00:11:09.940 --> 00:11:14.960
+For the load clip, we'll go into the clip
+name here and search for Qwen. Add it.
+
+00:11:14.960 --> 00:11:20.160
+The type will also be a Qwen
+Image. Then the device can be default.
+
+00:11:20.580 --> 00:11:23.960
+The load VAE, search for
+Qwen Image VAE as well.
+
+00:11:24.080 --> 00:11:26.158
+By the way, in case you
+do not have these two, when
+
+00:11:26.170 --> 00:11:28.140
+you drag and drop the
+workload inside of ComfyUI,
+
+00:11:28.460 --> 00:11:30.900
+it will ask you to download
+these two models.
+
+00:11:31.240 --> 00:11:34.440
+In case you are having any difficulty, let
+me know in the comments down below.
+
+00:11:34.620 --> 00:11:38.240
+Okay, so we should be good. Let's
+click on queue prompt or run at the top.
+
+00:11:38.320 --> 00:11:42.460
+Alright, I ended up getting a
+few errors inside of ComfyUI.
+
+00:11:42.460 --> 00:11:45.017
+And I found out that
+ComfyUI got updated.
+
+00:11:45.029 --> 00:11:47.720
+The latest version is
+not working right now.
+
+00:11:47.740 --> 00:11:51.872
+So what I did is I went into
+the manager, clicked on switch
+
+00:11:51.884 --> 00:11:56.580
+ComfyUI, and then I switched to
+the previous version, which is 3.67.
+
+00:11:57.300 --> 00:12:00.060
+So this version probably
+got released last night
+
+00:12:00.072 --> 00:12:02.900
+because I tested this
+workflow and it was working.
+
+00:12:02.920 --> 00:12:05.080
+And now in the latest
+version, it's no longer working.
+
+00:12:05.200 --> 00:12:08.119
+And after that, I restarted
+ComfyUI, run the workflow
+
+00:12:08.131 --> 00:12:10.900
+exactly like this, and I
+was able to get my result.
+
+00:12:10.900 --> 00:12:13.483
+Now, I'm not sure if that
+update affects other Qwen
+
+00:12:13.495 --> 00:12:16.040
+models, but if it does,
+now you know how to fix it.
+
+00:12:16.160 --> 00:12:18.460
+Okay, so let's take a
+look at the terminal here.
+
+00:12:18.840 --> 00:12:22.940
+So 20 steps for me takes about
+a minute, 30 seconds to generate.
+
+00:12:23.040 --> 00:12:27.240
+And this is too long when experimenting
+and trying to get a good result.
+
+00:12:27.300 --> 00:12:30.365
+So the first thing that
+we can do to improve
+
+00:12:30.377 --> 00:12:33.180
+this workflow will be
+to add a load LoRa.
+
+00:12:33.280 --> 00:12:37.280
+And I'm going to select the
+LoRa Loader model only version.
+
+00:12:37.280 --> 00:12:40.390
+This one will patch our
+model and will allow us to
+
+00:12:40.402 --> 00:12:43.340
+use four steps instead
+of 20 as it is right now.
+
+00:12:43.360 --> 00:12:46.651
+We'll take the model,
+connect it with the Load LoRa
+
+00:12:46.663 --> 00:12:50.220
+node, and then the model
+output goes into the k-sampler.
+
+00:12:50.260 --> 00:12:54.060
+Now, I'm going to select the
+Qwen Image Lightning four steps V2.
+
+00:12:54.180 --> 00:12:58.053
+There's also an 8 steps, but with
+this model here, you can quickly
+
+00:12:58.065 --> 00:13:01.660
+bypass this to go back to 20
+steps if you need higher quality.
+
+00:13:01.860 --> 00:13:05.940
+And then if you are experimenting, you
+can enable the LoRa to go to four steps.
+
+00:13:05.940 --> 00:13:08.940
+Okay, it's completed. And this
+time, I don't see any changes.
+
+00:13:09.040 --> 00:13:12.860
+If this happens, we'll have to go into
+our prompt and give a better prompt.
+
+00:13:13.200 --> 00:13:17.040
+Now we have a better image, I
+would say. We have a flower pattern.
+
+00:13:17.220 --> 00:13:21.789
+And all I've done is change my
+previous prompt that was saying a flower
+
+00:13:21.801 --> 00:13:26.700
+tattoo to describing the image and
+then adding what I want to add at the end.
+
+00:13:26.720 --> 00:13:29.553
+So basically, I said a
+beautiful woman with a
+
+00:13:29.565 --> 00:13:32.720
+flower-shaped tattoo on
+the left side of her chest.
+
+00:13:32.720 --> 00:13:38.685
+When you are in painting, it is best to have
+a descriptive prompt compared to when you
+
+00:13:38.697 --> 00:13:44.400
+are editing where you can get by by just
+saying change hair color from red to blue.
+
+00:13:44.500 --> 00:13:47.645
+Editing, you will give
+instructions to the model.
+
+00:13:47.657 --> 00:13:50.940
+In painting, you will describe
+what you want to see.
+
+00:13:51.120 --> 00:13:53.519
+Now, we can do better.
+Right now, it's good.
+
+00:13:53.531 --> 00:13:55.620
+Actually, this is a
+pretty good result.
+
+00:13:55.680 --> 00:13:59.680
+But let's see if we can improve
+it by adding one more node.
+
+00:13:59.680 --> 00:14:03.607
+I'm going to go in between
+the Lora and the k-sampler.
+
+00:14:03.619 --> 00:14:07.200
+Double click and add
+AuraFlow. Just search for it.
+
+00:14:07.240 --> 00:14:12.480
+And I'm going to add the model sampling
+AuraFlow node. This is built in as well.
+
+00:14:12.920 --> 00:14:15.780
+It will take the model,
+which is the patched version
+
+00:14:15.792 --> 00:14:18.880
+from the Lora, and the output
+will go into the k-sampler.
+
+00:14:18.960 --> 00:14:22.288
+Alright, you can think of
+the k-sampler as an artist.
+
+00:14:22.300 --> 00:14:25.640
+And then our checkpoint
+here is going to be the brain.
+
+00:14:25.640 --> 00:14:29.712
+It has knowledge over how the
+image is supposed to look, what a
+
+00:14:29.724 --> 00:14:33.680
+flower is meant to be, and
+what is a tattoo, things like that.
+
+00:14:33.840 --> 00:14:37.680
+Now, our artist here, the k-sampler,
+it has techniques on how to draw.
+
+00:14:38.240 --> 00:14:42.400
+Our model sampling AuraFlow
+here, it acts like a teacher.
+
+00:14:42.680 --> 00:14:45.898
+So let's pretend that our
+artist here has a technique
+
+00:14:45.910 --> 00:14:49.140
+where it's holding the
+brush like this, at this angle.
+
+00:14:49.540 --> 00:14:55.180
+Our teacher here will teach the
+artist to slightly shift the technique.
+
+00:14:55.180 --> 00:14:58.994
+So instead of holding the brush
+like this, we will say, okay, hold
+
+00:14:59.006 --> 00:15:02.660
+the brush maybe at flat angle
+so that you can do shading better.
+
+00:15:03.180 --> 00:15:08.900
+So this shifting of the technique is
+what our AuraFlow is responsible for.
+
+00:15:09.220 --> 00:15:13.613
+The model sampling AuraFlow
+is modifying the underlying
+
+00:15:13.625 --> 00:15:18.580
+algorithm that the k-sampler
+will use when denoising the image.
+
+00:15:18.700 --> 00:15:23.700
+Hopefully it makes sense now. And I
+think the default value is 1.73, like this.
+
+00:15:23.700 --> 00:15:26.362
+And if I keep everything
+the same, I'm going to
+
+00:15:26.374 --> 00:15:28.880
+fix the seed, generate
+again, it's completed.
+
+00:15:29.060 --> 00:15:32.600
+And you probably cannot tell, but
+we have a different pattern right now.
+
+00:15:32.620 --> 00:15:37.720
+Let me go inside of the outputs folder.
+And this is the last image I generated.
+
+00:15:37.800 --> 00:15:43.100
+This is with the AuraFlow, and
+this one is without the AuraFlow.
+
+00:15:43.160 --> 00:15:47.860
+So you see the flower is fully
+formed, like the petals here are full.
+
+00:15:48.460 --> 00:15:52.020
+While in this one, we have this
+here where it's missing a little bit.
+
+00:15:52.020 --> 00:15:55.077
+So we have this improvement
+to our final image. It's not
+
+00:15:55.089 --> 00:15:58.480
+changing it by much, depending
+on the number that you put here.
+
+00:15:58.500 --> 00:16:01.940
+You can increase it positively,
+you can also go down.
+
+00:16:02.260 --> 00:16:06.820
+So let's say we generate at 1.73 and
+you find that the quality is getting worse.
+
+00:16:06.900 --> 00:16:10.045
+What you can do is you can
+decrease this value. You start
+
+00:16:10.057 --> 00:16:13.160
+with 1.5, check the quality,
+if it is good, if it is bad.
+
+00:16:13.260 --> 00:16:17.960
+Depending on that, you increase it
+or decrease it. This is modular as well.
+
+00:16:17.960 --> 00:16:21.198
+If you find that you are
+getting better results without this
+
+00:16:21.210 --> 00:16:24.620
+node, you can select it, click
+on this button here to bypass it.
+
+00:16:24.640 --> 00:16:27.132
+And now you have just
+your Qwen image, the
+
+00:16:27.144 --> 00:16:29.880
+Lora, which goes directly
+inside the k-sampler.
+
+00:16:30.120 --> 00:16:33.668
+If you don't want the Lora,
+you can select it, disable the
+
+00:16:33.680 --> 00:16:37.240
+Lora, go to 20 steps, which
+will give you a higher quality.
+
+00:16:37.460 --> 00:16:40.643
+Now I'm going to enable
+the AuraFlow, since it's
+
+00:16:40.655 --> 00:16:43.980
+making the tattoo here,
+the inpainted area, better.
+
+00:16:43.980 --> 00:16:46.588
+And let's take a look
+at another improvement
+
+00:16:46.600 --> 00:16:48.580
+that you can add
+to your AuraFlow.
+
+00:16:48.720 --> 00:16:54.800
+And we will do it with our mask here.
+Right now our mask is a solid mask.
+
+00:16:55.140 --> 00:16:59.240
+We have a harsh separation
+between the mask and the pixel area.
+
+00:16:59.400 --> 00:17:04.260
+We can double click and add
+a grow mask with blur node.
+
+00:17:04.540 --> 00:17:10.900
+It's going to take a mask. Now we need to
+do this before the set latent noise mask.
+
+00:17:10.900 --> 00:17:16.620
+So we'll add it right in between our
+VAE encode and the set latent noise mask.
+
+00:17:16.900 --> 00:17:19.720
+It will take a mask. The
+mask is from our load image.
+
+00:17:20.220 --> 00:17:23.840
+And then this mask will
+go into the set latent noise.
+
+00:17:23.920 --> 00:17:27.540
+We'll also pass it to our
+controlnet like this here.
+
+00:17:27.800 --> 00:17:32.300
+Now what this one does, it allows
+us to expand the mask slightly.
+
+00:17:32.460 --> 00:17:37.120
+I'm going to go with 3 pixels.
+Then we have this blur radius here.
+
+00:17:37.120 --> 00:17:39.828
+I'm going to go
+with... let's start with
+
+00:17:39.840 --> 00:17:42.760
+10. And let me convert
+the mask to an image.
+
+00:17:43.000 --> 00:17:45.520
+We are going to select
+this convert mask to image.
+
+00:17:45.920 --> 00:17:49.340
+And we can add a preview
+image here. Generate.
+
+00:17:49.520 --> 00:17:54.260
+Now you will see that there is a
+slight blur at the edge of the mask.
+
+00:17:54.600 --> 00:17:56.740
+Now with this blur we can generate.
+
+00:17:57.280 --> 00:18:00.840
+And whether we have an improvement
+or not will depend on the image.
+
+00:18:00.900 --> 00:18:04.420
+So let's go into outputs here.
+So this is without the AuraFlow.
+
+00:18:04.420 --> 00:18:09.920
+This one is with the AuraFlow.
+And this one is with the blur in it.
+
+00:18:09.920 --> 00:18:15.520
+So we see that it's less harsh when we
+have the blur compared to without the blur.
+
+00:18:15.980 --> 00:18:19.320
+So the edges here are very
+dark compared to this one.
+
+00:18:19.440 --> 00:18:21.560
+Which looks like it's faded a little bit.
+
+00:18:21.580 --> 00:18:24.240
+It is better because this
+is supposed to be a tattoo.
+
+00:18:24.640 --> 00:18:28.340
+And the tattoo should not
+be as sharp as this one here.
+
+00:18:28.580 --> 00:18:30.820
+Now of course this is a specific case.
+
+00:18:30.820 --> 00:18:33.880
+As always we can go into ComfyUI here.
+
+00:18:33.940 --> 00:18:36.420
+And we can enable, disable this section.
+
+00:18:36.600 --> 00:18:39.980
+Depending on whether you are
+getting a good result or a bad result.
+
+00:18:40.060 --> 00:18:42.300
+Alright so let me load the full version.
+
+00:18:42.580 --> 00:18:44.180
+This one will be in the description below.
+
+00:18:44.280 --> 00:18:46.560
+This is exactly the same
+workflow that we built today.
+
+00:18:46.620 --> 00:18:48.740
+And at this point you should
+be able to understand it.
+
+00:18:49.220 --> 00:18:52.160
+This will be all the
+models that we are loading.
+
+00:18:52.260 --> 00:18:54.520
+We also have the lightning
+and controlnet here.
+
+00:18:54.840 --> 00:18:57.720
+Like I said the prompt has
+to be descriptive prompt.
+
+00:18:57.720 --> 00:19:00.680
+There is the model sampling
+that you can enable or disable.
+
+00:19:01.080 --> 00:19:05.080
+At the bottom here there is a little
+bit more than what we built today.
+
+00:19:05.180 --> 00:19:06.840
+There is a preview node here.
+
+00:19:07.340 --> 00:19:11.340
+There is also a before and after
+that is showing you the image.
+
+00:19:11.840 --> 00:19:13.820
+And where the mask will be applied.
+
+00:19:14.000 --> 00:19:17.980
+Anything that is in white is
+what the k-sampler will denoise.
+
+00:19:18.220 --> 00:19:20.840
+Everything that is in
+black will stay the same.
+
+00:19:21.140 --> 00:19:23.320
+So biggest advantage
+when you do in-painting.
+
+00:19:23.380 --> 00:19:26.840
+Is that the area which is in black here.
+
+00:19:26.840 --> 00:19:29.160
+There will not be change at all.
+
+00:19:29.180 --> 00:19:30.600
+So if you compare these two.
+
+00:19:30.880 --> 00:19:32.280
+This here is the input image.
+
+00:19:32.460 --> 00:19:33.580
+This is the output image.
+
+00:19:33.740 --> 00:19:37.080
+There is no modification
+in these areas here.
+
+00:19:37.120 --> 00:19:41.880
+It's only the part where we
+are masking which get modified.
+
+00:19:41.960 --> 00:19:43.200
+When you compare this to editing.
+
+00:19:43.520 --> 00:19:45.780
+The entire image will be generated.
+
+00:19:45.880 --> 00:19:50.420
+And you may see some
+subtle degradation in the quality.
+
+00:19:50.640 --> 00:19:52.100
+Alright so that was it for today.
+
+00:19:52.160 --> 00:19:56.300
+I would like to say a big thank you to all
+of you who joined my Patreon recently.
+
+00:19:56.300 --> 00:19:58.140
+I really appreciate all the support.
+
+00:19:58.400 --> 00:20:03.160
+It is thanks to all of you that I am able
+to give all of these workflows for free.
+
+00:20:03.420 --> 00:20:05.040
+And teach on YouTube.
+
+00:20:05.180 --> 00:20:07.000
+Thank you once again for all the support.
+
+00:20:07.140 --> 00:20:08.540
+If you watched until the very end.
+
+00:20:08.640 --> 00:20:09.940
+And you find this video helpful.
+
+00:20:10.160 --> 00:20:11.780
+Consider giving this a like.
+
+00:20:12.020 --> 00:20:13.300
+Subscribe if you have not.
+
+00:20:13.440 --> 00:20:14.960
+I will see you next time.
+
