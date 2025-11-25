@@ -1778,6 +1778,9 @@ async function loadAndInitSubtitles(imageId) {
 
             container.innerHTML = createSubtitlePanel(data.subtitles, data.languages);
 
+            // Initialize resize functionality
+            initSubtitleResize();
+
             // Initialize video sync for karaoke panel
             if (videoElement) {
                 initSubtitleSync(videoElement);
@@ -5573,6 +5576,9 @@ function createSubtitlePanel(subtitles, languages) {
 
     return `
         <div class="subtitle-panel" id="subtitlePanel">
+            <div class="subtitle-resize-handle" id="subtitleResizeHandle" title="Drag to resize">
+                <span class="resize-grip"></span>
+            </div>
             <div class="subtitle-panel-header">
                 <h4>🎤 Subtitles</h4>
                 <select class="subtitle-lang-select" id="subtitleLangSelect" onchange="changeSubtitleLanguage(this.value)">
@@ -5589,6 +5595,65 @@ function createSubtitlePanel(subtitles, languages) {
             </div>
         </div>
     `;
+}
+
+// Subtitle panel resize functionality
+function initSubtitleResize() {
+    const handle = document.getElementById('subtitleResizeHandle');
+    const panel = document.getElementById('subtitlePanel');
+
+    if (!handle || !panel) return;
+
+    let isResizing = false;
+    let startY = 0;
+    let startHeight = 0;
+
+    handle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startY = e.clientY;
+        startHeight = panel.offsetHeight;
+        document.body.style.cursor = 'ns-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+
+        const deltaY = startY - e.clientY;
+        const newHeight = Math.min(Math.max(startHeight + deltaY, 100), window.innerHeight * 0.7);
+        panel.style.maxHeight = newHeight + 'px';
+        panel.style.height = newHeight + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+    });
+
+    // Touch support for mobile
+    handle.addEventListener('touchstart', (e) => {
+        isResizing = true;
+        startY = e.touches[0].clientY;
+        startHeight = panel.offsetHeight;
+        e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isResizing) return;
+
+        const deltaY = startY - e.touches[0].clientY;
+        const newHeight = Math.min(Math.max(startHeight + deltaY, 100), window.innerHeight * 0.7);
+        panel.style.maxHeight = newHeight + 'px';
+        panel.style.height = newHeight + 'px';
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+        isResizing = false;
+    });
 }
 
 function formatSubtitleTime(ms) {
