@@ -458,40 +458,56 @@ class Database:
             return self._row_to_dict(result)
         return None
     
-    def get_all_images(self, limit: int = 1000, offset: int = 0, 
+    def get_all_images(self, limit: int = 1000, offset: int = 0,
                        favorites_only: bool = False,
                        media_type: Optional[str] = None,
-                       analyzed: Optional[bool] = None) -> List[Dict]:
+                       analyzed: Optional[bool] = None,
+                       youtube_only: bool = False,
+                       exclude_youtube: bool = False) -> List[Dict]:
         """Get all images with pagination and optional filters"""
         conn = self.get_connection()
         cursor = conn.cursor()
-        
-        query = "SELECT * FROM images"
+
+        # Use LEFT JOIN if we need YouTube filtering
+        if youtube_only or exclude_youtube:
+            query = """
+                SELECT i.* FROM images i
+                LEFT JOIN youtube_videos yv ON i.id = yv.image_id
+            """
+        else:
+            query = "SELECT * FROM images"
+
         clauses = []
         params = []
-        
+
         if favorites_only:
-            clauses.append("is_favorite = 1")
-        
+            clauses.append("i.is_favorite = 1" if (youtube_only or exclude_youtube) else "is_favorite = 1")
+
         if media_type:
-            clauses.append("media_type = ?")
+            clauses.append("i.media_type = ?" if (youtube_only or exclude_youtube) else "media_type = ?")
             params.append(media_type)
-        
+
         if analyzed is True:
-            clauses.append("analyzed_at IS NOT NULL")
+            clauses.append("i.analyzed_at IS NOT NULL" if (youtube_only or exclude_youtube) else "analyzed_at IS NOT NULL")
         elif analyzed is False:
-            clauses.append("analyzed_at IS NULL")
-        
+            clauses.append("i.analyzed_at IS NULL" if (youtube_only or exclude_youtube) else "analyzed_at IS NULL")
+
+        # YouTube filtering
+        if youtube_only:
+            clauses.append("yv.id IS NOT NULL")
+        elif exclude_youtube:
+            clauses.append("yv.id IS NULL")
+
         if clauses:
             query += " WHERE " + " AND ".join(clauses)
-        
-        query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+
+        query += " ORDER BY " + ("i.created_at" if (youtube_only or exclude_youtube) else "created_at") + " DESC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
-        
+
         cursor.execute(query, params)
         results = cursor.fetchall()
         conn.close()
-        
+
         return [self._row_to_dict(row) for row in results]
     
     def update_image_analysis(self, image_id: int, description: str, tags: List[str]):

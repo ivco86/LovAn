@@ -330,6 +330,19 @@ body {
     background: var(--bg-hover);
 }
 
+/* YouTube Header Button */
+.btn-icon-round.youtube-btn {
+    background: #ff0000;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.btn-icon-round.youtube-btn:hover {
+    background: #cc0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+}
+
 /* Theme Toggle Button */
 .theme-toggle {
     position: relative;
@@ -443,6 +456,23 @@ body {
 .category-pill.active {
     background: var(--accent-primary);
     color: var(--text-inverse);
+}
+
+/* YouTube Category Pill */
+.category-pill.youtube-pill {
+    background: rgba(255, 0, 0, 0.15);
+    color: #ff0000;
+    border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.category-pill.youtube-pill:hover {
+    background: rgba(255, 0, 0, 0.25);
+}
+
+.category-pill.youtube-pill.active {
+    background: #ff0000;
+    color: white;
+    border-color: #ff0000;
 }
 
 /* ============ Buttons ============ */

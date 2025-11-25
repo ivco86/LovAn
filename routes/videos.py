@@ -103,12 +103,16 @@ def download_video():
         return jsonify({'error': 'URL parameter required'}), 400
 
     download_subtitles = data.get('subtitles', True)
+    original_subtitles = data.get('original_subtitles', True)
     extract_keyframes = data.get('keyframes', True)
+    quality = data.get('quality', '1080')
 
     result = youtube_service.download_video(
         url,
         download_subtitles=download_subtitles,
-        extract_keyframes=extract_keyframes
+        original_subtitles=original_subtitles,
+        extract_keyframes=extract_keyframes,
+        quality=quality
     )
 
     if not result:
