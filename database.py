@@ -190,12 +190,20 @@ class Database:
             cursor.execute("ALTER TABLE images ADD COLUMN media_type TEXT DEFAULT 'image'")
             conn.commit()
 
+        # Add phash column for perceptual hashing (migration)
+        cursor.execute("PRAGMA table_info(images)")
+        columns = [col[1] for col in cursor.fetchall()]
+        if 'phash' not in columns:
+            cursor.execute("ALTER TABLE images ADD COLUMN phash TEXT DEFAULT NULL")
+            conn.commit()
+
         # Create indexes for performance
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_images_filepath ON images(filepath)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_images_favorite ON images(is_favorite)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_images_analyzed ON images(analyzed_at)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_images_created ON images(created_at)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_images_media_type ON images(media_type)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_images_phash ON images(phash)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_boards_parent ON boards(parent_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_board_images_board ON board_images(board_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_board_images_image ON board_images(image_id)")
@@ -561,7 +569,103 @@ class Database:
             conn.commit()
         finally:
             conn.close()
-    
+
+    def update_image_phash(self, image_id: int, phash: str):
+        """Update image with perceptual hash"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                UPDATE images SET phash = ?, updated_at = ? WHERE id = ?
+            """, (phash, datetime.now(), image_id))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def get_images_without_phash(self, limit: int = 100) -> List[Dict]:
+        """Get images that don't have a perceptual hash yet"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM images
+            WHERE phash IS NULL AND media_type = 'image'
+            ORDER BY created_at DESC
+            LIMIT ?
+        """, (limit,))
+        results = cursor.fetchall()
+        conn.close()
+        return [self._row_to_dict(row) for row in results]
+
+    def find_duplicate_phashes(self) -> List[Dict]:
+        """Find all duplicate images based on perceptual hash"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        # Find phashes that appear more than once
+        cursor.execute("""
+            SELECT phash, COUNT(*) as count
+            FROM images
+            WHERE phash IS NOT NULL AND phash != ''
+            GROUP BY phash
+            HAVING COUNT(*) > 1
+            ORDER BY count DESC
+        """)
+        duplicates = cursor.fetchall()
+
+        result = []
+        for dup in duplicates:
+            phash = dup['phash']
+            cursor.execute("""
+                SELECT * FROM images WHERE phash = ? ORDER BY created_at ASC
+            """, (phash,))
+            images = cursor.fetchall()
+            result.append({
+                'phash': phash,
+                'count': dup['count'],
+                'images': [self._row_to_dict(img) for img in images]
+            })
+
+        conn.close()
+        return result
+
+    def find_similar_by_phash(self, phash: str, threshold: int = 10) -> List[Dict]:
+        """Find images with similar perceptual hash (within hamming distance threshold)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM images WHERE phash IS NOT NULL AND phash != ''")
+        all_images = cursor.fetchall()
+        conn.close()
+
+        similar = []
+        for img in all_images:
+            img_phash = img['phash']
+            # Calculate hamming distance
+            distance = sum(c1 != c2 for c1, c2 in zip(phash, img_phash))
+            if distance <= threshold and distance > 0:  # Exclude exact matches
+                img_dict = self._row_to_dict(img)
+                img_dict['hamming_distance'] = distance
+                similar.append(img_dict)
+
+        similar.sort(key=lambda x: x['hamming_distance'])
+        return similar
+
+    def get_phash_by_id(self, image_id: int) -> Optional[str]:
+        """Get phash for a specific image"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT phash FROM images WHERE id = ?", (image_id,))
+        result = cursor.fetchone()
+        conn.close()
+        return result['phash'] if result else None
+
+    def check_phash_exists(self, phash: str) -> Optional[Dict]:
+        """Check if a phash already exists in the database"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM images WHERE phash = ?", (phash,))
+        result = cursor.fetchone()
+        conn.close()
+        return self._row_to_dict(result) if result else None
+
     def toggle_favorite(self, image_id: int) -> bool:
         """Toggle favorite status, return new status"""
         conn = self.get_connection()
