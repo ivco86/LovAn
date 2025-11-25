@@ -2053,14 +2053,16 @@ class Database:
 
         try:
             # First check if entry already exists (by image_id OR youtube_id)
+            print(f"[DB DEBUG] Checking for existing youtube_videos: image_id={image_id}, youtube_id={youtube_id}")
             cursor.execute(
                 "SELECT id FROM youtube_videos WHERE image_id = ? OR youtube_id = ?",
                 (image_id, youtube_id)
             )
             existing = cursor.fetchone()
             if existing:
-                logger.info(f"YouTube video already exists with id={existing['id']} for image_id={image_id} or youtube_id={youtube_id}")
+                print(f"[DB DEBUG] Found existing entry: id={existing['id']}")
                 return existing['id']
+            print(f"[DB DEBUG] No existing entry, will INSERT")
 
             categories = metadata.get('categories', [])
             subtitle_langs = metadata.get('subtitle_languages', [])
@@ -2095,21 +2097,25 @@ class Database:
             ))
 
             conn.commit()
+            print(f"[DB DEBUG] ✅ INSERT successful, lastrowid={cursor.lastrowid}")
             return cursor.lastrowid
         except sqlite3.IntegrityError as e:
             # Video already exists, get existing ID
-            logger.info(f"YouTube video already exists (IntegrityError): {e}")
+            print(f"[DB DEBUG] IntegrityError: {e}")
             cursor.execute(
                 "SELECT id FROM youtube_videos WHERE youtube_id = ?",
                 (youtube_id,)
             )
             result = cursor.fetchone()
             if result:
-                logger.info(f"Found existing youtube_video with id={result['id']}")
+                print(f"[DB DEBUG] Found existing by youtube_id: id={result['id']}")
                 return result['id']
+            print(f"[DB DEBUG] No existing found after IntegrityError")
             return None
         except Exception as e:
-            logger.error(f"❌ Error adding YouTube video: {e}", exc_info=True)
+            print(f"[DB DEBUG] ❌ Exception: {e}")
+            import traceback
+            traceback.print_exc()
             return None
         finally:
             conn.close()
