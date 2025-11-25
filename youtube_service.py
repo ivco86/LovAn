@@ -314,12 +314,14 @@ class YouTubeService:
                 '--sub-format', 'vtt/srt/best',
                 '--convert-subs', 'vtt',
             ])
-        
+
         # Add options to handle YouTube restrictions better
         cmd.extend([
             '--extractor-args', 'youtube:player_client=android',  # Use android client (more reliable)
             '--retries', '3',
             '--fragment-retries', '3',
+            '--ignore-errors',  # Continue downloading even if subtitles fail
+            '--no-abort-on-error',  # Don't abort on non-fatal errors
         ])
 
         cmd.append(f'https://www.youtube.com/watch?v={youtube_id}')
@@ -340,14 +342,17 @@ class YouTubeService:
             # Find the downloaded video file - MUST contain the youtube_id in filename
             video_file = None
             if os.path.exists(video_dir):
+                video_extensions = ('.mp4', '.mkv', '.webm', '.avi', '.mov')
                 for file in os.listdir(video_dir):
                     # Only match files that contain the youtube_id (our naming convention)
-                    if youtube_id in file and file.endswith(('.mp4', '.mkv', '.webm')):
-                        full_path = os.path.join(video_dir, file)
-                        if os.path.isfile(full_path):
-                            video_file = full_path
-                            print(f"[YT DEBUG] Found matching video file: {file}")
-                            break
+                    # Also skip partial download files (.part, .temp)
+                    if youtube_id in file and file.endswith(video_extensions):
+                        if not file.endswith('.part') and '.temp' not in file:
+                            full_path = os.path.join(video_dir, file)
+                            if os.path.isfile(full_path) and os.path.getsize(full_path) > 0:
+                                video_file = full_path
+                                print(f"[YT DEBUG] Found matching video file: {file}")
+                                break
 
             # Check if download succeeded or if video file exists despite errors
             if result.returncode != 0:
