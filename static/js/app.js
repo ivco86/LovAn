@@ -1193,11 +1193,12 @@ function createImageCard(image, useLazyLoading = false) {
         : `src="${thumbUrl}"`;
 
     return `
-        <div class="image-card ${selectedClass}" data-id="${image.id}" data-media-type="${image.media_type || 'image'}">
+        <div class="image-card ${selectedClass}" data-id="${image.id}" data-media-type="${image.media_type || 'image'}"
+             draggable="true">
             <div class="image-card-checkbox ${checkboxClass}" data-id="${image.id}"></div>
             <div class="image-card-status-icon ${statusIconClass}">${statusIcon}</div>
             ${isVideo ?
-            `<div class="image-card-video-wrapper">
+            `<div class="image-card-video-wrapper" data-image-id="${image.id}">
                     <img
                         class="image-card-image"
                         ${imgSrcAttr}
@@ -1320,6 +1321,7 @@ function createBoardItem(board, isSubBoard = false) {
         <div class="board-pill ${hasSubBoards ? 'has-children' : ''}"
              data-board-id="${board.id}"
              data-has-children="${hasSubBoards}"
+             data-drop-target="true"
              style="background: linear-gradient(135deg, ${color1}, ${color2});">
             <span class="board-pill-name">${escapeHtml(board.name)}</span>
             <span class="board-pill-count">${imageCount}</span>
@@ -2105,6 +2107,149 @@ function hideBoardContextMenu() {
     }
 }
 
+// ============ Video Hover Preview ============
+
+let videoPreviewTimeout = null;
+
+function playVideoPreview(wrapper) {
+    const imageId = wrapper.dataset.imageId;
+    if (!imageId) return;
+
+    // Wait 300ms before starting preview to avoid flickering on quick mouse moves
+    videoPreviewTimeout = setTimeout(() => {
+        const video = document.createElement('video');
+        video.src = `/api/images/${imageId}/file`;
+        video.muted = true;
+        video.loop = true;
+        video.playbackRate = 2.0; // 2x speed for quick preview
+        video.className = 'image-card-image preview-video';
+        video.style.objectFit = 'cover';
+        video.style.position = 'absolute';
+        video.style.top = '0';
+        video.style.left = '0';
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.play().catch(() => {}); // Ignore autoplay errors
+
+        // Hide thumbnail and play icon
+        const img = wrapper.querySelector('img');
+        if (img) img.style.opacity = '0';
+
+        const overlay = wrapper.querySelector('.video-play-overlay');
+        if (overlay) overlay.style.opacity = '0';
+
+        wrapper.appendChild(video);
+    }, 300);
+}
+
+function stopVideoPreview(wrapper) {
+    clearTimeout(videoPreviewTimeout);
+
+    const video = wrapper.querySelector('video.preview-video');
+    if (video) {
+        video.pause();
+        video.src = '';
+        video.remove();
+    }
+
+    const img = wrapper.querySelector('img');
+    if (img) img.style.opacity = '1';
+
+    const overlay = wrapper.querySelector('.video-play-overlay');
+    if (overlay) overlay.style.opacity = '1';
+}
+
+// ============ Drag & Drop to Boards ============
+
+let draggedImageId = null;
+
+function handleImageDragStart(e) {
+    const card = e.target.closest('.image-card');
+    if (!card) return;
+
+    draggedImageId = parseInt(card.dataset.id);
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('text/plain', draggedImageId);
+
+    // Add dragging visual effect
+    card.classList.add('dragging');
+
+    // If we're in selection mode and this image is selected, we're dragging all selected
+    if (state.selectionMode && state.selectedImages.has(draggedImageId)) {
+        e.dataTransfer.setData('text/plain', JSON.stringify(Array.from(state.selectedImages)));
+    }
+}
+
+function handleImageDragEnd(e) {
+    const card = e.target.closest('.image-card');
+    if (card) card.classList.remove('dragging');
+    draggedImageId = null;
+}
+
+function handleBoardDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+
+    const boardPill = e.target.closest('.board-pill[data-drop-target]');
+    if (boardPill) {
+        boardPill.classList.add('drag-over');
+    }
+}
+
+function handleBoardDragLeave(e) {
+    const boardPill = e.target.closest('.board-pill[data-drop-target]');
+    if (boardPill) {
+        boardPill.classList.remove('drag-over');
+    }
+}
+
+async function handleBoardDrop(e) {
+    e.preventDefault();
+
+    const boardPill = e.target.closest('.board-pill[data-drop-target]');
+    if (!boardPill) return;
+
+    boardPill.classList.remove('drag-over');
+
+    const boardId = parseInt(boardPill.dataset.boardId);
+    if (!boardId) return;
+
+    // Check if we're dragging multiple selected images
+    if (state.selectionMode && state.selectedImages.size > 0 && state.selectedImages.has(draggedImageId)) {
+        const count = state.selectedImages.size;
+        showToast(`Adding ${count} images to board...`, 'info');
+
+        let success = 0;
+        for (const imageId of state.selectedImages) {
+            try {
+                await addImageToBoard(boardId, imageId);
+                success++;
+            } catch (error) {
+                console.error(`Failed to add image ${imageId} to board:`, error);
+            }
+        }
+
+        showToast(`Added ${success} images to board`, 'success');
+        await loadBoards();
+        renderBoards();
+    } else if (draggedImageId) {
+        // Single image drag
+        showToast('Adding image to board...', 'info');
+
+        try {
+            await addImageToBoard(boardId, draggedImageId);
+            showToast('Image added to board', 'success');
+            await loadBoards();
+            renderBoards();
+        } catch (error) {
+            console.error('Failed to add image to board:', error);
+            showToast('Failed to add image to board', 'error');
+        }
+    }
+
+    draggedImageId = null;
+}
+
 // ============ Event Listeners ============
 
 function attachEventListeners() {
@@ -2286,6 +2431,25 @@ function attachEventListeners() {
                 }
             }
         });
+
+        // Video hover preview events
+        imageGrid.addEventListener('mouseenter', (e) => {
+            const wrapper = e.target.closest('.image-card-video-wrapper');
+            if (wrapper) {
+                playVideoPreview(wrapper);
+            }
+        }, true);
+
+        imageGrid.addEventListener('mouseleave', (e) => {
+            const wrapper = e.target.closest('.image-card-video-wrapper');
+            if (wrapper) {
+                stopVideoPreview(wrapper);
+            }
+        }, true);
+
+        // Drag & drop events for image cards
+        imageGrid.addEventListener('dragstart', handleImageDragStart);
+        imageGrid.addEventListener('dragend', handleImageDragEnd);
     }
 
     // ✅ Boards List - Event delegation with single/double click
@@ -2410,6 +2574,11 @@ function attachEventListeners() {
                 touchTimer = null;
             }
         });
+
+        // Drag & drop events for board pills (drop targets)
+        boardsList.addEventListener('dragover', handleBoardDragOver);
+        boardsList.addEventListener('dragleave', handleBoardDragLeave);
+        boardsList.addEventListener('drop', handleBoardDrop);
     }
 
     // Board Context Menu
@@ -2914,6 +3083,30 @@ function attachEventListeners() {
             } else if (e.key === 'ArrowRight') {
                 e.preventDefault();
                 navigateModal(1);
+            }
+        }
+
+        // Skip shortcuts if typing in an input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        // Power user shortcuts when modal is open
+        if (document.getElementById('imageModal').style.display === 'block' && state.currentImage) {
+            // 'F' for Favorite
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                toggleFavorite(state.currentImage.id);
+            }
+
+            // 'Delete' for deleting image
+            if (e.key === 'Delete') {
+                e.preventDefault();
+                confirmDeleteImage(state.currentImage.id, state.currentImage.filename);
+            }
+
+            // 'E' for Edit
+            if (e.key === 'e' || e.key === 'E') {
+                e.preventDefault();
+                openEditImageModal(state.currentImage.id);
             }
         }
 
