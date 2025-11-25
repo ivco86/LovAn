@@ -1267,12 +1267,32 @@ body {
     border-radius: var(--radius-lg);
     overflow: hidden;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     border: 1px solid rgba(168, 85, 247, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     position: relative;
     min-height: 0;
+}
+
+/* Allow subtitle panel to show for videos */
+.image-main-view:has(video) {
+    overflow: visible;
+    justify-content: flex-start;
+}
+
+.image-main-view:has(video) video {
+    max-height: calc(90vh - 200px);
+    border-radius: var(--radius-lg);
+}
+
+#subtitlePanelContainer {
+    width: 150%;
+    max-height: 200px;
+    overflow: visible;
+    position: relative;
+    left: -25%;
 }
 
 .image-main-view::before {
@@ -1286,6 +1306,11 @@ body {
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
+}
+
+/* Hide border effect for videos since we have overflow visible */
+.image-main-view:has(video)::before {
+    display: none;
 }
 
 .image-main-view img {
@@ -1634,9 +1659,9 @@ body {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: var(--spacing-md);
-    margin-top: var(--spacing-md);
-    max-height: 300px;
+    padding: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+    max-height: 180px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
