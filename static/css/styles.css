@@ -1661,12 +1661,51 @@ body {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
+    padding-top: 0;
     margin-top: var(--spacing-sm);
     max-height: 200px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+/* Resize handle for subtitle panel */
+.subtitle-resize-handle {
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: ns-resize;
+    background: linear-gradient(to bottom, var(--bg-tertiary), transparent);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    margin: 0 calc(-1 * var(--spacing-md));
+    margin-bottom: var(--spacing-sm);
+    transition: background 0.2s ease;
+}
+
+.subtitle-resize-handle:hover {
+    background: linear-gradient(to bottom, var(--accent-color), transparent);
+}
+
+.subtitle-resize-handle:active {
+    background: var(--accent-color);
+}
+
+.resize-grip {
+    width: 40px;
+    height: 4px;
+    background: var(--text-muted);
+    border-radius: 2px;
+    opacity: 0.5;
+    transition: opacity 0.2s ease, width 0.2s ease;
+}
+
+.subtitle-resize-handle:hover .resize-grip {
+    opacity: 1;
+    width: 60px;
+    background: var(--text-primary);
 }
 
 .subtitle-panel-header {
