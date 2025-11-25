@@ -59,6 +59,8 @@ class YouTubeService:
         self.keyframes_dir = KEYFRAMES_DIR
         self.subtitles_dir = SUBTITLES_DIR
         self.ytdlp_command = self._find_ytdlp_command()
+        self.ffmpeg_cmd = self._find_ffmpeg_command()
+        self.ffprobe_cmd = self._find_ffprobe_command()
     
     def _find_ytdlp_command(self) -> list:
         """Find yt-dlp executable or use python -m yt_dlp"""
@@ -76,6 +78,36 @@ class YouTubeService:
         
         # Fallback to python -m yt_dlp
         return [sys.executable, '-m', 'yt_dlp']
+
+    def _find_ffmpeg_command(self) -> str:
+        """Find ffmpeg executable - check local folder first, then PATH"""
+        # Check for ffmpeg.exe in current directory (Windows local install)
+        local_ffmpeg = os.path.join(os.getcwd(), 'ffmpeg.exe')
+        if os.path.exists(local_ffmpeg):
+            return local_ffmpeg
+
+        # Check in PATH
+        ffmpeg_path = shutil.which('ffmpeg')
+        if ffmpeg_path:
+            return ffmpeg_path
+
+        # Fallback - hope it's in PATH
+        return 'ffmpeg'
+
+    def _find_ffprobe_command(self) -> str:
+        """Find ffprobe executable - check local folder first, then PATH"""
+        # Check for ffprobe.exe in current directory (Windows local install)
+        local_ffprobe = os.path.join(os.getcwd(), 'ffprobe.exe')
+        if os.path.exists(local_ffprobe):
+            return local_ffprobe
+
+        # Check in PATH
+        ffprobe_path = shutil.which('ffprobe')
+        if ffprobe_path:
+            return ffprobe_path
+
+        # Fallback - hope it's in PATH
+        return 'ffprobe'
 
     def extract_youtube_id(self, url: str) -> Optional[str]:
         """Extract YouTube video ID from various URL formats"""
@@ -491,7 +523,7 @@ class YouTubeService:
         """Get video dimensions and file size using ffprobe"""
         try:
             result = subprocess.run([
-                'ffprobe',
+                self.ffprobe_cmd,  # Use local ffprobe if available
                 '-v', 'error',
                 '-select_streams', 'v:0',
                 '-show_entries', 'stream=width,height',
@@ -666,7 +698,7 @@ class YouTubeService:
 
             try:
                 result = subprocess.run([
-                    'ffmpeg',
+                    self.ffmpeg_cmd,  # Use local ffmpeg if available
                     '-ss', str(timestamp),
                     '-i', video_path,
                     '-vframes', '1',
