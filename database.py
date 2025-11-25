@@ -2052,6 +2052,16 @@ class Database:
         cursor = conn.cursor()
 
         try:
+            # First check if entry already exists (by image_id OR youtube_id)
+            cursor.execute(
+                "SELECT id FROM youtube_videos WHERE image_id = ? OR youtube_id = ?",
+                (image_id, youtube_id)
+            )
+            existing = cursor.fetchone()
+            if existing:
+                logger.info(f"YouTube video already exists with id={existing['id']} for image_id={image_id} or youtube_id={youtube_id}")
+                return existing['id']
+
             categories = metadata.get('categories', [])
             subtitle_langs = metadata.get('subtitle_languages', [])
 
