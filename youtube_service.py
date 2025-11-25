@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-YouTube Download Service for AI Gallery
-Downloads videos using yt-dlp, extracts metadata, subtitles, and keyframes
+Video Download Service for AI Gallery
+Downloads videos from YouTube, TikTok, Facebook and other platforms using yt-dlp
+Extracts metadata, subtitles, and keyframes
+
+Supported platforms:
+- YouTube (youtube.com, youtu.be)
+- TikTok (tiktok.com)
+- Facebook (facebook.com, fb.watch)
+- Instagram (instagram.com)
+- Twitter/X (twitter.com, x.com)
+- And 1000+ other sites supported by yt-dlp
 
 Performance improvements:
 - Background download support with ThreadPoolExecutor
@@ -18,6 +27,7 @@ import logging
 import shutil
 import sys
 import threading
+import hashlib
 from concurrent.futures import ThreadPoolExecutor, Future
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Callable
@@ -109,42 +119,103 @@ class YouTubeService:
         # Fallback - hope it's in PATH
         return 'ffprobe'
 
-    def extract_youtube_id(self, url: str) -> Optional[str]:
-        """Extract YouTube video ID from various URL formats"""
-        patterns = [
-            r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/|youtube\.com/v/)([a-zA-Z0-9_-]{11})',
-            r'(?:youtube\.com/shorts/)([a-zA-Z0-9_-]{11})',
-        ]
+    def detect_platform(self, url: str) -> str:
+        """Detect the video platform from URL"""
+        url_lower = url.lower()
 
-        for pattern in patterns:
-            match = re.search(pattern, url)
+        if 'youtube.com' in url_lower or 'youtu.be' in url_lower:
+            return 'youtube'
+        elif 'tiktok.com' in url_lower:
+            return 'tiktok'
+        elif 'facebook.com' in url_lower or 'fb.watch' in url_lower or 'fb.com' in url_lower:
+            return 'facebook'
+        elif 'instagram.com' in url_lower:
+            return 'instagram'
+        elif 'twitter.com' in url_lower or 'x.com' in url_lower:
+            return 'twitter'
+        elif 'vimeo.com' in url_lower:
+            return 'vimeo'
+        elif 'dailymotion.com' in url_lower:
+            return 'dailymotion'
+        elif 'twitch.tv' in url_lower:
+            return 'twitch'
+        else:
+            return 'other'
+
+    def extract_video_id(self, url: str) -> str:
+        """Extract video ID from URL or generate one for the platform"""
+        platform = self.detect_platform(url)
+
+        if platform == 'youtube':
+            # Try to extract YouTube ID
+            patterns = [
+                r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/|youtube\.com/v/)([a-zA-Z0-9_-]{11})',
+                r'(?:youtube\.com/shorts/)([a-zA-Z0-9_-]{11})',
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, url)
+                if match:
+                    return match.group(1)
+            # Check if it's already just an ID
+            if re.match(r'^[a-zA-Z0-9_-]{11}$', url):
+                return url
+
+        elif platform == 'tiktok':
+            # Extract TikTok video ID
+            match = re.search(r'/video/(\d+)', url)
             if match:
-                return match.group(1)
+                return f"tt_{match.group(1)}"
+            # Handle short URLs
+            match = re.search(r'tiktok\.com/@[^/]+/video/(\d+)', url)
+            if match:
+                return f"tt_{match.group(1)}"
 
-        # Check if it's already just an ID
-        if re.match(r'^[a-zA-Z0-9_-]{11}$', url):
-            return url
+        elif platform == 'facebook':
+            # Extract Facebook video ID
+            match = re.search(r'/videos/(\d+)', url)
+            if match:
+                return f"fb_{match.group(1)}"
+            match = re.search(r'v=(\d+)', url)
+            if match:
+                return f"fb_{match.group(1)}"
 
-        return None
+        elif platform == 'instagram':
+            # Extract Instagram post ID
+            match = re.search(r'/(?:p|reel|tv)/([A-Za-z0-9_-]+)', url)
+            if match:
+                return f"ig_{match.group(1)}"
+
+        elif platform == 'twitter':
+            # Extract Twitter/X video ID
+            match = re.search(r'/status/(\d+)', url)
+            if match:
+                return f"tw_{match.group(1)}"
+
+        # Fallback: generate hash-based ID from URL
+        url_hash = hashlib.md5(url.encode()).hexdigest()[:12]
+        return f"{platform[:2]}_{url_hash}"
+
+    def extract_youtube_id(self, url: str) -> Optional[str]:
+        """Extract YouTube video ID from various URL formats (legacy method)"""
+        video_id = self.extract_video_id(url)
+        # For non-YouTube platforms, we still return an ID
+        return video_id if video_id else None
 
     def get_video_info(self, url: str) -> Optional[Dict]:
         """
         Get video metadata without downloading
 
         Args:
-            url: YouTube URL or video ID
+            url: Video URL from any supported platform
 
         Returns:
             Dict with video metadata or None if failed
         """
-        youtube_id = self.extract_youtube_id(url)
-        if not youtube_id:
-            error_msg = (
-                f"Invalid YouTube URL: '{url}'\n"
-                "Моля въведете пълен YouTube URL, например:\n"
-                "  https://www.youtube.com/watch?v=VIDEO_ID\n"
-                "  https://youtu.be/VIDEO_ID"
-            )
+        video_id = self.extract_video_id(url)
+        platform = self.detect_platform(url)
+
+        if not video_id:
+            error_msg = f"Could not extract video ID from URL: '{url}'"
             logger.error(error_msg)
             raise ValueError(error_msg)
 
@@ -158,17 +229,21 @@ class YouTubeService:
             )
             if result.returncode != 0:
                 logger.warning(f"yt-dlp version check failed: {result.stderr}")
-                # Don't raise error, try to continue anyway
         except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError) as e:
             logger.warning(f"Could not verify yt-dlp installation: {e}")
-            # Don't raise error immediately, try to use it anyway
+
+        # Build the URL to use
+        if platform == 'youtube' and len(video_id) == 11:
+            fetch_url = f'https://www.youtube.com/watch?v={video_id}'
+        else:
+            fetch_url = url  # Use original URL for other platforms
 
         try:
             result = subprocess.run(
                 self.ytdlp_command + [
                     '--dump-json',
                     '--no-download',
-                    f'https://www.youtube.com/watch?v={youtube_id}'
+                    fetch_url
                 ],
                 capture_output=True,
                 text=True,
@@ -191,7 +266,9 @@ class YouTubeService:
                         subtitle_langs.append(f"{lang} (auto)")
 
             return {
-                'youtube_id': youtube_id,
+                'youtube_id': video_id,  # Keep for compatibility
+                'video_id': video_id,
+                'platform': platform,
                 'title': info.get('title'),
                 'channel_name': info.get('channel') or info.get('uploader'),
                 'channel_id': info.get('channel_id'),
@@ -200,7 +277,7 @@ class YouTubeService:
                 'like_count': info.get('like_count'),
                 'upload_date': info.get('upload_date'),
                 'thumbnail_url': info.get('thumbnail'),
-                'webpage_url': info.get('webpage_url'),
+                'webpage_url': info.get('webpage_url') or url,
                 'categories': info.get('categories', []),
                 'description': info.get('description'),
                 'resolution': f"{info.get('width', 0)}x{info.get('height', 0)}",
@@ -227,10 +304,10 @@ class YouTubeService:
                        quality: str = '1080',
                        progress_callback=None) -> Optional[Dict]:
         """
-        Download a YouTube video with metadata, subtitles, and keyframes
+        Download a video from YouTube, TikTok, Facebook or other platforms
 
         Args:
-            url: YouTube URL or video ID
+            url: Video URL from any supported platform
             download_subtitles: Whether to download auto-generated subtitles
             original_subtitles: Whether to download original subtitles
             extract_keyframes: Whether to extract keyframes
@@ -240,19 +317,23 @@ class YouTubeService:
         Returns:
             Dict with download results or None if failed
         """
-        youtube_id = self.extract_youtube_id(url)
-        if not youtube_id:
-            logger.error(f"Invalid YouTube URL: {url}")
+        video_id = self.extract_video_id(url)
+        platform = self.detect_platform(url)
+
+        if not video_id:
+            logger.error(f"Could not extract video ID from URL: {url}")
             return None
+
+        logger.info(f"Downloading video: platform={platform}, video_id={video_id}")
 
         # Check if already downloaded
         if self.db:
-            existing = self.db.get_youtube_video_by_youtube_id(youtube_id)
+            existing = self.db.get_youtube_video_by_youtube_id(video_id)
             if existing:
-                logger.info(f"Video {youtube_id} already exists")
+                logger.info(f"Video {video_id} already exists")
                 return {
                     'status': 'exists',
-                    'youtube_id': youtube_id,
+                    'youtube_id': video_id,
                     'video': existing
                 }
 
@@ -269,8 +350,8 @@ class YouTubeService:
 
         # Create directories - save video directly in PHOTOS_DIR
         video_dir = self.videos_dir  # Use PHOTOS_DIR directly (no subdirectory)
-        keyframe_dir = os.path.join(self.keyframes_dir, youtube_id)
-        subtitle_dir = os.path.join(self.subtitles_dir, youtube_id)
+        keyframe_dir = os.path.join(self.keyframes_dir, video_id)
+        subtitle_dir = os.path.join(self.subtitles_dir, video_id)
 
         os.makedirs(video_dir, exist_ok=True)
         os.makedirs(keyframe_dir, exist_ok=True)
@@ -278,9 +359,9 @@ class YouTubeService:
 
         # Build yt-dlp command - save directly to PHOTOS_DIR with descriptive name
         # Use title for filename (sanitized)
-        safe_title = re.sub(r'[^\w\s-]', '', info.get('title', youtube_id)).strip()[:100]
+        safe_title = re.sub(r'[^\w\s-]', '', info.get('title', video_id)).strip()[:100]
         safe_title = re.sub(r'[-\s]+', '_', safe_title)
-        output_template = os.path.join(video_dir, f'{safe_title}_{youtube_id}.%(ext)s')
+        output_template = os.path.join(video_dir, f'{safe_title}_{video_id}.%(ext)s')
 
         # Build format string based on quality setting
         if quality == 'best':
@@ -315,16 +396,34 @@ class YouTubeService:
                 '--convert-subs', 'vtt',
             ])
 
-        # Add options to handle YouTube restrictions better
+        # Add common options
         cmd.extend([
-            '--extractor-args', 'youtube:player_client=android',  # Use android client (more reliable)
             '--retries', '3',
             '--fragment-retries', '3',
             '--ignore-errors',  # Continue downloading even if subtitles fail
             '--no-abort-on-error',  # Don't abort on non-fatal errors
         ])
 
-        cmd.append(f'https://www.youtube.com/watch?v={youtube_id}')
+        # Add platform-specific options
+        if platform == 'youtube':
+            cmd.extend([
+                '--extractor-args', 'youtube:player_client=android',  # Use android client (more reliable)
+            ])
+            download_url = f'https://www.youtube.com/watch?v={video_id}'
+        elif platform == 'tiktok':
+            # TikTok doesn't support subtitles in the same way
+            cmd.extend([
+                '--extractor-args', 'tiktok:api_hostname=api22-normal-c-useast2a.tiktokv.com',
+            ])
+            download_url = url
+        elif platform == 'facebook':
+            # Facebook may require cookies for some videos
+            download_url = url
+        else:
+            # Use original URL for other platforms
+            download_url = url
+
+        cmd.append(download_url)
 
         # Log the command being run
         logger.info(f"Running yt-dlp command: {' '.join(cmd)}")
@@ -339,14 +438,14 @@ class YouTubeService:
             if result.stderr:
                 logger.warning(f"yt-dlp stderr: {result.stderr[:2000]}")
 
-            # Find the downloaded video file - MUST contain the youtube_id in filename
+            # Find the downloaded video file - MUST contain the video_id in filename
             video_file = None
             if os.path.exists(video_dir):
                 video_extensions = ('.mp4', '.mkv', '.webm', '.avi', '.mov')
                 for file in os.listdir(video_dir):
-                    # Only match files that contain the youtube_id (our naming convention)
+                    # Only match files that contain the video_id (our naming convention)
                     # Also skip partial download files (.part, .temp)
-                    if youtube_id in file and file.endswith(video_extensions):
+                    if video_id in file and file.endswith(video_extensions):
                         if not file.endswith('.part') and '.temp' not in file:
                             full_path = os.path.join(video_dir, file)
                             if os.path.isfile(full_path) and os.path.getsize(full_path) > 0:
@@ -435,7 +534,9 @@ class YouTubeService:
             # Save to database
             result_data = {
                 'status': 'success',
-                'youtube_id': youtube_id,
+                'youtube_id': video_id,  # Keep for compatibility
+                'video_id': video_id,
+                'platform': platform,
                 'video_path': video_file,
                 'title': info['title'],
                 'duration': info['duration'],
@@ -483,10 +584,11 @@ class YouTubeService:
                         logger.error(f"Error checking existing video: {e}")
 
                 if image_id:
-                    # Add YouTube metadata
+                    # Add video metadata (works for all platforms, stored in youtube_videos table)
                     info['subtitle_languages'] = list(parsed_subtitles.keys())
-                    print(f"[YT DEBUG] 🎬 Adding YouTube metadata: image_id={image_id}, youtube_id={youtube_id}")
-                    yt_video_id = self.db.add_youtube_video(image_id, youtube_id, info)
+                    info['platform'] = platform
+                    print(f"[YT DEBUG] 🎬 Adding video metadata: image_id={image_id}, video_id={video_id}, platform={platform}")
+                    yt_video_id = self.db.add_youtube_video(image_id, video_id, info)
 
                     if yt_video_id:
                         print(f"[YT DEBUG] ✅ YouTube video added to youtube_videos: yt_video_id={yt_video_id}")
