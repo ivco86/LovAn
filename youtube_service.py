@@ -337,6 +337,9 @@ class YouTubeService:
                 return None
             
             logger.info(f"Video file found: {video_file}")
+            print(f"[YT DEBUG] Video file found: {video_file}")
+            print(f"[YT DEBUG] Video dir: {video_dir}")
+            print(f"[YT DEBUG] Files in dir: {os.listdir(video_dir)}")
 
             if progress_callback:
                 progress_callback('download', 50, 'Video downloaded successfully')
@@ -413,8 +416,8 @@ class YouTubeService:
                 # Use just filename (relative to PHOTOS_DIR) like other images
                 filename_only = os.path.basename(video_file)
                 
-                logger.info(f"Adding video to database: filepath={filename_only}, filename={filename_only}, video_file={video_file}")
-                
+                print(f"[YT DEBUG] Adding video to database: filepath={filename_only}")
+
                 # Add to images table with just filename (like upload/scan functions do)
                 image_id = self.db.add_image(
                     filepath=filename_only,
@@ -424,11 +427,11 @@ class YouTubeService:
                     file_size=file_size,
                     media_type='video'
                 )
-                
+
                 if image_id:
-                    logger.info(f"✅ Video added to database with image_id: {image_id}, filepath: {filename_only}")
+                    print(f"[YT DEBUG] ✅ Video added to images table: image_id={image_id}")
                 else:
-                    logger.error(f"❌ Failed to add video to database - may already exist")
+                    print(f"[YT DEBUG] ❌ add_image returned None - video may already exist")
                     # Try to get existing image_id
                     try:
                         conn = self.db.get_connection()
@@ -445,11 +448,11 @@ class YouTubeService:
                 if image_id:
                     # Add YouTube metadata
                     info['subtitle_languages'] = list(parsed_subtitles.keys())
-                    logger.info(f"🎬 Adding YouTube metadata for image_id={image_id}, youtube_id={youtube_id}")
+                    print(f"[YT DEBUG] 🎬 Adding YouTube metadata: image_id={image_id}, youtube_id={youtube_id}")
                     yt_video_id = self.db.add_youtube_video(image_id, youtube_id, info)
 
                     if yt_video_id:
-                        logger.info(f"✅ YouTube video added to youtube_videos table: yt_video_id={yt_video_id}")
+                        print(f"[YT DEBUG] ✅ YouTube video added to youtube_videos: yt_video_id={yt_video_id}")
                         result_data['image_id'] = image_id
                         result_data['youtube_video_id'] = yt_video_id
 
@@ -466,11 +469,11 @@ class YouTubeService:
                                 kf['timestamp_ms'],
                                 kf['filepath']
                             )
-                        logger.info(f"🖼️ Added {len(keyframes)} keyframes")
+                        print(f"[YT DEBUG] 🖼️ Added {len(keyframes)} keyframes")
                     else:
-                        logger.error(f"❌ Failed to add YouTube video metadata for image_id={image_id}")
+                        print(f"[YT DEBUG] ❌ add_youtube_video returned None for image_id={image_id}")
                 else:
-                    logger.error(f"❌ No image_id - cannot add YouTube metadata")
+                    print(f"[YT DEBUG] ❌ No image_id - cannot add YouTube metadata")
 
             if progress_callback:
                 progress_callback('complete', 100, 'Download complete!')
