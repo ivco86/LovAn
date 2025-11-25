@@ -67,6 +67,30 @@ function getImageObserver() {
     return _imageObserver;
 }
 
+// Clean up images before removing from DOM to prevent memory leaks
+function cleanupGridImages(grid) {
+    if (!grid) return;
+
+    // Unobserve all images from IntersectionObserver
+    const observer = getImageObserver();
+    const images = grid.querySelectorAll('img');
+    images.forEach(img => {
+        observer.unobserve(img);
+        // Clear image source to release memory
+        img.src = '';
+        img.removeAttribute('src');
+        img.removeAttribute('data-src');
+    });
+
+    // Also clean up any video elements
+    const videos = grid.querySelectorAll('video');
+    videos.forEach(video => {
+        video.pause();
+        video.src = '';
+        video.load();
+    });
+}
+
 // ============ Initialization ============
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -992,7 +1016,8 @@ function renderImages() {
 
         // For large galleries, render in batches
         if (sortedImages.length > CONFIG.RENDER_BATCH_SIZE) {
-            // Clear grid first
+            // IMPORTANT: Clean up old images before clearing to prevent memory leaks
+            cleanupGridImages(grid);
             grid.innerHTML = '';
 
             // Render first batch immediately
@@ -1016,6 +1041,8 @@ function renderImages() {
             while (tempContainer.firstChild) {
                 fragment.appendChild(tempContainer.firstChild);
             }
+            // IMPORTANT: Clean up old images before clearing to prevent memory leaks
+            cleanupGridImages(grid);
             grid.innerHTML = '';
             grid.appendChild(fragment);
             setupLazyLoading(grid);
