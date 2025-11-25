@@ -75,10 +75,10 @@
     --radius-md: 10px;
     --radius-lg: 14px;
 
-    /* Transitions */
-    --transition-fast: 0.15s ease;
-    --transition-normal: 0.3s ease;
-    --transition-slow: 0.5s ease;
+    /* Transitions - slowed down */
+    --transition-fast: 0.25s ease;
+    --transition-normal: 0.4s ease;
+    --transition-slow: 0.6s ease;
 
     /* Header height */
     --header-height: 70px;
@@ -149,6 +149,21 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+/* Pause animations when off-screen for performance */
+.image-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 300px;
+}
+
+.image-card.offscreen {
+    animation-play-state: paused !important;
+}
+
+.image-card.offscreen * {
+    animation-play-state: paused !important;
+    transition: none !important;
 }
 
 body {
@@ -1216,6 +1231,13 @@ body {
     max-height: calc(90vh - 80px);
 }
 
+/* Override for image detail modal - no scroll */
+.modal-body:has(.image-detail-container) {
+    overflow: hidden;
+    max-height: none;
+    padding: var(--spacing-md);
+}
+
 .modal-body h2 {
     font-size: 24px;
     font-weight: 700;
@@ -1236,8 +1258,8 @@ body {
     display: grid;
     grid-template-columns: 1.5fr 1fr 0.8fr;
     gap: 12px;
-    height: calc(100vh - 100px);
-    max-height: calc(100vh - 100px);
+    height: calc(90vh - 60px);
+    max-height: calc(90vh - 60px);
 }
 
 .image-main-view {

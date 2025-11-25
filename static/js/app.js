@@ -67,6 +67,27 @@ function getImageObserver() {
     return _imageObserver;
 }
 
+// Animation visibility observer - pauses animations on off-screen cards
+let _animationObserver = null;
+
+function getAnimationObserver() {
+    if (!_animationObserver) {
+        _animationObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.remove('offscreen');
+                } else {
+                    entry.target.classList.add('offscreen');
+                }
+            });
+        }, {
+            rootMargin: '100px',
+            threshold: 0
+        });
+    }
+    return _animationObserver;
+}
+
 // Clean up images before removing from DOM to prevent memory leaks
 function cleanupGridImages(grid) {
     if (!grid) return;
@@ -81,6 +102,11 @@ function cleanupGridImages(grid) {
         img.removeAttribute('src');
         img.removeAttribute('data-src');
     });
+
+    // Unobserve all cards from animation observer
+    const animObserver = getAnimationObserver();
+    const cards = grid.querySelectorAll('.image-card');
+    cards.forEach(card => animObserver.unobserve(card));
 
     // Also clean up any video elements
     const videos = grid.querySelectorAll('video');
@@ -1172,6 +1198,11 @@ function setupLazyLoading(container) {
     const observer = getImageObserver();
     const lazyImages = container.querySelectorAll('img[data-src]');
     lazyImages.forEach(img => observer.observe(img));
+
+    // Also setup animation observer for image cards
+    const animObserver = getAnimationObserver();
+    const cards = container.querySelectorAll('.image-card');
+    cards.forEach(card => animObserver.observe(card));
 }
 
 function sortImages(images, sortType) {
