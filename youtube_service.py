@@ -352,9 +352,20 @@ class YouTubeService:
                 if file.endswith('.vtt'):
                     src = os.path.join(video_dir, file)
                     dst = os.path.join(subtitle_dir, file)
-                    os.rename(src, dst)
-                    subtitle_files.append(dst)
-                    logger.info(f"Moved subtitle file: {file} -> {dst}")
+                    try:
+                        # Remove existing file if it exists
+                        if os.path.exists(dst):
+                            os.remove(dst)
+                            logger.info(f"Removed existing subtitle file: {dst}")
+                        os.rename(src, dst)
+                        subtitle_files.append(dst)
+                        logger.info(f"Moved subtitle file: {file} -> {dst}")
+                    except Exception as e:
+                        logger.error(f"Error moving subtitle file {file}: {e}")
+                        # Try to use the file from source location instead
+                        if os.path.exists(src):
+                            subtitle_files.append(src)
+                            logger.info(f"Using subtitle from source: {src}")
 
             logger.info(f"Total subtitle files found: {len(subtitle_files)}")
 
