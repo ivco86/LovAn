@@ -35,6 +35,14 @@
     --warning: #ff9800;
     --error: #e60023;
 
+    /* Status Backgrounds - Light Theme */
+    --success-bg: rgba(0, 200, 83, 0.12);
+    --success-text: #00a844;
+    --warning-bg: rgba(255, 152, 0, 0.12);
+    --warning-text: #e68a00;
+    --error-bg: rgba(230, 0, 35, 0.12);
+    --error-text: #cc0000;
+
     /* Borders - Light Theme */
     --border-color: #e0e0e0;
     --border-hover: #ccc;
@@ -104,6 +112,14 @@
     --success: #4ade80;
     --warning: #fbbf24;
     --error: #f87171;
+
+    /* Status Backgrounds - Dark Theme */
+    --success-bg: rgba(74, 222, 128, 0.15);
+    --success-text: #4ade80;
+    --warning-bg: rgba(251, 191, 36, 0.15);
+    --warning-text: #fbbf24;
+    --error-bg: rgba(248, 113, 113, 0.15);
+    --error-text: #f87171;
 
     /* Borders - Dark Theme */
     --border-color: #3a3a3a;

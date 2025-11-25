@@ -42,6 +42,7 @@
                     <div class="dropdown-item" id="scanBtnMenu">Scan Directory</div>
                     <div class="dropdown-item" id="sortImagesBtnMenu">Sort Images</div>
                     <div class="dropdown-item" id="findDuplicatesBtnMenu">Find Duplicates</div>
+                    <div class="dropdown-item" id="youtubeDownloadBtnMenu">YouTube Download</div>
                     <div class="dropdown-item" id="analyzeBtnMenu">AI Analyze</div>
                     <div class="dropdown-item" id="chatBtnMenu">AI Chat</div>
                     <div class="dropdown-divider"></div>
@@ -915,6 +916,80 @@
                 <h2>Duplicate Images</h2>
                 <div id="duplicatesContent">
                     <!-- Duplicate groups will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- YouTube Download Modal -->
+    <div class="modal" id="youtubeModal" style="display: none;">
+        <div class="modal-overlay" id="youtubeOverlay"></div>
+        <div class="modal-content modal-small">
+            <button class="modal-close" id="youtubeClose" aria-label="Close YouTube download">&times;</button>
+
+            <div class="modal-body">
+                <h2>YouTube Download</h2>
+                <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+                    Download videos from YouTube with subtitles and keyframes
+                </p>
+
+                <!-- URL Input -->
+                <div class="form-group">
+                    <label for="youtubeUrl">YouTube URL</label>
+                    <div style="display: flex; gap: var(--spacing-sm);">
+                        <input type="text" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." style="flex: 1;">
+                        <button class="btn btn-secondary" id="youtubeInfoBtn">Info</button>
+                    </div>
+                </div>
+
+                <!-- Video Info Preview (hidden by default) -->
+                <div id="youtubeVideoInfo" style="display: none; margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                    <div style="display: flex; gap: var(--spacing-md);">
+                        <img id="youtubeThumbnail" src="" alt="Thumbnail" style="width: 160px; height: 90px; object-fit: cover; border-radius: var(--radius-sm);">
+                        <div style="flex: 1;">
+                            <h4 id="youtubeTitle" style="margin: 0 0 var(--spacing-xs) 0; font-size: 0.9375rem;"></h4>
+                            <p id="youtubeChannel" style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);"></p>
+                            <p id="youtubeDuration" style="margin: var(--spacing-xs) 0 0 0; font-size: 0.875rem; color: var(--text-muted);"></p>
+                        </div>
+                    </div>
+                    <div id="youtubeExistsWarning" style="display: none; margin-top: var(--spacing-sm); padding: var(--spacing-sm); background: var(--warning-bg, rgba(255, 193, 7, 0.1)); border-radius: var(--radius-sm); color: var(--warning-text, #ffc107); font-size: 0.875rem;">
+                        This video already exists in your gallery
+                    </div>
+                </div>
+
+                <!-- Download Options -->
+                <div id="youtubeOptions" style="display: none; margin-top: var(--spacing-md);">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="youtubeSubtitles" checked>
+                            Download subtitles
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="youtubeKeyframes" checked>
+                            Extract keyframes
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div id="youtubeProgress" style="display: none; margin-top: var(--spacing-md);">
+                    <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                        <div class="spinner" style="width: 20px; height: 20px;"></div>
+                        <span id="youtubeProgressText">Downloading...</span>
+                    </div>
+                </div>
+
+                <!-- Result Section -->
+                <div id="youtubeResult" style="display: none; margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--success-bg, rgba(40, 167, 69, 0.1)); border-radius: var(--radius-md); color: var(--success-text, #28a745);">
+                    <p style="margin: 0;" id="youtubeResultText">Download complete!</p>
+                </div>
+
+                <!-- Actions -->
+                <div class="form-actions" style="margin-top: var(--spacing-lg);">
+                    <button type="button" class="btn btn-secondary" id="youtubeCancelBtn">Close</button>
+                    <button type="button" class="btn btn-primary" id="youtubeDownloadBtn" disabled>Download</button>
                 </div>
             </div>
         </div>
