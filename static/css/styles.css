@@ -1280,20 +1280,25 @@ body {
 .image-main-view:has(video) {
     overflow: visible;
     justify-content: flex-start;
+    height: 100%;
 }
 
 .image-main-view:has(video) video {
-    max-height: calc(90vh - 320px);
+    max-height: calc(100% - 220px);
+    min-height: 150px;
     border-radius: var(--radius-lg);
-    flex-shrink: 0;
+    flex-shrink: 1;
+    transition: max-height 0.1s ease-out;
+    object-fit: contain;
+    width: 100%;
 }
 
 #subtitlePanelContainer {
     width: 100%;
-    max-height: 220px;
     overflow: visible;
     position: relative;
     z-index: 10;
+    flex-shrink: 0;
 }
 
 .image-main-view::before {
@@ -1664,11 +1669,13 @@ body {
     padding-top: 0;
     margin-top: var(--spacing-sm);
     max-height: 200px;
+    min-height: 100px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     position: relative;
+    transition: height 0.1s ease-out, max-height 0.1s ease-out;
 }
 
 /* Resize handle for subtitle panel */

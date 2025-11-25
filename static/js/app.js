@@ -5601,17 +5601,47 @@ function createSubtitlePanel(subtitles, languages) {
 function initSubtitleResize() {
     const handle = document.getElementById('subtitleResizeHandle');
     const panel = document.getElementById('subtitlePanel');
+    const video = document.getElementById('modalVideoPlayer');
+    const container = document.querySelector('.image-main-view');
 
     if (!handle || !panel) return;
 
     let isResizing = false;
     let startY = 0;
-    let startHeight = 0;
+    let startPanelHeight = 0;
+    let startVideoHeight = 0;
+    let containerHeight = 0;
+
+    const updateHeights = (panelHeight) => {
+        // Calculate available space for video (container height minus panel height and some padding)
+        const padding = 40; // spacing between elements
+        const minVideoHeight = 150;
+        const minPanelHeight = 100;
+        const maxPanelHeight = containerHeight - minVideoHeight - padding;
+
+        // Clamp panel height
+        const clampedPanelHeight = Math.min(Math.max(panelHeight, minPanelHeight), maxPanelHeight);
+
+        // Calculate video height
+        const videoHeight = containerHeight - clampedPanelHeight - padding;
+
+        // Apply heights
+        panel.style.maxHeight = clampedPanelHeight + 'px';
+        panel.style.height = clampedPanelHeight + 'px';
+
+        if (video) {
+            video.style.maxHeight = Math.max(videoHeight, minVideoHeight) + 'px';
+            video.style.height = 'auto';
+        }
+    };
 
     handle.addEventListener('mousedown', (e) => {
         isResizing = true;
         startY = e.clientY;
-        startHeight = panel.offsetHeight;
+        startPanelHeight = panel.offsetHeight;
+        if (video) startVideoHeight = video.offsetHeight;
+        if (container) containerHeight = container.offsetHeight;
+
         document.body.style.cursor = 'ns-resize';
         document.body.style.userSelect = 'none';
         e.preventDefault();
@@ -5621,9 +5651,8 @@ function initSubtitleResize() {
         if (!isResizing) return;
 
         const deltaY = startY - e.clientY;
-        const newHeight = Math.min(Math.max(startHeight + deltaY, 100), window.innerHeight * 0.7);
-        panel.style.maxHeight = newHeight + 'px';
-        panel.style.height = newHeight + 'px';
+        const newPanelHeight = startPanelHeight + deltaY;
+        updateHeights(newPanelHeight);
     });
 
     document.addEventListener('mouseup', () => {
@@ -5638,7 +5667,9 @@ function initSubtitleResize() {
     handle.addEventListener('touchstart', (e) => {
         isResizing = true;
         startY = e.touches[0].clientY;
-        startHeight = panel.offsetHeight;
+        startPanelHeight = panel.offsetHeight;
+        if (video) startVideoHeight = video.offsetHeight;
+        if (container) containerHeight = container.offsetHeight;
         e.preventDefault();
     }, { passive: false });
 
@@ -5646,9 +5677,8 @@ function initSubtitleResize() {
         if (!isResizing) return;
 
         const deltaY = startY - e.touches[0].clientY;
-        const newHeight = Math.min(Math.max(startHeight + deltaY, 100), window.innerHeight * 0.7);
-        panel.style.maxHeight = newHeight + 'px';
-        panel.style.height = newHeight + 'px';
+        const newPanelHeight = startPanelHeight + deltaY;
+        updateHeights(newPanelHeight);
     }, { passive: true });
 
     document.addEventListener('touchend', () => {
