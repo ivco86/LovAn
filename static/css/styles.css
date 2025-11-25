@@ -920,6 +920,16 @@ body {
     gap: var(--spacing-md);
 }
 
+/* Placeholder cards to fill empty spaces in last row */
+.image-card-placeholder {
+    background: var(--bg-tertiary);
+    border-radius: 16px;
+    border: 1px dashed var(--border-color);
+    opacity: 0.3;
+    aspect-ratio: 3 / 4;
+    pointer-events: none;
+}
+
 .image-card {
     /* Removed break-inside since we're using grid now */
     background: var(--bg-card);

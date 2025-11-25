@@ -96,6 +96,13 @@ function cleanupGridImages(grid) {
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     attachEventListeners();
+
+    // Recalculate grid placeholders on window resize (debounced)
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(addGridPlaceholders, 150);
+    });
 });
 
 async function initializeApp() {
@@ -1065,6 +1072,9 @@ function renderImages() {
             grid.appendChild(fragment);
             setupLazyLoading(grid);
         }
+
+        // Add placeholders to fill empty spaces in last row
+        requestAnimationFrame(() => addGridPlaceholders());
     } catch (error) {
         console.error('Error rendering images:', error);
         grid.style.display = 'none';
@@ -1102,6 +1112,9 @@ function renderRemainingBatches(grid, remainingImages) {
         // Continue if there are more images
         if (index < remainingImages.length) {
             requestIdleCallback(renderBatch, { timeout: 100 });
+        } else {
+            // All batches done - add placeholders
+            addGridPlaceholders();
         }
     }
 
@@ -1116,7 +1129,39 @@ function renderRemainingBatches(grid, remainingImages) {
                 grid.appendChild(tempContainer.firstChild);
             }
             setupLazyLoading(grid);
+            addGridPlaceholders(); // Add placeholders after rendering
         }, 0);
+    }
+}
+
+function addGridPlaceholders() {
+    /**
+     * Add placeholder cards to fill empty spaces in the last row of the grid
+     * This prevents layout issues when the number of items doesn't fill the row
+     */
+    const grid = document.getElementById('imageGrid');
+    if (!grid) return;
+
+    // Remove existing placeholders
+    grid.querySelectorAll('.image-card-placeholder').forEach(p => p.remove());
+
+    // Get the number of real image cards
+    const realCards = grid.querySelectorAll('.image-card');
+    if (realCards.length === 0) return;
+
+    // Calculate how many columns fit in the grid
+    const gridStyle = window.getComputedStyle(grid);
+    const gridColumns = gridStyle.gridTemplateColumns.split(' ').length;
+
+    // Calculate how many placeholders needed to fill the last row
+    const remainder = realCards.length % gridColumns;
+    const placeholdersNeeded = remainder === 0 ? 0 : gridColumns - remainder;
+
+    // Add placeholder cards
+    for (let i = 0; i < placeholdersNeeded; i++) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'image-card-placeholder';
+        grid.appendChild(placeholder);
     }
 }
 
