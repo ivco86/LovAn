@@ -99,6 +99,16 @@ def serve_thumbnail(image_id):
         # Resize thumbnail
         img.thumbnail((size, size), Image.Resampling.LANCZOS)
 
+        # Convert RGBA to RGB (JPEG doesn't support transparency)
+        if img.mode in ('RGBA', 'LA', 'P'):
+            # Create white background for transparent images
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            if img.mode in ('RGBA', 'LA'):
+                background.paste(img, mask=img.split()[-1])  # Use alpha channel as mask
+            img = background
+
         # Higher quality for better visual appearance (92 is a good balance)
         img.save(cache_path, 'JPEG', quality=92, optimize=True)
 
@@ -112,7 +122,7 @@ def serve_thumbnail(image_id):
 
         return send_file(cache_path, mimetype='image/jpeg')
     except Exception as e:
-        print(f"Error generating thumbnail: {e}")
+        print(f"Error generating thumbnail for image {image_id}: {e}")
 
         # For videos, try to return placeholder
         if is_video:
@@ -120,8 +130,12 @@ def serve_thumbnail(image_id):
                 img = create_video_placeholder(size)
                 img.save(cache_path, 'JPEG', quality=92)
                 return send_file(cache_path, mimetype='image/jpeg')
-            except:
-                pass
+            except Exception as e2:
+                print(f"Failed to create video placeholder: {e2}")
 
-        # Fallback to original file
-        return send_file(abs_filepath, mimetype=mimetypes.guess_type(abs_filepath)[0])
+        # Try to serve original file as fallback
+        try:
+            return send_file(abs_filepath, mimetype=mimetypes.guess_type(abs_filepath)[0])
+        except Exception as e3:
+            print(f"Failed to serve original file: {e3}")
+            return jsonify({'error': 'Thumbnail generation failed'}), 500
