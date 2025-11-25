@@ -4782,4 +4782,110 @@ async function downloadYouTubeVideo() {
 // Initialize YouTube modal on page load
 document.addEventListener('DOMContentLoaded', initYouTubeModal);
 
+// ============================================================================
+// Full-screen Drag & Drop Upload
+// ============================================================================
+
+let dragCounter = 0;
+
+function initFullscreenDropZone() {
+    const dropZone = document.getElementById('fullscreenDropZone');
+    if (!dropZone) return;
+
+    // Prevent default drag behaviors on document
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    // Show drop zone when dragging files over the document
+    document.addEventListener('dragenter', (e) => {
+        // Only show for file drags
+        if (!e.dataTransfer.types.includes('Files')) return;
+
+        dragCounter++;
+        dropZone.classList.add('active');
+    });
+
+    document.addEventListener('dragleave', (e) => {
+        dragCounter--;
+        if (dragCounter <= 0) {
+            dragCounter = 0;
+            dropZone.classList.remove('active');
+        }
+    });
+
+    // Handle drop on the drop zone
+    dropZone.addEventListener('drop', async (e) => {
+        dragCounter = 0;
+        dropZone.classList.remove('active');
+
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length === 0) return;
+
+        // Filter for valid media files
+        const validFiles = files.filter(file =>
+            file.type.startsWith('image/') || file.type.startsWith('video/')
+        );
+
+        if (validFiles.length === 0) {
+            showToast('No valid image or video files found', 'warning');
+            return;
+        }
+
+        // Upload files directly
+        await uploadFilesDirectly(validFiles);
+    });
+}
+
+async function uploadFilesDirectly(files) {
+    showToast(`Uploading ${files.length} file(s)...`, 'info');
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                successCount++;
+            } else {
+                failCount++;
+                console.error(`Failed to upload ${file.name}:`, data.error);
+            }
+        } catch (error) {
+            failCount++;
+            console.error(`Error uploading ${file.name}:`, error);
+        }
+    }
+
+    // Show result
+    if (successCount > 0 && failCount === 0) {
+        showToast(`Uploaded ${successCount} file(s) successfully!`, 'success');
+    } else if (successCount > 0 && failCount > 0) {
+        showToast(`Uploaded ${successCount} file(s), ${failCount} failed`, 'warning');
+    } else {
+        showToast('Upload failed', 'error');
+    }
+
+    // Reload gallery
+    if (successCount > 0) {
+        loadImages();
+    }
+}
+
+// Initialize fullscreen drop zone on page load
+document.addEventListener('DOMContentLoaded', initFullscreenDropZone);
+
 console.log('AI Gallery initialized ✨');
