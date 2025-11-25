@@ -3,6 +3,11 @@
 """
 YouTube Download Service for AI Gallery
 Downloads videos using yt-dlp, extracts metadata, subtitles, and keyframes
+
+Performance improvements:
+- Background download support with ThreadPoolExecutor
+- Reduced timeout for faster error handling
+- Non-blocking subprocess calls
 """
 
 import os
@@ -12,11 +17,18 @@ import subprocess
 import logging
 import shutil
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor, Future
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Callable
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+# Thread pool for background downloads
+_download_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix='youtube_')
+_active_downloads: Dict[str, Future] = {}  # Track active downloads by youtube_id
+_downloads_lock = threading.Lock()
 
 # Configuration
 # Import PHOTOS_DIR after checking for circular import
@@ -642,3 +654,118 @@ class YouTubeService:
         if count >= 1_000:
             return f"{count / 1_000:.1f}K"
         return str(count)
+
+    # ============ BACKGROUND DOWNLOAD METHODS ============
+
+    def download_video_async(
+            self,
+            url: str,
+            download_subtitles: bool = True,
+            extract_keyframes: bool = True,
+            on_complete: Callable = None,
+            on_error: Callable = None
+    ) -> str:
+        """
+        Start a background video download (non-blocking).
+
+        Args:
+            url: YouTube URL or video ID
+            download_subtitles: Whether to download subtitles
+            extract_keyframes: Whether to extract keyframes
+            on_complete: Callback(result_dict) when download finishes
+            on_error: Callback(exception) when download fails
+
+        Returns:
+            youtube_id for tracking the download status
+        """
+        youtube_id = self.extract_youtube_id(url)
+        if not youtube_id:
+            raise ValueError(f"Invalid YouTube URL: {url}")
+
+        # Check if already downloading
+        with _downloads_lock:
+            if youtube_id in _active_downloads:
+                future = _active_downloads[youtube_id]
+                if not future.done():
+                    logger.info(f"Download already in progress for {youtube_id}")
+                    return youtube_id
+
+        def download_task():
+            try:
+                result = self.download_video(
+                    url,
+                    download_subtitles=download_subtitles,
+                    extract_keyframes=extract_keyframes
+                )
+                if on_complete:
+                    on_complete(result)
+                return result
+            except Exception as e:
+                logger.error(f"Background download failed for {youtube_id}: {e}")
+                if on_error:
+                    on_error(e)
+                raise
+            finally:
+                # Clean up tracking
+                with _downloads_lock:
+                    _active_downloads.pop(youtube_id, None)
+
+        # Submit to thread pool
+        future = _download_executor.submit(download_task)
+
+        with _downloads_lock:
+            _active_downloads[youtube_id] = future
+
+        logger.info(f"Started background download for {youtube_id}")
+        return youtube_id
+
+    def get_download_status(self, youtube_id: str) -> dict:
+        """
+        Get the status of a background download.
+
+        Returns:
+            dict with 'status' ('pending', 'running', 'completed', 'failed', 'not_found')
+            and optional 'result' or 'error'
+        """
+        with _downloads_lock:
+            if youtube_id not in _active_downloads:
+                return {'status': 'not_found'}
+
+            future = _active_downloads[youtube_id]
+
+            if not future.done():
+                return {'status': 'running'}
+
+            try:
+                result = future.result(timeout=0)
+                return {'status': 'completed', 'result': result}
+            except Exception as e:
+                return {'status': 'failed', 'error': str(e)}
+
+    def cancel_download(self, youtube_id: str) -> bool:
+        """
+        Attempt to cancel a background download.
+
+        Returns:
+            True if cancelled, False if not found or already completed
+        """
+        with _downloads_lock:
+            if youtube_id not in _active_downloads:
+                return False
+
+            future = _active_downloads[youtube_id]
+            cancelled = future.cancel()
+
+            if cancelled:
+                _active_downloads.pop(youtube_id, None)
+                logger.info(f"Cancelled download for {youtube_id}")
+
+            return cancelled
+
+    def get_active_downloads(self) -> List[str]:
+        """Get list of youtube_ids currently being downloaded"""
+        with _downloads_lock:
+            return [
+                yt_id for yt_id, future in _active_downloads.items()
+                if not future.done()
+            ]

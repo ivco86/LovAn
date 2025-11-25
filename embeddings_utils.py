@@ -162,6 +162,55 @@ class CLIPEmbeddingsGenerator:
             print(f"Error computing similarity: {e}")
             return 0.0
 
+    def unload_model(self):
+        """
+        Unload CLIP model from memory to free GPU/RAM.
+        Useful when memory is needed for other operations.
+        Model will be reloaded automatically on next use.
+        """
+        if self._model is not None:
+            print("🧹 Unloading CLIP model from memory...")
+            del self._model
+            self._model = None
+
+        if self._processor is not None:
+            del self._processor
+            self._processor = None
+
+        # Clear CUDA cache if using GPU
+        if HAS_CLIP and self._device == "cuda":
+            try:
+                torch.cuda.empty_cache()
+                print("✅ CUDA cache cleared")
+            except Exception as e:
+                print(f"⚠️ Could not clear CUDA cache: {e}")
+
+        self.available = False
+        print("✅ CLIP model unloaded successfully")
+
+    def get_memory_usage(self) -> dict:
+        """
+        Get current memory usage of the CLIP model.
+        Returns dict with RAM and VRAM usage in MB.
+        """
+        result = {
+            'model_loaded': self._model is not None,
+            'device': self._device,
+            'model_name': self._model_name
+        }
+
+        if HAS_CLIP and self._device == "cuda":
+            try:
+                # GPU memory
+                allocated = torch.cuda.memory_allocated() / (1024 * 1024)
+                reserved = torch.cuda.memory_reserved() / (1024 * 1024)
+                result['gpu_allocated_mb'] = round(allocated, 2)
+                result['gpu_reserved_mb'] = round(reserved, 2)
+            except Exception:
+                pass
+
+        return result
+
 
 # Global instance
 _clip_generator = None
@@ -173,6 +222,23 @@ def get_clip_generator():
     if _clip_generator is None:
         _clip_generator = CLIPEmbeddingsGenerator()
     return _clip_generator
+
+
+def unload_clip_model():
+    """Unload CLIP model to free memory"""
+    global _clip_generator
+    if _clip_generator is not None:
+        _clip_generator.unload_model()
+        _clip_generator = None
+        print("✅ Global CLIP generator released")
+
+
+def get_clip_memory_usage() -> dict:
+    """Get memory usage of the CLIP model"""
+    global _clip_generator
+    if _clip_generator is None:
+        return {'model_loaded': False}
+    return _clip_generator.get_memory_usage()
 
 
 def is_clip_available():

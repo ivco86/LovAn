@@ -932,7 +932,7 @@ RESPONSE (Python Dictionary only, no markdown, no code blocks):"""
         text = text.strip()
         try:
             return json.loads(text)
-        except:
+        except (json.JSONDecodeError, ValueError):
             pass
 
         # Simple approach: find first { and last } - covers most common cases
@@ -953,7 +953,7 @@ RESPONSE (Python Dictionary only, no markdown, no code blocks):"""
                 parsed = json.loads(json_str)
                 logger.debug("✅ JSON extracted using find/rfind method")
                 return parsed
-            except:
+            except (json.JSONDecodeError, ValueError):
                 pass
 
         # Look for ```json ... ``` markdown code blocks
@@ -961,7 +961,7 @@ RESPONSE (Python Dictionary only, no markdown, no code blocks):"""
         if json_match:
             try:
                 return json.loads(json_match.group(1))
-            except:
+            except (json.JSONDecodeError, ValueError):
                 pass
 
         # Look for properly nested JSON {...} block
@@ -969,7 +969,7 @@ RESPONSE (Python Dictionary only, no markdown, no code blocks):"""
         if json_match:
             try:
                 return json.loads(json_match.group(0))
-            except:
+            except (json.JSONDecodeError, ValueError):
                 pass
 
         # Last resort: Manual brace counting

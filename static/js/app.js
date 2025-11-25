@@ -37,8 +37,35 @@ const CONFIG = {
     BASE_HEIGHT: 250,
     SEARCH_DEBOUNCE_MS: 300,
     TOAST_DURATION_MS: 5000,
-    SIMILAR_IMAGES_LIMIT: 6
+    SIMILAR_IMAGES_LIMIT: 6,
+    // Performance optimizations
+    RENDER_BATCH_SIZE: 50,           // Render images in batches
+    INTERSECTION_ROOT_MARGIN: '200px' // Pre-load images 200px before visible
 };
+
+// Lazy loading observer for images
+let _imageObserver = null;
+
+function getImageObserver() {
+    if (!_imageObserver) {
+        _imageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                        _imageObserver.unobserve(img);
+                    }
+                }
+            });
+        }, {
+            rootMargin: CONFIG.INTERSECTION_ROOT_MARGIN,
+            threshold: 0.01
+        });
+    }
+    return _imageObserver;
+}
 
 // ============ Initialization ============
 
@@ -958,12 +985,103 @@ function renderImages() {
     try {
         // Sort images before rendering
         const sortedImages = sortImages([...state.images], state.imageSort);
-        grid.innerHTML = sortedImages.map(image => createImageCard(image)).join('');
+
+        // OPTIMIZED: Use DocumentFragment for faster DOM updates
+        const fragment = document.createDocumentFragment();
+        const tempContainer = document.createElement('div');
+
+        // For large galleries, render in batches
+        if (sortedImages.length > CONFIG.RENDER_BATCH_SIZE) {
+            // Clear grid first
+            grid.innerHTML = '';
+
+            // Render first batch immediately
+            const firstBatch = sortedImages.slice(0, CONFIG.RENDER_BATCH_SIZE);
+            tempContainer.innerHTML = firstBatch.map(image => createImageCard(image, true)).join('');
+            while (tempContainer.firstChild) {
+                fragment.appendChild(tempContainer.firstChild);
+            }
+            grid.appendChild(fragment);
+
+            // Setup lazy loading for images
+            setupLazyLoading(grid);
+
+            // Render remaining batches asynchronously
+            if (sortedImages.length > CONFIG.RENDER_BATCH_SIZE) {
+                renderRemainingBatches(grid, sortedImages.slice(CONFIG.RENDER_BATCH_SIZE));
+            }
+        } else {
+            // Small gallery - render all at once
+            tempContainer.innerHTML = sortedImages.map(image => createImageCard(image, true)).join('');
+            while (tempContainer.firstChild) {
+                fragment.appendChild(tempContainer.firstChild);
+            }
+            grid.innerHTML = '';
+            grid.appendChild(fragment);
+            setupLazyLoading(grid);
+        }
     } catch (error) {
         console.error('Error rendering images:', error);
         grid.style.display = 'none';
         emptyState.style.display = 'flex';
     }
+}
+
+function renderRemainingBatches(grid, remainingImages) {
+    /**
+     * Render remaining images in batches using requestIdleCallback
+     * This prevents UI blocking for large galleries
+     */
+    let index = 0;
+
+    function renderBatch(deadline) {
+        const fragment = document.createDocumentFragment();
+        const tempContainer = document.createElement('div');
+
+        // Render as many as we can in this idle period
+        while (index < remainingImages.length &&
+               (deadline.timeRemaining() > 5 || deadline.didTimeout)) {
+            const batchEnd = Math.min(index + 10, remainingImages.length);
+            const batch = remainingImages.slice(index, batchEnd);
+            tempContainer.innerHTML = batch.map(image => createImageCard(image, true)).join('');
+
+            while (tempContainer.firstChild) {
+                fragment.appendChild(tempContainer.firstChild);
+            }
+            index = batchEnd;
+        }
+
+        grid.appendChild(fragment);
+        setupLazyLoading(grid);
+
+        // Continue if there are more images
+        if (index < remainingImages.length) {
+            requestIdleCallback(renderBatch, { timeout: 100 });
+        }
+    }
+
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(renderBatch, { timeout: 100 });
+    } else {
+        setTimeout(() => {
+            const tempContainer = document.createElement('div');
+            tempContainer.innerHTML = remainingImages.map(image => createImageCard(image, true)).join('');
+            while (tempContainer.firstChild) {
+                grid.appendChild(tempContainer.firstChild);
+            }
+            setupLazyLoading(grid);
+        }, 0);
+    }
+}
+
+function setupLazyLoading(container) {
+    /**
+     * Setup IntersectionObserver for lazy loading images
+     */
+    const observer = getImageObserver();
+    const lazyImages = container.querySelectorAll('img[data-src]');
+    lazyImages.forEach(img => observer.observe(img));
 }
 
 function sortImages(images, sortType) {
@@ -1001,7 +1119,12 @@ function sortImages(images, sortType) {
     return sorted;
 }
 
-function createImageCard(image) {
+function createImageCard(image, useLazyLoading = false) {
+    /**
+     * Create HTML for an image card
+     * @param {Object} image - Image data object
+     * @param {boolean} useLazyLoading - Use data-src for IntersectionObserver lazy loading
+     */
     const favoriteClass = image.is_favorite ? 'active' : '';
     const isVideo = image.media_type === 'video';
 
@@ -1018,6 +1141,12 @@ function createImageCard(image) {
     const checkboxClass = isSelected ? 'checked' : '';
     const selectedClass = isSelected ? 'selected' : '';
 
+    // OPTIMIZED: Use data-src for lazy loading with IntersectionObserver
+    const thumbUrl = `/api/images/${image.id}/thumbnail?size=500`;
+    const imgSrcAttr = useLazyLoading
+        ? `data-src="${thumbUrl}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E"`
+        : `src="${thumbUrl}"`;
+
     return `
         <div class="image-card ${selectedClass}" data-id="${image.id}" data-media-type="${image.media_type || 'image'}">
             <div class="image-card-checkbox ${checkboxClass}" data-id="${image.id}"></div>
@@ -1026,7 +1155,7 @@ function createImageCard(image) {
             `<div class="image-card-video-wrapper">
                     <img
                         class="image-card-image"
-                        src="/api/images/${image.id}/thumbnail?size=500"
+                        ${imgSrcAttr}
                         alt="${escapeHtml(image.filename)}"
                         loading="lazy"
                     >
@@ -1037,7 +1166,7 @@ function createImageCard(image) {
                 </div>` :
             `<img
                     class="image-card-image"
-                    src="/api/images/${image.id}/thumbnail?size=500"
+                    ${imgSrcAttr}
                     alt="${escapeHtml(image.filename)}"
                     loading="lazy"
                 >`

@@ -1,25 +1,115 @@
 """
 Database layer for AI Gallery
 Handles all SQLite operations for images, boards, and relationships
+
+Performance improvements:
+- Connection pooling with context manager
+- Thread-local connections for reuse
+- Automatic connection cleanup
+- TTL caching for frequently accessed data (tags)
 """
 
 import sqlite3
 import json
+import threading
+import time
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 
 
+class TTLCache:
+    """Simple TTL (Time To Live) cache for expensive operations"""
+
+    def __init__(self, ttl_seconds: int = 60):
+        self.ttl = ttl_seconds
+        self._cache = {}
+        self._timestamps = {}
+        self._lock = threading.Lock()
+
+    def get(self, key: str):
+        """Get cached value if not expired"""
+        with self._lock:
+            if key in self._cache:
+                if time.time() - self._timestamps[key] < self.ttl:
+                    return self._cache[key]
+                else:
+                    # Expired
+                    del self._cache[key]
+                    del self._timestamps[key]
+        return None
+
+    def set(self, key: str, value):
+        """Set cache value with current timestamp"""
+        with self._lock:
+            self._cache[key] = value
+            self._timestamps[key] = time.time()
+
+    def invalidate(self, key: str = None):
+        """Invalidate specific key or all cache"""
+        with self._lock:
+            if key:
+                self._cache.pop(key, None)
+                self._timestamps.pop(key, None)
+            else:
+                self._cache.clear()
+                self._timestamps.clear()
+
+
 class Database:
     def __init__(self, db_path: str = "data/gallery.db"):
         self.db_path = db_path
+        self._local = threading.local()  # Thread-local storage for connections
+        self._lock = threading.Lock()  # Lock for thread-safe operations
+        self._cache = TTLCache(ttl_seconds=60)  # Cache for expensive queries
         self.init_database()
-    
+
     def get_connection(self):
-        """Get database connection with row factory and timeout"""
+        """Get database connection with row factory and timeout (legacy method)"""
         conn = sqlite3.connect(self.db_path, timeout=30.0)
         conn.row_factory = sqlite3.Row
         return conn
+
+    @contextmanager
+    def connection(self):
+        """
+        Context manager for database connections.
+        Reuses connection per thread, auto-commits on success, rolls back on error.
+
+        Usage:
+            with db.connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(...)
+        """
+        # Check if we already have a connection for this thread
+        if not hasattr(self._local, 'conn') or self._local.conn is None:
+            self._local.conn = sqlite3.connect(
+                self.db_path,
+                timeout=30.0,
+                check_same_thread=False
+            )
+            self._local.conn.row_factory = sqlite3.Row
+            # Enable WAL mode for better concurrent access
+            self._local.conn.execute("PRAGMA journal_mode=WAL")
+            self._local.conn.execute("PRAGMA synchronous=NORMAL")
+
+        conn = self._local.conn
+        try:
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+
+    def close_connection(self):
+        """Close the thread-local connection if it exists"""
+        if hasattr(self._local, 'conn') and self._local.conn is not None:
+            try:
+                self._local.conn.close()
+            except Exception:
+                pass
+            self._local.conn = None
     
     def init_database(self):
     
@@ -408,15 +498,18 @@ class Database:
         """Update image with AI analysis results"""
         tags_json = json.dumps(tags)
         tags_text = ' '.join(tags)
-        
+
         try:
             self._apply_image_analysis_update(image_id, description, tags_json, tags_text)
+            # Invalidate tag cache since tags changed
+            self.invalidate_tag_cache()
         except sqlite3.DatabaseError as error:
             if "malformed" in str(error).lower():
                 print("Detected corrupted full-text index, attempting rebuild...")
                 self.rebuild_fulltext_index()
                 # Retry the update
                 self._apply_image_analysis_update(image_id, description, tags_json, tags_text)
+                self.invalidate_tag_cache()
             else:
                 raise
     
@@ -517,7 +610,7 @@ class Database:
 
         try:
             source_tags = json.loads(result['tags'])
-        except:
+        except (json.JSONDecodeError, TypeError):
             conn.close()
             return []
 
@@ -550,7 +643,7 @@ class Database:
                     img_dict = self._row_to_dict(row)
                     img_dict['similarity_score'] = len(shared_tags)
                     similar_images.append(img_dict)
-            except:
+            except (json.JSONDecodeError, TypeError):
                 continue
 
         # Sort by similarity and return top N
@@ -587,21 +680,30 @@ class Database:
 
     # ============ TAG OPERATIONS ============
 
-    def get_all_tags(self) -> List[Dict]:
+    def get_all_tags(self, use_cache: bool = True) -> List[Dict]:
         """
-        Get all unique tags with usage count, sorted by popularity
+        Get all unique tags with usage count, sorted by popularity.
         Returns: [{'tag': 'sunset', 'count': 5}, ...]
+
+        Performance: Uses 60-second TTL cache to avoid repeated parsing.
         """
-        conn = self.get_connection()
-        cursor = conn.cursor()
+        cache_key = 'all_tags'
 
-        cursor.execute("""
-            SELECT tags FROM images
-            WHERE tags IS NOT NULL AND tags != '[]'
-        """)
+        # Check cache first
+        if use_cache:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
 
-        results = cursor.fetchall()
-        conn.close()
+        with self.connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT tags FROM images
+                WHERE tags IS NOT NULL AND tags != '[]'
+            """)
+
+            results = cursor.fetchall()
 
         # Count tag occurrences
         tag_counts = {}
@@ -612,14 +714,22 @@ class Database:
                     tag = tag.lower().strip()
                     if tag:
                         tag_counts[tag] = tag_counts.get(tag, 0) + 1
-            except:
+            except json.JSONDecodeError:
                 continue
 
         # Convert to list of dicts and sort by count
         tag_list = [{'tag': tag, 'count': count} for tag, count in tag_counts.items()]
         tag_list.sort(key=lambda x: x['count'], reverse=True)
 
+        # Cache result
+        self._cache.set(cache_key, tag_list)
+
         return tag_list
+
+    def invalidate_tag_cache(self):
+        """Invalidate the tag cache (call after tag changes)"""
+        self._cache.invalidate('all_tags')
+        self._cache.invalidate('related_tags')
 
     def get_tag_suggestions(self, prefix: str = '', limit: int = 10) -> List[str]:
         """
@@ -641,29 +751,41 @@ class Database:
 
         return [t['tag'] for t in filtered[:limit]]
 
-    def get_related_tags(self, tag: str, limit: int = 10) -> List[Dict]:
+    def get_related_tags(self, tag: str, limit: int = 10, use_cache: bool = True) -> List[Dict]:
         """
         Get tags that frequently appear together with the given tag
 
         Args:
             tag: The tag to find related tags for
             limit: Maximum number of related tags to return
+            use_cache: Whether to use cached results
 
         Returns: [{'tag': 'related_tag', 'co_occurrence': 3}, ...]
+
+        Performance: Uses TTL cache for repeated queries.
         """
-        conn = self.get_connection()
-        cursor = conn.cursor()
-
         tag_lower = tag.lower().strip()
+        cache_key = f'related_tags:{tag_lower}'
 
-        # Find all images with this tag
-        cursor.execute("""
-            SELECT tags FROM images
-            WHERE tags IS NOT NULL AND tags != '[]'
-        """)
+        # Check cache first
+        if use_cache:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached[:limit]
 
-        results = cursor.fetchall()
-        conn.close()
+        with self.connection() as conn:
+            cursor = conn.cursor()
+
+            # OPTIMIZED: Only fetch images that contain this tag using LIKE
+            # This is faster than loading all images when we have many
+            cursor.execute("""
+                SELECT tags FROM images
+                WHERE tags IS NOT NULL
+                  AND tags != '[]'
+                  AND LOWER(tags) LIKE ?
+            """, (f'%"{tag_lower}"%',))
+
+            results = cursor.fetchall()
 
         # Count co-occurrences
         co_occurrences = {}
@@ -678,12 +800,15 @@ class Database:
                     for other_tag in tags_lower:
                         if other_tag != tag_lower:
                             co_occurrences[other_tag] = co_occurrences.get(other_tag, 0) + 1
-            except:
+            except json.JSONDecodeError:
                 continue
 
         # Convert to list and sort
         related = [{'tag': t, 'co_occurrence': count} for t, count in co_occurrences.items()]
         related.sort(key=lambda x: x['co_occurrence'], reverse=True)
+
+        # Cache full result (not limited)
+        self._cache.set(cache_key, related)
 
         return related[:limit]
 
@@ -913,34 +1038,33 @@ class Database:
         parent_ids = []
         current_id = board_id
 
-        conn = self.get_connection()
-        cursor = conn.cursor()
-
         print(f"get_parent_boards: Looking for parents of board {board_id}")
 
-        # Walk up the tree to find all parents
-        max_depth = 10  # Prevent infinite loops
-        depth = 0
-        while depth < max_depth:
-            cursor.execute("SELECT id, name, parent_id FROM boards WHERE id = ?", (current_id,))
-            result = cursor.fetchone()
+        with self.connection() as conn:
+            cursor = conn.cursor()
 
-            if not result:
-                print(f"  Board {current_id} not found in database!")
-                break
+            # Walk up the tree to find all parents
+            max_depth = 10  # Prevent infinite loops
+            depth = 0
+            while depth < max_depth:
+                cursor.execute("SELECT id, name, parent_id FROM boards WHERE id = ?", (current_id,))
+                result = cursor.fetchone()
 
-            print(f"  Depth {depth}: Board {result['id']} ('{result['name']}') has parent_id={result['parent_id']}")
+                if not result:
+                    print(f"  Board {current_id} not found in database!")
+                    break
 
-            if result['parent_id'] is None:
-                print(f"  Reached root board (no parent)")
-                break
+                print(f"  Depth {depth}: Board {result['id']} ('{result['name']}') has parent_id={result['parent_id']}")
 
-            parent_id = result['parent_id']
-            parent_ids.append(parent_id)
-            current_id = parent_id
-            depth += 1
+                if result['parent_id'] is None:
+                    print(f"  Reached root board (no parent)")
+                    break
 
-        conn.close()
+                parent_id = result['parent_id']
+                parent_ids.append(parent_id)
+                current_id = parent_id
+                depth += 1
+
         print(f"get_parent_boards: Found {len(parent_ids)} parents: {parent_ids}")
         return parent_ids
 
@@ -952,53 +1076,37 @@ class Database:
             board_id: The board to add the image to
             image_id: The image to add
             auto_add_to_parents: If True, also adds image to all parent boards
+
+        Performance: Uses single connection for all operations (optimized)
         """
         print(f"add_image_to_board: board_id={board_id}, image_id={image_id}, auto_add_to_parents={auto_add_to_parents}")
 
-        conn = self.get_connection()
-        cursor = conn.cursor()
+        # Collect all board IDs to add (main board + parents)
+        board_ids_to_add = [board_id]
 
-        # Add to the specified board
-        try:
-            cursor.execute("""
-                INSERT INTO board_images (board_id, image_id)
-                VALUES (?, ?)
-            """, (board_id, image_id))
-            conn.commit()
-            print(f"✓ Added image {image_id} to board {board_id}")
-        except sqlite3.IntegrityError:
-            # Already exists, ignore
-            print(f"Image {image_id} already in board {board_id}")
-            pass
-        finally:
-            conn.close()
-
-        # Auto-add to parent boards if enabled
         if auto_add_to_parents:
             parent_ids = self.get_parent_boards(board_id)
             print(f"Found {len(parent_ids)} parent boards: {parent_ids}")
+            board_ids_to_add.extend(parent_ids)
 
-            if len(parent_ids) == 0:
-                print(f"Board {board_id} has no parent boards")
+        # Use single connection for all inserts (OPTIMIZED)
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            added_count = 0
 
-            for parent_id in parent_ids:
-                conn = self.get_connection()
-                cursor = conn.cursor()
+            for bid in board_ids_to_add:
                 try:
                     cursor.execute("""
                         INSERT INTO board_images (board_id, image_id)
                         VALUES (?, ?)
-                    """, (parent_id, image_id))
-                    conn.commit()
-                    print(f"✓ Auto-added image {image_id} to parent board {parent_id}")
+                    """, (bid, image_id))
+                    added_count += 1
+                    print(f"✓ Added image {image_id} to board {bid}")
                 except sqlite3.IntegrityError:
                     # Already exists, ignore
-                    print(f"Image {image_id} already in parent board {parent_id}")
-                    pass
-                finally:
-                    conn.close()
-        else:
-            print(f"Auto-add to parents is disabled")
+                    print(f"Image {image_id} already in board {bid}")
+
+            print(f"add_image_to_board: Added to {added_count}/{len(board_ids_to_add)} boards")
     
     def remove_image_from_board(self, board_id: int, image_id: int):
         """Remove image from board"""
@@ -1083,11 +1191,19 @@ class Database:
     # ============ HELPER METHODS ============
     
     def rebuild_fulltext_index(self):
-        """Rebuild the FTS index from the images table"""
+        """
+        Rebuild the FTS index from the images table.
+
+        Uses EXCLUSIVE transaction to prevent corruption during rebuild.
+        This ensures no other writes can occur while the index is being rebuilt.
+        """
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         try:
+            # Use EXCLUSIVE lock to prevent concurrent writes during rebuild
+            cursor.execute("BEGIN EXCLUSIVE")
+
             # Drop and recreate FTS table with retries
             for attempt in range(3):
                 try:
@@ -1095,27 +1211,26 @@ class Database:
                     break
                 except sqlite3.OperationalError as exc:
                     if "locked" in str(exc).lower() and attempt < 2:
-                        import time
                         time.sleep(0.5 * (attempt + 1))
                         continue
                     raise
-            
+
             self._create_fulltext_table(cursor)
-            
+
             # Rebuild from images table
             cursor.execute("SELECT id, filename, description, tags FROM images")
             rows = cursor.fetchall()
-            
+
             for row in rows:
                 tags_list = []
-                
+
                 if row['tags']:
                     try:
                         tags_list = json.loads(row['tags'])
                     except json.JSONDecodeError:
                         # Corrupted tag data, skip gracefully
                         tags_list = []
-                
+
                 cursor.execute("""
                     INSERT INTO images_fts (rowid, filename, description, tags)
                     VALUES (?, ?, ?, ?)
@@ -1125,8 +1240,13 @@ class Database:
                     row['description'] or '',
                     ' '.join(tags_list)
                 ))
-            
+
             conn.commit()
+            print(f"✅ FTS index rebuilt successfully with {len(rows)} entries")
+        except Exception as e:
+            conn.rollback()
+            print(f"❌ FTS index rebuild failed: {e}")
+            raise
         finally:
             conn.close()
     

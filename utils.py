@@ -1,11 +1,211 @@
 """
 Utility functions for AI Gallery
 Helper functions for file handling, video processing, and image operations
+
+Includes:
+- Simple in-memory rate limiter
+- File handling utilities
+- Video frame extraction
 """
 
 import os
+import time
+import threading
+from collections import defaultdict
+from functools import wraps
+from flask import request, jsonify
 from PIL import Image, ImageDraw
 from pathlib import Path
+
+
+# ============ RATE LIMITER ============
+
+class RateLimiter:
+    """
+    Simple in-memory rate limiter.
+    Tracks requests per IP with sliding window.
+    """
+
+    def __init__(self):
+        self._requests = defaultdict(list)  # IP -> list of timestamps
+        self._lock = threading.Lock()
+
+    def is_allowed(self, key: str, limit: int, window_seconds: int) -> bool:
+        """
+        Check if request is allowed under rate limit.
+
+        Args:
+            key: Identifier (usually IP address)
+            limit: Max requests allowed in window
+            window_seconds: Time window in seconds
+
+        Returns:
+            True if allowed, False if rate limited
+        """
+        now = time.time()
+        cutoff = now - window_seconds
+
+        with self._lock:
+            # Clean old requests
+            self._requests[key] = [t for t in self._requests[key] if t > cutoff]
+
+            # Check limit
+            if len(self._requests[key]) >= limit:
+                return False
+
+            # Record this request
+            self._requests[key].append(now)
+            return True
+
+    def get_remaining(self, key: str, limit: int, window_seconds: int) -> int:
+        """Get remaining requests for a key"""
+        now = time.time()
+        cutoff = now - window_seconds
+
+        with self._lock:
+            recent = [t for t in self._requests[key] if t > cutoff]
+            return max(0, limit - len(recent))
+
+
+# Global rate limiter instance
+_rate_limiter = RateLimiter()
+
+
+def rate_limit(limit: int = 10, window: int = 60):
+    """
+    Decorator to rate limit API endpoints.
+
+    Args:
+        limit: Maximum requests per window
+        window: Time window in seconds
+
+    Usage:
+        @app.route('/api/analyze')
+        @rate_limit(limit=5, window=60)  # 5 requests per minute
+        def analyze():
+            ...
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            # Get client identifier (IP address)
+            client_ip = request.remote_addr or 'unknown'
+
+            if not _rate_limiter.is_allowed(client_ip, limit, window):
+                remaining = _rate_limiter.get_remaining(client_ip, limit, window)
+                return jsonify({
+                    'error': 'Rate limit exceeded',
+                    'message': f'Too many requests. Please wait before trying again.',
+                    'limit': limit,
+                    'window_seconds': window,
+                    'remaining': remaining
+                }), 429
+
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
+
+# ============ API RESPONSE CACHE ============
+
+class ResponseCache:
+    """
+    Simple in-memory cache for API responses.
+    TTL-based expiration with automatic cleanup.
+    """
+
+    def __init__(self, default_ttl: int = 60):
+        self._cache = {}  # key -> (value, expiry_time)
+        self._lock = threading.Lock()
+        self._default_ttl = default_ttl
+
+    def get(self, key: str):
+        """Get cached value if not expired"""
+        with self._lock:
+            if key in self._cache:
+                value, expiry = self._cache[key]
+                if time.time() < expiry:
+                    return value
+                else:
+                    del self._cache[key]
+        return None
+
+    def set(self, key: str, value, ttl: int = None):
+        """Set cache value with TTL"""
+        expiry = time.time() + (ttl or self._default_ttl)
+        with self._lock:
+            self._cache[key] = (value, expiry)
+
+    def invalidate(self, key: str = None, pattern: str = None):
+        """Invalidate specific key, pattern, or all"""
+        with self._lock:
+            if key:
+                self._cache.pop(key, None)
+            elif pattern:
+                # Remove keys matching pattern
+                keys_to_remove = [k for k in self._cache if pattern in k]
+                for k in keys_to_remove:
+                    del self._cache[k]
+            else:
+                self._cache.clear()
+
+    def cleanup(self):
+        """Remove expired entries"""
+        now = time.time()
+        with self._lock:
+            expired = [k for k, (_, exp) in self._cache.items() if now >= exp]
+            for k in expired:
+                del self._cache[k]
+
+
+# Global cache instance
+_response_cache = ResponseCache(default_ttl=60)
+
+
+def cache_response(ttl: int = 60, key_prefix: str = ''):
+    """
+    Decorator to cache API response for GET requests.
+
+    Args:
+        ttl: Cache time-to-live in seconds
+        key_prefix: Optional prefix for cache key
+
+    Usage:
+        @app.route('/api/images')
+        @cache_response(ttl=30)
+        def get_images():
+            ...
+
+    Note: Only caches GET requests. POST/PUT/DELETE bypass cache.
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            # Only cache GET requests
+            if request.method != 'GET':
+                return f(*args, **kwargs)
+
+            # Build cache key from endpoint + query params
+            cache_key = f"{key_prefix}{request.path}?{request.query_string.decode()}"
+
+            # Check cache
+            cached = _response_cache.get(cache_key)
+            if cached is not None:
+                return cached
+
+            # Execute function and cache result
+            result = f(*args, **kwargs)
+            _response_cache.set(cache_key, result, ttl)
+
+            return result
+        return wrapped
+    return decorator
+
+
+def invalidate_cache(pattern: str = None):
+    """Invalidate cache entries matching pattern"""
+    _response_cache.invalidate(pattern=pattern)
+
 
 # Try to import opencv for video frame extraction
 try:
