@@ -16,6 +16,7 @@ from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler, ContextTypes, filters
 import requests
 from database import Database
+from youtube_service import YouTubeService
 
 # Fix Windows console encoding for emoji support
 if sys.platform == 'win32':
@@ -48,6 +49,9 @@ os.makedirs(PHOTOS_DIR, exist_ok=True)
 
 # Database instance
 db = Database()
+
+# YouTube service
+youtube_service = YouTubeService(db)
 
 
 class TelegramGalleryBot:
@@ -254,15 +258,138 @@ class TelegramGalleryBot:
             "🤖 *Bot Commands*\n\n"
             "/start - Show welcome message\n"
             "/status - Check gallery statistics\n"
+            "/download <url> - Download YouTube video\n"
             "/help - Show this help message\n\n"
             "*Features:*\n"
             "• Automatic photo saving\n"
             "• AI analysis with descriptions and tags\n"
+            "• YouTube video downloading with subtitles\n"
             "• Works in groups and private chats\n"
             "• Supports JPG, PNG, WebP formats\n"
         )
 
         await update.message.reply_text(help_msg, parse_mode='Markdown')
+
+    async def download_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle /download command for YouTube videos"""
+        chat_id = update.effective_chat.id
+
+        # Check if chat is allowed
+        if not self.is_chat_allowed(chat_id):
+            logger.warning(f"Ignoring download from unauthorized chat: {chat_id}")
+            return
+
+        # Get URL from command arguments
+        if not context.args:
+            await update.message.reply_text(
+                "📥 *YouTube Download*\n\n"
+                "Usage: `/download <youtube_url>`\n\n"
+                "Example:\n"
+                "`/download https://youtube.com/watch?v=dQw4w9WgXcQ`",
+                parse_mode='Markdown'
+            )
+            return
+
+        url = context.args[0]
+
+        # Validate URL
+        youtube_id = youtube_service.extract_youtube_id(url)
+        if not youtube_id:
+            await update.message.reply_text(
+                "❌ Invalid YouTube URL\n\n"
+                "Please provide a valid YouTube link."
+            )
+            return
+
+        # Check if video already exists
+        existing = db.get_youtube_video_by_youtube_id(youtube_id)
+        if existing:
+            await update.message.reply_text(
+                f"ℹ️ *Video already in gallery*\n\n"
+                f"📺 {existing.get('title', 'Unknown')}\n"
+                f"🎬 Channel: {existing.get('channel_name', 'Unknown')}\n"
+                f"⏱️ Duration: {youtube_service.format_duration(existing.get('duration', 0))}\n"
+                f"🆔 ID: {existing.get('id')}",
+                parse_mode='Markdown'
+            )
+            return
+
+        # Send initial status message
+        status_msg = await update.message.reply_text(
+            "🔍 Getting video information...",
+            parse_mode='Markdown'
+        )
+
+        try:
+            # Get video info first
+            info = youtube_service.get_video_info(url)
+            if not info:
+                await status_msg.edit_text("❌ Failed to get video information")
+                return
+
+            # Show video info and start download
+            await status_msg.edit_text(
+                f"📥 *Downloading...*\n\n"
+                f"📺 {info.get('title', 'Unknown')}\n"
+                f"🎬 {info.get('channel_name', 'Unknown')}\n"
+                f"⏱️ {youtube_service.format_duration(info.get('duration', 0))}\n"
+                f"👁️ {youtube_service.format_views(info.get('view_count', 0))} views\n\n"
+                f"⏳ This may take a few minutes...",
+                parse_mode='Markdown'
+            )
+
+            # Download video
+            result = youtube_service.download_video(url)
+
+            if not result:
+                await status_msg.edit_text("❌ Download failed. Please try again.")
+                return
+
+            if result.get('status') == 'exists':
+                video = result.get('video', {})
+                await status_msg.edit_text(
+                    f"ℹ️ *Video already exists*\n\n"
+                    f"📺 {video.get('title', 'Unknown')}\n"
+                    f"🆔 ID: {video.get('id')}",
+                    parse_mode='Markdown'
+                )
+                return
+
+            # Success message
+            keyframe_count = len(result.get('keyframes', []))
+            subtitle_langs = list(result.get('parsed_subtitles', {}).keys())
+
+            success_msg = (
+                f"✅ *Download Complete!*\n\n"
+                f"📺 {result.get('title', 'Unknown')}\n"
+                f"⏱️ Duration: {youtube_service.format_duration(result.get('duration', 0))}\n"
+                f"📐 Resolution: {result.get('width', 0)}x{result.get('height', 0)}\n"
+            )
+
+            if keyframe_count > 0:
+                success_msg += f"🖼️ Keyframes: {keyframe_count}\n"
+
+            if subtitle_langs:
+                success_msg += f"💬 Subtitles: {', '.join(subtitle_langs)}\n"
+
+            success_msg += f"\n🆔 Gallery ID: {result.get('image_id', 'N/A')}"
+
+            await status_msg.edit_text(success_msg, parse_mode='Markdown')
+
+            # Send thumbnail if available
+            thumbnail_url = info.get('thumbnail_url')
+            if thumbnail_url:
+                try:
+                    await update.message.reply_photo(
+                        photo=thumbnail_url,
+                        caption=f"🎬 {info.get('title', '')}"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to send thumbnail: {e}")
+
+        except Exception as e:
+            logger.error(f"Error in download command: {e}", exc_info=True)
+            await status_msg.edit_text(f"❌ Error: {str(e)}")
 
     def is_chat_allowed(self, chat_id: int) -> bool:
         """Check if chat is allowed to use the bot"""
@@ -393,6 +520,7 @@ class TelegramGalleryBot:
         self.app.add_handler(CommandHandler("start", self.start_command))
         self.app.add_handler(CommandHandler("status", self.status_command))
         self.app.add_handler(CommandHandler("help", self.help_command))
+        self.app.add_handler(CommandHandler("download", self.download_command))
         self.app.add_handler(MessageHandler(filters.PHOTO, self.handle_photo))
         self.app.add_handler(MessageHandler(filters.VIDEO, self.handle_video))
         self.app.add_handler(MessageHandler(filters.Document.ALL, self.handle_document))

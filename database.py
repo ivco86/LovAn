@@ -223,6 +223,76 @@ class Database:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_face_embeddings_face ON face_embeddings(face_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_person_groups_name ON person_groups(name)")
 
+        # ============ YOUTUBE VIDEO TABLES ============
+
+        # YouTube video metadata (extends images table for YouTube-specific data)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS youtube_videos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                image_id INTEGER UNIQUE NOT NULL,
+                youtube_id TEXT UNIQUE NOT NULL,
+                title TEXT,
+                channel_name TEXT,
+                channel_id TEXT,
+                duration INTEGER,
+                view_count INTEGER,
+                like_count INTEGER,
+                upload_date TEXT,
+                thumbnail_url TEXT,
+                webpage_url TEXT,
+                categories TEXT,
+                video_format TEXT,
+                audio_format TEXT,
+                resolution TEXT,
+                fps REAL,
+                has_subtitles BOOLEAN DEFAULT 0,
+                subtitle_languages TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
+            )
+        """)
+
+        # Video keyframes (extracted frames for CLIP embeddings)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS video_keyframes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                youtube_video_id INTEGER NOT NULL,
+                frame_number INTEGER NOT NULL,
+                timestamp_ms INTEGER NOT NULL,
+                filepath TEXT NOT NULL,
+                description TEXT,
+                tags TEXT,
+                embedding_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (youtube_video_id) REFERENCES youtube_videos(id) ON DELETE CASCADE,
+                FOREIGN KEY (embedding_id) REFERENCES image_embeddings(id) ON DELETE SET NULL,
+                UNIQUE(youtube_video_id, frame_number)
+            )
+        """)
+
+        # Video subtitles (parsed VTT data for search)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS video_subtitles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                youtube_video_id INTEGER NOT NULL,
+                language TEXT NOT NULL,
+                start_time_ms INTEGER NOT NULL,
+                end_time_ms INTEGER NOT NULL,
+                text TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (youtube_video_id) REFERENCES youtube_videos(id) ON DELETE CASCADE
+            )
+        """)
+
+        # Create indexes for YouTube tables
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_youtube_videos_image ON youtube_videos(image_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_youtube_videos_youtube_id ON youtube_videos(youtube_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_youtube_videos_channel ON youtube_videos(channel_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_keyframes_video ON video_keyframes(youtube_video_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_keyframes_timestamp ON video_keyframes(timestamp_ms)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_subtitles_video ON video_subtitles(youtube_video_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_subtitles_time ON video_subtitles(start_time_ms, end_time_ms)")
+
         # Full-text search index - check if needs migration
         cursor.execute("""
             SELECT sql FROM sqlite_master 
@@ -1824,3 +1894,378 @@ class Database:
             faces.append(face)
 
         return faces
+
+    # ============ YOUTUBE VIDEO OPERATIONS ============
+
+    def add_youtube_video(self, image_id: int, youtube_id: str, metadata: Dict) -> Optional[int]:
+        """
+        Add YouTube video metadata linked to an image entry
+
+        Args:
+            image_id: The image ID (video entry in images table)
+            youtube_id: YouTube video ID (e.g., 'dQw4w9WgXcQ')
+            metadata: Dict with video metadata from yt-dlp
+
+        Returns:
+            int: YouTube video ID or None if failed
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            categories = metadata.get('categories', [])
+            subtitle_langs = metadata.get('subtitle_languages', [])
+
+            cursor.execute("""
+                INSERT INTO youtube_videos (
+                    image_id, youtube_id, title, channel_name, channel_id,
+                    duration, view_count, like_count, upload_date,
+                    thumbnail_url, webpage_url, categories,
+                    video_format, audio_format, resolution, fps,
+                    has_subtitles, subtitle_languages
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                image_id,
+                youtube_id,
+                metadata.get('title'),
+                metadata.get('channel_name') or metadata.get('uploader'),
+                metadata.get('channel_id'),
+                metadata.get('duration'),
+                metadata.get('view_count'),
+                metadata.get('like_count'),
+                metadata.get('upload_date'),
+                metadata.get('thumbnail_url') or metadata.get('thumbnail'),
+                metadata.get('webpage_url'),
+                json.dumps(categories) if categories else None,
+                metadata.get('video_format') or metadata.get('vcodec'),
+                metadata.get('audio_format') or metadata.get('acodec'),
+                metadata.get('resolution'),
+                metadata.get('fps'),
+                bool(subtitle_langs),
+                json.dumps(subtitle_langs) if subtitle_langs else None
+            ))
+
+            conn.commit()
+            return cursor.lastrowid
+        except sqlite3.IntegrityError as e:
+            # Video already exists, get existing ID
+            cursor.execute(
+                "SELECT id FROM youtube_videos WHERE youtube_id = ?",
+                (youtube_id,)
+            )
+            result = cursor.fetchone()
+            return result['id'] if result else None
+        except Exception as e:
+            print(f"Error adding YouTube video: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def get_youtube_video(self, youtube_video_id: int) -> Optional[Dict]:
+        """Get YouTube video by its ID"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT yv.*, i.filepath, i.filename, i.width, i.height, i.file_size
+            FROM youtube_videos yv
+            JOIN images i ON yv.image_id = i.id
+            WHERE yv.id = ?
+        """, (youtube_video_id,))
+
+        result = cursor.fetchone()
+        conn.close()
+
+        if result:
+            data = dict(result)
+            # Parse JSON fields
+            if data.get('categories'):
+                try:
+                    data['categories'] = json.loads(data['categories'])
+                except:
+                    data['categories'] = []
+            if data.get('subtitle_languages'):
+                try:
+                    data['subtitle_languages'] = json.loads(data['subtitle_languages'])
+                except:
+                    data['subtitle_languages'] = []
+            return data
+        return None
+
+    def get_youtube_video_by_youtube_id(self, youtube_id: str) -> Optional[Dict]:
+        """Get YouTube video by YouTube video ID"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT yv.*, i.filepath, i.filename, i.width, i.height, i.file_size
+            FROM youtube_videos yv
+            JOIN images i ON yv.image_id = i.id
+            WHERE yv.youtube_id = ?
+        """, (youtube_id,))
+
+        result = cursor.fetchone()
+        conn.close()
+
+        if result:
+            data = dict(result)
+            if data.get('categories'):
+                try:
+                    data['categories'] = json.loads(data['categories'])
+                except:
+                    data['categories'] = []
+            if data.get('subtitle_languages'):
+                try:
+                    data['subtitle_languages'] = json.loads(data['subtitle_languages'])
+                except:
+                    data['subtitle_languages'] = []
+            return data
+        return None
+
+    def get_all_youtube_videos(self, limit: int = 100, offset: int = 0) -> List[Dict]:
+        """Get all YouTube videos with pagination"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT yv.*, i.filepath, i.filename, i.width, i.height, i.file_size
+            FROM youtube_videos yv
+            JOIN images i ON yv.image_id = i.id
+            ORDER BY yv.created_at DESC
+            LIMIT ? OFFSET ?
+        """, (limit, offset))
+
+        results = cursor.fetchall()
+        conn.close()
+
+        videos = []
+        for row in results:
+            data = dict(row)
+            if data.get('categories'):
+                try:
+                    data['categories'] = json.loads(data['categories'])
+                except:
+                    data['categories'] = []
+            if data.get('subtitle_languages'):
+                try:
+                    data['subtitle_languages'] = json.loads(data['subtitle_languages'])
+                except:
+                    data['subtitle_languages'] = []
+            videos.append(data)
+
+        return videos
+
+    def add_video_keyframe(self, youtube_video_id: int, frame_number: int,
+                           timestamp_ms: int, filepath: str) -> Optional[int]:
+        """
+        Add a keyframe extracted from a video
+
+        Args:
+            youtube_video_id: YouTube video ID (from youtube_videos table)
+            frame_number: Frame sequence number
+            timestamp_ms: Timestamp in milliseconds
+            filepath: Path to the keyframe image
+
+        Returns:
+            int: Keyframe ID or None if failed
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                INSERT INTO video_keyframes (youtube_video_id, frame_number, timestamp_ms, filepath)
+                VALUES (?, ?, ?, ?)
+            """, (youtube_video_id, frame_number, timestamp_ms, filepath))
+
+            conn.commit()
+            return cursor.lastrowid
+        except sqlite3.IntegrityError:
+            # Keyframe already exists
+            cursor.execute(
+                "SELECT id FROM video_keyframes WHERE youtube_video_id = ? AND frame_number = ?",
+                (youtube_video_id, frame_number)
+            )
+            result = cursor.fetchone()
+            return result['id'] if result else None
+        except Exception as e:
+            print(f"Error adding keyframe: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def get_video_keyframes(self, youtube_video_id: int) -> List[Dict]:
+        """Get all keyframes for a video"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT * FROM video_keyframes
+            WHERE youtube_video_id = ?
+            ORDER BY frame_number
+        """, (youtube_video_id,))
+
+        results = cursor.fetchall()
+        conn.close()
+
+        return [dict(row) for row in results]
+
+    def update_keyframe_analysis(self, keyframe_id: int, description: str, tags: List[str]):
+        """Update keyframe with AI analysis"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                UPDATE video_keyframes
+                SET description = ?, tags = ?
+                WHERE id = ?
+            """, (description, json.dumps(tags), keyframe_id))
+
+            conn.commit()
+        finally:
+            conn.close()
+
+    def add_video_subtitle(self, youtube_video_id: int, language: str,
+                           start_time_ms: int, end_time_ms: int, text: str) -> Optional[int]:
+        """
+        Add a subtitle entry for a video
+
+        Args:
+            youtube_video_id: YouTube video ID
+            language: Language code (e.g., 'en', 'bg')
+            start_time_ms: Start time in milliseconds
+            end_time_ms: End time in milliseconds
+            text: Subtitle text
+
+        Returns:
+            int: Subtitle ID or None if failed
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                INSERT INTO video_subtitles (youtube_video_id, language, start_time_ms, end_time_ms, text)
+                VALUES (?, ?, ?, ?, ?)
+            """, (youtube_video_id, language, start_time_ms, end_time_ms, text))
+
+            conn.commit()
+            return cursor.lastrowid
+        except Exception as e:
+            print(f"Error adding subtitle: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def add_video_subtitles_batch(self, youtube_video_id: int, language: str,
+                                  subtitles: List[Dict]) -> int:
+        """
+        Add multiple subtitle entries for a video
+
+        Args:
+            youtube_video_id: YouTube video ID
+            language: Language code
+            subtitles: List of dicts with start_time_ms, end_time_ms, text
+
+        Returns:
+            int: Number of subtitles added
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        count = 0
+        try:
+            for sub in subtitles:
+                cursor.execute("""
+                    INSERT INTO video_subtitles (youtube_video_id, language, start_time_ms, end_time_ms, text)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (
+                    youtube_video_id,
+                    language,
+                    sub['start_time_ms'],
+                    sub['end_time_ms'],
+                    sub['text']
+                ))
+                count += 1
+
+            conn.commit()
+        except Exception as e:
+            print(f"Error adding subtitles batch: {e}")
+        finally:
+            conn.close()
+
+        return count
+
+    def get_video_subtitles(self, youtube_video_id: int, language: str = None) -> List[Dict]:
+        """Get subtitles for a video, optionally filtered by language"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        if language:
+            cursor.execute("""
+                SELECT * FROM video_subtitles
+                WHERE youtube_video_id = ? AND language = ?
+                ORDER BY start_time_ms
+            """, (youtube_video_id, language))
+        else:
+            cursor.execute("""
+                SELECT * FROM video_subtitles
+                WHERE youtube_video_id = ?
+                ORDER BY language, start_time_ms
+            """, (youtube_video_id,))
+
+        results = cursor.fetchall()
+        conn.close()
+
+        return [dict(row) for row in results]
+
+    def search_video_subtitles(self, query: str, limit: int = 50) -> List[Dict]:
+        """
+        Search across all video subtitles
+
+        Returns list of matches with video info and timestamp
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT vs.*, yv.youtube_id, yv.title, yv.channel_name, i.filepath
+            FROM video_subtitles vs
+            JOIN youtube_videos yv ON vs.youtube_video_id = yv.id
+            JOIN images i ON yv.image_id = i.id
+            WHERE vs.text LIKE ?
+            ORDER BY yv.created_at DESC
+            LIMIT ?
+        """, (f'%{query}%', limit))
+
+        results = cursor.fetchall()
+        conn.close()
+
+        return [dict(row) for row in results]
+
+    def delete_youtube_video(self, youtube_video_id: int) -> bool:
+        """Delete a YouTube video and all related data (keyframes, subtitles)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            # Get image_id before deleting
+            cursor.execute("SELECT image_id FROM youtube_videos WHERE id = ?", (youtube_video_id,))
+            result = cursor.fetchone()
+
+            if result:
+                image_id = result['image_id']
+                # Delete YouTube video (cascades to keyframes and subtitles)
+                cursor.execute("DELETE FROM youtube_videos WHERE id = ?", (youtube_video_id,))
+                # Also delete from images table
+                cursor.execute("DELETE FROM images WHERE id = ?", (image_id,))
+                cursor.execute("DELETE FROM images_fts WHERE rowid = ?", (image_id,))
+
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error deleting YouTube video: {e}")
+            return False
+        finally:
+            conn.close()
