@@ -2514,6 +2514,40 @@ body {
     font-weight: 500;
 }
 
+/* ============ Drag & Drop Styles ============ */
+
+/* Image card being dragged */
+.image-card.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.image-card[draggable="true"] {
+    cursor: grab;
+}
+
+.image-card[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+/* Board pill drop target */
+.board-pill.drag-over {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 245, 212, 0.3);
+}
+
+/* Video preview styles */
+.image-card-video-wrapper {
+    position: relative;
+}
+
+.image-card-video-wrapper img,
+.image-card-video-wrapper .video-play-overlay {
+    transition: opacity 0.2s ease;
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;
