@@ -2322,3 +2322,62 @@ body {
         transform: translateY(0);
     }
 }
+
+/* ============ Full-screen Drop Zone ============ */
+.fullscreen-dropzone {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.fullscreen-dropzone.active {
+    display: flex;
+    pointer-events: auto;
+}
+
+.dropzone-content {
+    text-align: center;
+    color: #fff;
+    padding: var(--spacing-xl);
+    border: 3px dashed var(--accent-primary);
+    border-radius: var(--radius-lg);
+    background: rgba(230, 0, 35, 0.1);
+    min-width: 400px;
+    animation: dropzonePulse 1.5s ease-in-out infinite;
+}
+
+.dropzone-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.dropzone-content h2 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.dropzone-content p {
+    margin: 0;
+    opacity: 0.8;
+    font-size: 1rem;
+}
+
+@keyframes dropzonePulse {
+    0%, 100% {
+        transform: scale(1);
+        border-color: var(--accent-primary);
+    }
+    50% {
+        transform: scale(1.02);
+        border-color: var(--accent-cyan);
+    }
+}
