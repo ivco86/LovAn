@@ -2,9 +2,12 @@
 API routes for YouTube video operations
 """
 
+import logging
 from flask import Blueprint, jsonify, request
 from shared import db
 from youtube_service import YouTubeService
+
+logger = logging.getLogger(__name__)
 
 videos_bp = Blueprint('videos', __name__)
 youtube_service = YouTubeService(db)
@@ -107,6 +110,8 @@ def download_video():
     extract_keyframes = data.get('keyframes', True)
     quality = data.get('quality', '1080')
 
+    logger.info(f"📥 Starting download: url={url}, quality={quality}, subtitles={download_subtitles}, original_subs={original_subtitles}")
+
     result = youtube_service.download_video(
         url,
         download_subtitles=download_subtitles,
@@ -116,7 +121,10 @@ def download_video():
     )
 
     if not result:
+        logger.error("❌ Download returned None - failed completely")
         return jsonify({'error': 'Download failed'}), 500
+
+    logger.info(f"📦 Download result: status={result.get('status')}, image_id={result.get('image_id')}, yt_video_id={result.get('youtube_video_id')}, video_path={result.get('video_path')}")
 
     if result.get('status') == 'exists':
         return jsonify({
@@ -124,6 +132,12 @@ def download_video():
             'message': 'Video already in gallery',
             'video': result.get('video')
         }), 200
+
+    # Check if video was properly added to database
+    if not result.get('image_id'):
+        logger.warning("⚠️ Video downloaded but image_id is missing - database insertion may have failed")
+    if not result.get('youtube_video_id'):
+        logger.warning("⚠️ Video downloaded but youtube_video_id is missing - YouTube metadata not saved")
 
     return jsonify({
         'status': 'success',

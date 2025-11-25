@@ -445,14 +445,17 @@ class YouTubeService:
                 if image_id:
                     # Add YouTube metadata
                     info['subtitle_languages'] = list(parsed_subtitles.keys())
+                    logger.info(f"🎬 Adding YouTube metadata for image_id={image_id}, youtube_id={youtube_id}")
                     yt_video_id = self.db.add_youtube_video(image_id, youtube_id, info)
 
                     if yt_video_id:
+                        logger.info(f"✅ YouTube video added to youtube_videos table: yt_video_id={yt_video_id}")
                         result_data['image_id'] = image_id
                         result_data['youtube_video_id'] = yt_video_id
 
                         # Add subtitles to database
                         for lang, subs in parsed_subtitles.items():
+                            logger.info(f"📝 Adding {len(subs)} subtitles for language: {lang}")
                             self.db.add_video_subtitles_batch(yt_video_id, lang, subs)
 
                         # Add keyframes to database
@@ -463,6 +466,11 @@ class YouTubeService:
                                 kf['timestamp_ms'],
                                 kf['filepath']
                             )
+                        logger.info(f"🖼️ Added {len(keyframes)} keyframes")
+                    else:
+                        logger.error(f"❌ Failed to add YouTube video metadata for image_id={image_id}")
+                else:
+                    logger.error(f"❌ No image_id - cannot add YouTube metadata")
 
             if progress_callback:
                 progress_callback('complete', 100, 'Download complete!')
