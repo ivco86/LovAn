@@ -1603,6 +1603,8 @@ async function loadAndInitSubtitles(imageId) {
     cleanupSubtitleSync();
 
     const container = document.getElementById('subtitlePanelContainer');
+    const videoElement = document.getElementById('modalVideoPlayer');
+
     if (!container) return;
 
     // Show loading state
@@ -1616,10 +1618,14 @@ async function loadAndInitSubtitles(imageId) {
             subtitleData.languages = data.languages;
             subtitleData.currentLang = data.languages[0];
 
+            // Add VTT track to video player for native subtitle support
+            if (videoElement) {
+                addSubtitleTracksToVideo(videoElement, imageId, data.languages);
+            }
+
             container.innerHTML = createSubtitlePanel(data.subtitles, data.languages);
 
-            // Initialize video sync
-            const videoElement = document.getElementById('modalVideoPlayer');
+            // Initialize video sync for karaoke panel
             if (videoElement) {
                 initSubtitleSync(videoElement);
                 attachSubtitleClickHandlers();
@@ -1631,6 +1637,35 @@ async function loadAndInitSubtitles(imageId) {
     } catch (error) {
         console.error('Error loading subtitles:', error);
         container.innerHTML = '';
+    }
+}
+
+// Add subtitle tracks to video player for native CC support
+function addSubtitleTracksToVideo(videoElement, imageId, languages) {
+    // Remove existing tracks
+    const existingTracks = videoElement.querySelectorAll('track');
+    existingTracks.forEach(track => track.remove());
+
+    // Add track for each language
+    languages.forEach((lang, idx) => {
+        const track = document.createElement('track');
+        track.kind = 'subtitles';
+        track.label = lang.toUpperCase();
+        track.srclang = lang;
+        track.src = `/api/images/${imageId}/subtitles.vtt?language=${lang}`;
+
+        // Set first track as default
+        if (idx === 0) {
+            track.default = true;
+        }
+
+        videoElement.appendChild(track);
+    });
+
+    // Enable text tracks display
+    if (videoElement.textTracks && videoElement.textTracks.length > 0) {
+        // Show first track by default
+        videoElement.textTracks[0].mode = 'showing';
     }
 }
 

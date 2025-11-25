@@ -207,6 +207,49 @@ def get_subtitles_by_image(image_id):
     })
 
 
+@videos_bp.route('/api/images/<int:image_id>/subtitles.vtt', methods=['GET'])
+def get_subtitles_vtt(image_id):
+    """Get subtitles as VTT file for HTML5 video player track element"""
+    from flask import Response
+
+    language = request.args.get('language', 'en')
+
+    # Get youtube video by image_id
+    video = db.get_youtube_video_by_image_id(image_id)
+    if not video:
+        return Response("WEBVTT\n\n", mimetype='text/vtt')
+
+    subtitles = db.get_video_subtitles(video['id'], language=language)
+
+    if not subtitles:
+        # Try without language filter
+        subtitles = db.get_video_subtitles(video['id'])
+
+    # Generate VTT content
+    vtt_content = "WEBVTT\n\n"
+
+    for idx, sub in enumerate(subtitles):
+        start_time = format_vtt_time(sub.get('start_time_ms', 0))
+        end_time = format_vtt_time(sub.get('end_time_ms', 0))
+        text = sub.get('text', '').replace('\n', ' ')
+
+        vtt_content += f"{idx + 1}\n"
+        vtt_content += f"{start_time} --> {end_time}\n"
+        vtt_content += f"{text}\n\n"
+
+    return Response(vtt_content, mimetype='text/vtt')
+
+
+def format_vtt_time(ms):
+    """Format milliseconds to VTT timestamp (HH:MM:SS.mmm)"""
+    total_seconds = ms // 1000
+    milliseconds = ms % 1000
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
+
+
 @videos_bp.route('/api/videos/search/subtitles', methods=['GET'])
 def search_subtitles():
     """Search across all video subtitles"""
