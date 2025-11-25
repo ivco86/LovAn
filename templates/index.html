@@ -34,7 +34,7 @@
                 <span class="icon-sun">☀</span>
                 <span class="icon-moon">☾</span>
             </button>
-            <button class="btn-icon-round youtube-btn" id="youtubeHeaderBtn" aria-label="YouTube Download" title="YouTube Download">▶</button>
+            <button class="btn-icon-round youtube-btn" id="youtubeHeaderBtn" aria-label="Video Download" title="Video Download (YouTube, TikTok, FB)">▶</button>
             <button class="btn-icon-round" id="uploadBtn" aria-label="Upload" title="Upload">+</button>
             <button class="btn-icon-round" id="selectBtn" aria-label="Select" title="Select">☑</button>
             <div class="dropdown">
@@ -43,7 +43,7 @@
                     <div class="dropdown-item" id="scanBtnMenu">Scan Directory</div>
                     <div class="dropdown-item" id="sortImagesBtnMenu">Sort Images</div>
                     <div class="dropdown-item" id="findDuplicatesBtnMenu">Find Duplicates</div>
-                    <div class="dropdown-item" id="youtubeDownloadBtnMenu">YouTube Download</div>
+                    <div class="dropdown-item" id="youtubeDownloadBtnMenu">Video Download</div>
                     <div class="dropdown-item" id="analyzeBtnMenu">AI Analyze</div>
                     <div class="dropdown-item" id="chatBtnMenu">AI Chat</div>
                     <div class="dropdown-divider"></div>
@@ -932,23 +932,23 @@
         </div>
     </div>
 
-    <!-- YouTube Download Modal -->
+    <!-- Video Download Modal -->
     <div class="modal" id="youtubeModal" style="display: none;">
         <div class="modal-overlay" id="youtubeOverlay"></div>
         <div class="modal-content modal-small">
-            <button class="modal-close" id="youtubeClose" aria-label="Close YouTube download">&times;</button>
+            <button class="modal-close" id="youtubeClose" aria-label="Close video download">&times;</button>
 
             <div class="modal-body">
-                <h2>YouTube Download</h2>
+                <h2>Video Download</h2>
                 <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
-                    Download videos from YouTube with subtitles and keyframes
+                    Download videos from YouTube, TikTok, Facebook, Instagram & more
                 </p>
 
                 <!-- URL Input -->
                 <div class="form-group">
-                    <label for="youtubeUrl">YouTube URL</label>
+                    <label for="youtubeUrl">Video URL</label>
                     <div style="display: flex; gap: var(--spacing-sm);">
-                        <input type="text" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." style="flex: 1;">
+                        <input type="text" id="youtubeUrl" placeholder="Paste video URL (YouTube, TikTok, Facebook...)" style="flex: 1;">
                         <button class="btn btn-secondary" id="youtubeInfoBtn">Info</button>
                     </div>
                 </div>
