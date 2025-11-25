@@ -21,32 +21,30 @@ document.addEventListener('DOMContentLoaded', function() {
  * Initialize chat functionality
  */
 function initChat() {
-    const chatBtn = document.getElementById('chatBtn');
     const chatModal = document.getElementById('chatModal');
     const chatClose = document.getElementById('chatClose');
     const chatOverlay = document.getElementById('chatOverlay');
     const chatSendBtn = document.getElementById('chatSendBtn');
     const chatInput = document.getElementById('chatInput');
 
-    // Check if elements exist before adding event listeners
-    if (!chatBtn || !chatModal || !chatClose || !chatOverlay || !chatSendBtn || !chatInput) {
+    // Check if essential elements exist (chatBtn is optional - handled by app.js)
+    if (!chatModal || !chatSendBtn || !chatInput) {
         console.warn('Chat elements not found, chat functionality disabled');
         return;
     }
 
-    // Open chat modal
-    chatBtn.addEventListener('click', () => {
-        openChat();
-    });
+    // Close chat modal (if close button exists)
+    if (chatClose) {
+        chatClose.addEventListener('click', () => {
+            closeChat();
+        });
+    }
 
-    // Close chat modal
-    chatClose.addEventListener('click', () => {
-        closeChat();
-    });
-
-    chatOverlay.addEventListener('click', () => {
-        closeChat();
-    });
+    if (chatOverlay) {
+        chatOverlay.addEventListener('click', () => {
+            closeChat();
+        });
+    }
 
     // Send message on button click
     chatSendBtn.addEventListener('click', () => {
@@ -60,6 +58,8 @@ function initChat() {
             sendMessage();
         }
     });
+
+    console.log('Chat initialized successfully');
 }
 
 /**

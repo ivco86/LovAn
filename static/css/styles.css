@@ -2495,6 +2495,25 @@ body {
     100% { transform: rotate(360deg); }
 }
 
+/* Small inline spinner for AI search */
+.spinner-small {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--bg-tertiary);
+    border-top: 2px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+/* AI search loading state */
+.ai-toggle.ai-searching {
+    color: var(--primary);
+    font-weight: 500;
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;

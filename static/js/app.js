@@ -680,18 +680,36 @@ async function searchImages(query) {
 
     try {
         const useAI = document.getElementById('ai-search-toggle')?.checked || false;
+        const searchInput = document.getElementById('searchInput');
+        const aiToggle = document.querySelector('.ai-toggle');
         let data;
 
         if (useAI) {
+            // Show loading state for AI search
+            if (searchInput) searchInput.disabled = true;
+            if (aiToggle) {
+                aiToggle.classList.add('ai-searching');
+                aiToggle.innerHTML = '<span class="spinner-small"></span> Searching...';
+            }
+
             // --- НОВАТА AI ЛОГИКА ---
             console.log("Използвам AI търсене...");
-            data = await apiCall('/search/semantic', {
-                method: 'POST',
-                body: JSON.stringify({
-                    query: query,
-                    top_k: 20
-                })
-            });
+            try {
+                data = await apiCall('/search/semantic', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        query: query,
+                        top_k: 20
+                    })
+                });
+            } finally {
+                // Restore AI toggle state
+                if (searchInput) searchInput.disabled = false;
+                if (aiToggle) {
+                    aiToggle.classList.remove('ai-searching');
+                    aiToggle.innerHTML = '<label><input type="checkbox" id="ai-search-toggle" checked> ✨ AI</label>';
+                }
+            }
             // AI endpoint връща results директно
             console.log("AI търсене резултати:", data);
 
@@ -1820,6 +1838,29 @@ function closeImageModal() {
     });
 }
 
+/**
+ * Navigate to next/previous image in modal
+ * @param {number} direction - 1 for next, -1 for previous
+ */
+function navigateModal(direction) {
+    if (!state.currentImage || !state.images || state.images.length === 0) return;
+
+    // Get sorted images (same order as displayed in grid)
+    const sortedImages = sortImages([...state.images], state.imageSort);
+    const currentIndex = sortedImages.findIndex(img => img.id === state.currentImage.id);
+
+    if (currentIndex === -1) return;
+
+    const newIndex = currentIndex + direction;
+
+    // Check bounds
+    if (newIndex < 0 || newIndex >= sortedImages.length) return;
+
+    // Open the new image
+    const newImage = sortedImages[newIndex];
+    openImageModal(newImage);
+}
+
 function closeAIStyleModal() {
     closeModal('aiStyleModal', () => {
         state.pendingAnalyzeImageId = null;
@@ -2318,6 +2359,57 @@ function attachEventListeners() {
                 showBoardContextMenu(boardId, e.pageX, e.pageY);
             }
         });
+
+        // Touch long-press support for context menu (touch screens)
+        let touchTimer = null;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const LONG_PRESS_DURATION = 500; // ms
+        const TOUCH_MOVE_THRESHOLD = 10; // px
+
+        boardsList.addEventListener('touchstart', (e) => {
+            const boardPill = e.target.closest('.board-pill[data-board-id]');
+            if (!boardPill) return;
+
+            const touch = e.touches[0];
+            touchStartX = touch.pageX;
+            touchStartY = touch.pageY;
+
+            touchTimer = setTimeout(() => {
+                const boardId = parseInt(boardPill.dataset.boardId);
+                showBoardContextMenu(boardId, touch.pageX, touch.pageY);
+                // Prevent click event after long press
+                e.preventDefault();
+            }, LONG_PRESS_DURATION);
+        }, { passive: false });
+
+        boardsList.addEventListener('touchmove', (e) => {
+            if (touchTimer) {
+                const touch = e.touches[0];
+                const deltaX = Math.abs(touch.pageX - touchStartX);
+                const deltaY = Math.abs(touch.pageY - touchStartY);
+
+                // Cancel long press if finger moved too much
+                if (deltaX > TOUCH_MOVE_THRESHOLD || deltaY > TOUCH_MOVE_THRESHOLD) {
+                    clearTimeout(touchTimer);
+                    touchTimer = null;
+                }
+            }
+        });
+
+        boardsList.addEventListener('touchend', () => {
+            if (touchTimer) {
+                clearTimeout(touchTimer);
+                touchTimer = null;
+            }
+        });
+
+        boardsList.addEventListener('touchcancel', () => {
+            if (touchTimer) {
+                clearTimeout(touchTimer);
+                touchTimer = null;
+            }
+        });
     }
 
     // Board Context Menu
@@ -2811,6 +2903,17 @@ function attachEventListeners() {
             }
             else if (document.getElementById('uploadModal').style.display === 'block') {
                 closeUploadModal();
+            }
+        }
+
+        // Modal navigation with arrow keys
+        if (document.getElementById('imageModal').style.display === 'block') {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                navigateModal(-1);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                navigateModal(1);
             }
         }
 
@@ -3528,6 +3631,7 @@ async function batchAnalyzeImages() {
 async function performBatchAnalyze(style, customPrompt = null) {
     const selectedIds = Array.from(state.selectedImages);
     const total = selectedIds.length;
+    const CONCURRENT_LIMIT = 3; // Process 3 images in parallel
 
     state.isAnalyzing = true;
     showToast(`Analyzing ${total} images...`, 'info');
@@ -3535,7 +3639,8 @@ async function performBatchAnalyze(style, customPrompt = null) {
     let completed = 0;
     let failed = 0;
 
-    for (const imageId of selectedIds) {
+    // Helper to analyze a single image
+    const analyzeOne = async (imageId) => {
         try {
             const requestBody = { style };
             if (customPrompt) {
@@ -3548,13 +3653,17 @@ async function performBatchAnalyze(style, customPrompt = null) {
             });
 
             completed++;
-
-            // Update toast progress
             showToast(`Analyzed ${completed}/${total} images...`, 'info');
         } catch (error) {
             console.error(`Failed to analyze image ${imageId}:`, error);
             failed++;
         }
+    };
+
+    // Process in chunks for parallel execution
+    for (let i = 0; i < selectedIds.length; i += CONCURRENT_LIMIT) {
+        const chunk = selectedIds.slice(i, i + CONCURRENT_LIMIT);
+        await Promise.all(chunk.map(analyzeOne));
     }
 
     state.isAnalyzing = false;
