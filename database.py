@@ -431,6 +431,28 @@ class Database:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_notes_video ON video_notes(youtube_video_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_notes_time ON video_notes(timestamp_ms)")
 
+        # Vocabulary table (for Language Reactor-style word learning)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS vocabulary (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                word TEXT NOT NULL,
+                translation TEXT NOT NULL,
+                source_language TEXT DEFAULT 'en',
+                target_language TEXT DEFAULT 'bg',
+                context_sentence TEXT,
+                video_id INTEGER,
+                timestamp_ms INTEGER,
+                notes TEXT,
+                mastery_level INTEGER DEFAULT 0,
+                review_count INTEGER DEFAULT 0,
+                last_reviewed TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (video_id) REFERENCES youtube_videos(id) ON DELETE SET NULL
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_vocab_word ON vocabulary(word)")
+        cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_vocab_unique ON vocabulary(word, source_language, target_language)")
+
         # Full-text search index - check if needs migration
         cursor.execute("""
             SELECT sql FROM sqlite_master 
@@ -2801,3 +2823,136 @@ class Database:
             return False
         finally:
             conn.close()
+
+    # ========== VOCABULARY (Language Reactor style) ==========
+
+    def add_vocabulary(self, word: str, translation: str,
+                       source_language: str = 'en', target_language: str = 'bg',
+                       context_sentence: str = None, video_id: int = None,
+                       timestamp_ms: int = None, notes: str = None) -> Optional[int]:
+        """Add a word to vocabulary"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                INSERT INTO vocabulary (word, translation, source_language, target_language,
+                                       context_sentence, video_id, timestamp_ms, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(word, source_language, target_language)
+                DO UPDATE SET
+                    translation = excluded.translation,
+                    context_sentence = COALESCE(excluded.context_sentence, context_sentence),
+                    video_id = COALESCE(excluded.video_id, video_id),
+                    timestamp_ms = COALESCE(excluded.timestamp_ms, timestamp_ms)
+            """, (word.lower().strip(), translation, source_language, target_language,
+                  context_sentence, video_id, timestamp_ms, notes))
+            conn.commit()
+            return cursor.lastrowid
+        except Exception as e:
+            print(f"Error adding vocabulary: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def get_vocabulary(self, source_language: str = None, target_language: str = None,
+                       search: str = None, limit: int = 100, offset: int = 0) -> List[Dict]:
+        """Get vocabulary words with optional filtering"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = "SELECT * FROM vocabulary WHERE 1=1"
+        params = []
+
+        if source_language:
+            query += " AND source_language = ?"
+            params.append(source_language)
+        if target_language:
+            query += " AND target_language = ?"
+            params.append(target_language)
+        if search:
+            query += " AND (word LIKE ? OR translation LIKE ?)"
+            params.extend([f'%{search}%', f'%{search}%'])
+
+        query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        conn.close()
+
+        return [dict(row) for row in results]
+
+    def get_vocabulary_word(self, word: str, source_language: str = 'en',
+                            target_language: str = 'bg') -> Optional[Dict]:
+        """Check if a word exists in vocabulary"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT * FROM vocabulary
+            WHERE word = ? AND source_language = ? AND target_language = ?
+        """, (word.lower().strip(), source_language, target_language))
+
+        result = cursor.fetchone()
+        conn.close()
+
+        return dict(result) if result else None
+
+    def update_vocabulary(self, vocab_id: int, **kwargs) -> bool:
+        """Update vocabulary entry"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        allowed_fields = ['translation', 'context_sentence', 'notes',
+                          'mastery_level', 'review_count', 'last_reviewed']
+        updates = []
+        values = []
+
+        for field in allowed_fields:
+            if field in kwargs and kwargs[field] is not None:
+                updates.append(f"{field} = ?")
+                values.append(kwargs[field])
+
+        if not updates:
+            conn.close()
+            return False
+
+        values.append(vocab_id)
+
+        try:
+            cursor.execute(f"""
+                UPDATE vocabulary SET {', '.join(updates)}
+                WHERE id = ?
+            """, values)
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error updating vocabulary: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def delete_vocabulary(self, vocab_id: int) -> bool:
+        """Delete a vocabulary entry"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("DELETE FROM vocabulary WHERE id = ?", (vocab_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error deleting vocabulary: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def get_vocabulary_count(self) -> int:
+        """Get total vocabulary count"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) as count FROM vocabulary")
+        result = cursor.fetchone()
+        conn.close()
+        return result['count'] if result else 0
