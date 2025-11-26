@@ -6259,10 +6259,13 @@ async function showTranslationPopup(word, context, targetElement) {
         // Update popup with translations
         const body = popup.querySelector('.translation-popup-body');
         if (data.translations && data.translations.length > 0) {
+            // Find AI note if present
+            const aiNote = data.translations.find(t => t.note)?.note || '';
+
             const translationsHtml = data.translations.map((t, i) =>
-                `<div class="translation-option ${i === 0 ? 'primary' : ''}" data-translation="${escapeHtml(t.translation)}">
-                    ${escapeHtml(t.translation)}
-                    ${t.source ? `<span class="translation-source">${t.source}</span>` : ''}
+                `<div class="translation-option ${i === 0 ? 'primary' : ''} ${t.is_ai ? 'ai-translation' : ''}" data-translation="${escapeHtml(t.translation)}">
+                    <span class="translation-text">${escapeHtml(t.translation)}</span>
+                    <span class="translation-source ${t.is_ai ? 'ai-source' : ''}">${t.is_ai ? '🤖 AI' : t.source || ''}</span>
                 </div>`
             ).join('');
 
@@ -6270,6 +6273,7 @@ async function showTranslationPopup(word, context, targetElement) {
                 <div class="translations-list">
                     ${translationsHtml}
                 </div>
+                ${aiNote ? `<div class="ai-note"><span class="note-icon">💡</span> ${escapeHtml(aiNote)}</div>` : ''}
                 <div class="translation-context">
                     <small>"${escapeHtml(context)}"</small>
                 </div>
