@@ -556,7 +556,71 @@ Format rules:
                 technical_msg=f"Unexpected error: {type(e).__name__} - {str(e)}",
                 user_msg=f"❌ Неочаквана грешка:\n{type(e).__name__}\n\n{str(e)}"
             )
-    
+
+    def analyze_text(self, prompt: str) -> Optional[str]:
+        """
+        Analyze text without an image - useful for summarizing transcripts, etc.
+
+        Args:
+            prompt: The text prompt to analyze
+
+        Returns:
+            str: The AI response text, or None on error
+        """
+        start_time = time.time()
+        self.metrics['total_requests'] += 1
+
+        try:
+            # Prepare API request (text only, no image)
+            payload = {
+                "model": self.config.default_model,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "max_tokens": 2000,  # Larger for summaries
+                "temperature": self.config.temperature
+            }
+
+            response = requests.post(
+                self.api_endpoint,
+                headers={"Content-Type": "application/json"},
+                json=payload,
+                timeout=120
+            )
+
+            if response.status_code != 200:
+                logger.error(f"AI API error: {response.status_code} - {response.text[:500]}")
+                self.metrics['failed'] += 1
+                return None
+
+            data = response.json()
+
+            if 'choices' not in data or len(data['choices']) == 0:
+                logger.error("Invalid response structure from LM Studio")
+                self.metrics['failed'] += 1
+                return None
+
+            response_text = data['choices'][0]['message']['content']
+
+            elapsed = time.time() - start_time
+            self.metrics['successful'] += 1
+            self.metrics['total_time'] += elapsed
+            logger.info(f"✅ Text analysis completed in {elapsed:.2f}s")
+
+            return response_text
+
+        except requests.Timeout:
+            logger.error("AI API timeout during text analysis")
+            self.metrics['failed'] += 1
+            return None
+        except Exception as e:
+            logger.error(f"Error in text analysis: {e}")
+            self.metrics['failed'] += 1
+            return None
+
     def batch_analyze(self, image_paths: List[str], 
                      progress_callback: Optional[Callable] = None,
                      style: str = 'classic',
@@ -1091,3 +1155,11 @@ if __name__ == "__main__":
     ai.print_metrics()
     
     print("\n✅ Examples complete!")
+
+
+# ============================================================================
+# DEFAULT INSTANCE (for easy imports)
+# ============================================================================
+
+# Create a default instance for simple imports: `from ai_service import ai_service`
+ai_service = AIService()

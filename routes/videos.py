@@ -514,7 +514,7 @@ def create_video_clip(image_id):
         return jsonify({'error': 'end_ms must be greater than start_ms'}), 400
 
     # Get video file path
-    image = db.get_image_by_id(image_id)
+    image = db.get_image(image_id)
     if not image:
         return jsonify({'error': 'Video not found'}), 404
 
@@ -610,11 +610,10 @@ Format your response as:
 
     try:
         # Use AI service to generate summary
-        if hasattr(ai_service, 'analyze_with_prompt'):
-            summary = ai_service.analyze_with_prompt(prompt)
-        else:
-            # Fallback to basic analyze
-            summary = ai_service.analyze_image_content(prompt)
+        summary = ai_service.analyze_text(prompt)
+
+        if not summary:
+            return jsonify({'error': 'AI service failed to generate summary'}), 500
 
         return jsonify({
             'success': True,
