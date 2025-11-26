@@ -12,8 +12,8 @@ import logging
 import mimetypes
 from pathlib import Path
 from datetime import datetime
-from telegram import Update
-from telegram.ext import Application, MessageHandler, CommandHandler, ContextTypes, filters
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, MessageHandler, CommandHandler, CallbackQueryHandler, ContextTypes, filters
 import requests
 from database import Database
 from youtube_service import YouTubeService
@@ -507,6 +507,162 @@ class TelegramGalleryBot:
             logger.error(f"Error handling document: {e}", exc_info=True)
             await update.message.reply_text(f"❌ Error: {str(e)}")
 
+    def _get_boards_keyboard(self, video_url: str, include_none: bool = True) -> InlineKeyboardMarkup:
+        """Create inline keyboard with available boards"""
+        boards = db.get_all_boards()
+        keyboard = []
+
+        # Add "No Board" option first
+        if include_none:
+            keyboard.append([InlineKeyboardButton("📂 No Board (just gallery)", callback_data=f"board:0:{video_url[:60]}")])
+
+        # Group boards by parent (show hierarchy)
+        root_boards = [b for b in boards if not b.get('parent_id')]
+        for board in root_boards[:8]:  # Limit to 8 root boards
+            btn_text = f"📁 {board['name']}"
+            keyboard.append([InlineKeyboardButton(btn_text, callback_data=f"board:{board['id']}:{video_url[:60]}")])
+
+            # Add sub-boards indented
+            sub_boards = [b for b in boards if b.get('parent_id') == board['id']]
+            for sub in sub_boards[:3]:  # Limit sub-boards
+                btn_text = f"  └ {sub['name']}"
+                keyboard.append([InlineKeyboardButton(btn_text, callback_data=f"board:{sub['id']}:{video_url[:60]}")])
+
+        # Add cancel button
+        keyboard.append([InlineKeyboardButton("❌ Cancel", callback_data="board:cancel:")])
+
+        return InlineKeyboardMarkup(keyboard)
+
+    async def handle_board_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle board selection callback from inline keyboard"""
+        query = update.callback_query
+        await query.answer()
+
+        data = query.data
+        if not data.startswith("board:"):
+            return
+
+        parts = data.split(":", 2)
+        if len(parts) < 2:
+            return
+
+        board_selection = parts[1]
+
+        # Handle cancel
+        if board_selection == "cancel":
+            await query.edit_message_text("❌ Download cancelled")
+            if 'pending_video' in context.user_data:
+                del context.user_data['pending_video']
+            return
+
+        # Get pending video info
+        pending = context.user_data.get('pending_video')
+        if not pending:
+            await query.edit_message_text("⚠️ Session expired. Please send the link again.")
+            return
+
+        board_id = int(board_selection) if board_selection != "0" else None
+        url = pending['url']
+        platform = pending['platform']
+        info = pending['info']
+        quality = pending['quality']
+        download_subtitles = pending['download_subtitles']
+        original_subtitles = pending['original_subtitles']
+        platform_emoji = pending['platform_emoji']
+
+        # Get board name for message
+        board_name = "No Board"
+        if board_id:
+            board = db.get_board(board_id)
+            if board:
+                board_name = board['name']
+
+        # Update message to show downloading
+        quality_text = '720p' if quality == '720' else 'Best'
+        await query.edit_message_text(
+            f"📥 *Downloading from {platform.title()}...*\n\n"
+            f"📺 {info.get('title', 'Unknown')[:50]}...\n"
+            f"🎬 {info.get('channel_name', 'Unknown')}\n"
+            f"⏱️ {youtube_service.format_duration(info.get('duration', 0))}\n"
+            f"📐 Quality: {quality_text}\n"
+            f"💬 Subtitles: {'Auto-generated' if download_subtitles else 'None'}\n"
+            f"📁 Board: {board_name}\n\n"
+            f"⏳ Please wait...",
+            parse_mode='Markdown'
+        )
+
+        try:
+            # Download video with appropriate settings
+            result = youtube_service.download_video(
+                url,
+                download_subtitles=download_subtitles,
+                original_subtitles=original_subtitles,
+                quality=quality
+            )
+
+            if not result:
+                await query.edit_message_text(f"❌ Download failed from {platform}")
+                return
+
+            if result.get('status') == 'exists':
+                video = result.get('video', {})
+                await query.edit_message_text(
+                    f"ℹ️ *Video already exists*\n\n"
+                    f"📺 {video.get('title', 'Unknown')}\n"
+                    f"🆔 ID: {video.get('id')}",
+                    parse_mode='Markdown'
+                )
+                return
+
+            # Add to board if selected
+            image_id = result.get('image_id')
+            if board_id and image_id:
+                db.add_image_to_board(image_id, board_id)
+
+            # Success message
+            keyframe_count = len(result.get('keyframes', []))
+            subtitle_langs = list(result.get('parsed_subtitles', {}).keys())
+
+            success_msg = (
+                f"✅ *Download Complete!*\n\n"
+                f"{platform_emoji} Platform: {platform.title()}\n"
+                f"📺 {result.get('title', 'Unknown')[:50]}\n"
+                f"⏱️ Duration: {youtube_service.format_duration(result.get('duration', 0))}\n"
+                f"📐 {result.get('width', 0)}x{result.get('height', 0)}\n"
+            )
+
+            if keyframe_count > 0:
+                success_msg += f"🖼️ Keyframes: {keyframe_count}\n"
+
+            if subtitle_langs:
+                success_msg += f"💬 Subtitles: {', '.join(subtitle_langs)}\n"
+
+            if board_id:
+                success_msg += f"📁 Board: {board_name}\n"
+
+            success_msg += f"\n🆔 Gallery ID: {image_id or 'N/A'}"
+
+            await query.edit_message_text(success_msg, parse_mode='Markdown')
+
+            # Clean up pending data
+            del context.user_data['pending_video']
+
+            # Send thumbnail if available
+            thumbnail_url = info.get('thumbnail_url')
+            if thumbnail_url:
+                try:
+                    await context.bot.send_photo(
+                        chat_id=query.message.chat_id,
+                        photo=thumbnail_url,
+                        caption=f"🎬 {info.get('title', '')[:100]}"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to send thumbnail: {e}")
+
+        except Exception as e:
+            logger.error(f"Error downloading from link: {e}", exc_info=True)
+            await query.edit_message_text(f"❌ Error: {str(e)}")
+
     async def handle_text_with_links(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle text messages that may contain video URLs"""
         chat_id = update.effective_chat.id
@@ -595,76 +751,35 @@ class TelegramGalleryBot:
                 )
                 return
 
-            # Show video info and start download
+            # Store pending video info for callback
+            context.user_data['pending_video'] = {
+                'url': url,
+                'platform': platform,
+                'info': info,
+                'quality': quality,
+                'download_subtitles': download_subtitles,
+                'original_subtitles': original_subtitles,
+                'platform_emoji': platform_emoji
+            }
+
+            # Show video info and board selection
             quality_text = '720p' if quality == '720' else 'Best'
+            keyboard = self._get_boards_keyboard(url)
+
             await status_msg.edit_text(
-                f"📥 *Downloading from {platform.title()}...*\n\n"
-                f"📺 {info.get('title', 'Unknown')[:50]}...\n"
+                f"{platform_emoji} *{platform.title()} Video Found*\n\n"
+                f"📺 {info.get('title', 'Unknown')[:60]}...\n"
                 f"🎬 {info.get('channel_name', 'Unknown')}\n"
                 f"⏱️ {youtube_service.format_duration(info.get('duration', 0))}\n"
                 f"📐 Quality: {quality_text}\n"
                 f"💬 Subtitles: {'Auto-generated' if download_subtitles else 'None'}\n\n"
-                f"⏳ Please wait...",
-                parse_mode='Markdown'
+                f"📁 *Select a board:*",
+                parse_mode='Markdown',
+                reply_markup=keyboard
             )
-
-            # Download video with appropriate settings
-            result = youtube_service.download_video(
-                url,
-                download_subtitles=download_subtitles,
-                original_subtitles=original_subtitles,
-                quality=quality
-            )
-
-            if not result:
-                await status_msg.edit_text(f"❌ Download failed from {platform}")
-                return
-
-            if result.get('status') == 'exists':
-                video = result.get('video', {})
-                await status_msg.edit_text(
-                    f"ℹ️ *Video already exists*\n\n"
-                    f"📺 {video.get('title', 'Unknown')}\n"
-                    f"🆔 ID: {video.get('id')}",
-                    parse_mode='Markdown'
-                )
-                return
-
-            # Success message
-            keyframe_count = len(result.get('keyframes', []))
-            subtitle_langs = list(result.get('parsed_subtitles', {}).keys())
-
-            success_msg = (
-                f"✅ *Download Complete!*\n\n"
-                f"{platform_emoji} Platform: {platform.title()}\n"
-                f"📺 {result.get('title', 'Unknown')[:50]}\n"
-                f"⏱️ Duration: {youtube_service.format_duration(result.get('duration', 0))}\n"
-                f"📐 {result.get('width', 0)}x{result.get('height', 0)}\n"
-            )
-
-            if keyframe_count > 0:
-                success_msg += f"🖼️ Keyframes: {keyframe_count}\n"
-
-            if subtitle_langs:
-                success_msg += f"💬 Subtitles: {', '.join(subtitle_langs)}\n"
-
-            success_msg += f"\n🆔 Gallery ID: {result.get('image_id', 'N/A')}"
-
-            await status_msg.edit_text(success_msg, parse_mode='Markdown')
-
-            # Send thumbnail if available
-            thumbnail_url = info.get('thumbnail_url')
-            if thumbnail_url:
-                try:
-                    await update.message.reply_photo(
-                        photo=thumbnail_url,
-                        caption=f"🎬 {info.get('title', '')[:100]}"
-                    )
-                except Exception as e:
-                    logger.warning(f"Failed to send thumbnail: {e}")
 
         except Exception as e:
-            logger.error(f"Error downloading from link: {e}", exc_info=True)
+            logger.error(f"Error processing video link: {e}", exc_info=True)
             await status_msg.edit_text(f"❌ Error: {str(e)}")
 
     def run(self):
@@ -696,6 +811,8 @@ class TelegramGalleryBot:
             filters.TEXT & ~filters.COMMAND,
             self.handle_text_with_links
         ))
+        # Handle board selection callbacks
+        self.app.add_handler(CallbackQueryHandler(self.handle_board_selection, pattern=r'^board:'))
 
         # Start bot
         print("🤖 Telegram Gallery Bot is running...")

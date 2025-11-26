@@ -416,6 +416,21 @@ class Database:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_bookmarks_video ON video_bookmarks(youtube_video_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_bookmarks_time ON video_bookmarks(timestamp_ms)")
 
+        # Video notes table (timestamped notes)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS video_notes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                youtube_video_id INTEGER NOT NULL,
+                timestamp_ms INTEGER NOT NULL,
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (youtube_video_id) REFERENCES youtube_videos(id) ON DELETE CASCADE
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_notes_video ON video_notes(youtube_video_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_notes_time ON video_notes(timestamp_ms)")
+
         # Full-text search index - check if needs migration
         cursor.execute("""
             SELECT sql FROM sqlite_master 
@@ -2700,3 +2715,89 @@ class Database:
         """Get full transcript text for a video"""
         subtitles = self.get_video_subtitles(youtube_video_id, language)
         return ' '.join(sub.get('text', '') for sub in subtitles)
+
+    # ========== VIDEO NOTES ==========
+
+    def add_video_note(self, youtube_video_id: int, timestamp_ms: int, content: str) -> Optional[int]:
+        """Add a timestamped note to a video"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                INSERT INTO video_notes (youtube_video_id, timestamp_ms, content)
+                VALUES (?, ?, ?)
+            """, (youtube_video_id, timestamp_ms, content))
+            conn.commit()
+            return cursor.lastrowid
+        except Exception as e:
+            print(f"Error adding video note: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def get_video_notes(self, youtube_video_id: int) -> List[Dict]:
+        """Get all notes for a video"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT * FROM video_notes
+            WHERE youtube_video_id = ?
+            ORDER BY timestamp_ms
+        """, (youtube_video_id,))
+
+        results = cursor.fetchall()
+        conn.close()
+
+        return [dict(row) for row in results]
+
+    def update_video_note(self, note_id: int, content: str = None, timestamp_ms: int = None) -> bool:
+        """Update a video note"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        updates = []
+        values = []
+
+        if content is not None:
+            updates.append("content = ?")
+            values.append(content)
+        if timestamp_ms is not None:
+            updates.append("timestamp_ms = ?")
+            values.append(timestamp_ms)
+
+        if not updates:
+            conn.close()
+            return False
+
+        updates.append("updated_at = CURRENT_TIMESTAMP")
+        values.append(note_id)
+
+        try:
+            cursor.execute(f"""
+                UPDATE video_notes SET {', '.join(updates)}
+                WHERE id = ?
+            """, values)
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error updating video note: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def delete_video_note(self, note_id: int) -> bool:
+        """Delete a video note"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("DELETE FROM video_notes WHERE id = ?", (note_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error deleting video note: {e}")
+            return False
+        finally:
+            conn.close()
