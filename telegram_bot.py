@@ -12,11 +12,16 @@ import logging
 import mimetypes
 from pathlib import Path
 from datetime import datetime
+from functools import partial
+from concurrent.futures import ThreadPoolExecutor
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, MessageHandler, CommandHandler, CallbackQueryHandler, ContextTypes, filters
 import requests
 from database import Database
 from youtube_service import YouTubeService
+
+# Thread pool for running blocking operations
+_executor = ThreadPoolExecutor(max_workers=4)
 
 # Fix Windows console encoding for emoji support
 if sys.platform == 'win32':
@@ -60,7 +65,15 @@ class TelegramGalleryBot:
     def __init__(self, token: str):
         self.token = token
         self.app = None
-    
+
+    async def _run_blocking(self, func, *args, **kwargs):
+        """Run a blocking function in a thread executor to avoid blocking the event loop"""
+        loop = asyncio.get_event_loop()
+        if kwargs:
+            func_with_kwargs = partial(func, *args, **kwargs)
+            return await loop.run_in_executor(_executor, func_with_kwargs)
+        return await loop.run_in_executor(_executor, func, *args)
+
     def _sanitize_token(self, value: str) -> str:
         return ''.join(c if c.isalnum() or c in ('-', '_') else '_' for c in value)
     
@@ -99,18 +112,20 @@ class TelegramGalleryBot:
     async def _run_analysis(self, update: Update, image_id: int):
         await update.message.reply_text("🤖 Analyzing with AI...")
         try:
-            response = requests.post(
+            # Run blocking request in thread pool
+            response = await self._run_blocking(
+                requests.post,
                 f"{GALLERY_API_URL}/api/images/{image_id}/analyze",
                 json={'style': AI_STYLE},
                 timeout=120
             )
-            
+
             if response.ok:
                 data = response.json()
                 description = data.get('description', 'No description')
                 tags = data.get('tags', [])
                 tags_text = ', '.join(tags[:5]) if tags else 'No tags'
-                
+
                 await update.message.reply_text(
                     f"✨ *Analysis Complete!*\n\n"
                     f"📝 {description}\n\n"
@@ -227,8 +242,12 @@ class TelegramGalleryBot:
     async def status_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /status command"""
         try:
-            # Get gallery stats
-            response = requests.get(f"{GALLERY_API_URL}/api/health", timeout=5)
+            # Get gallery stats - run blocking request in thread pool
+            response = await self._run_blocking(
+                requests.get,
+                f"{GALLERY_API_URL}/api/health",
+                timeout=5
+            )
             if response.ok:
                 data = response.json()
                 stats = data.get('stats', {})
@@ -328,8 +347,8 @@ class TelegramGalleryBot:
         )
 
         try:
-            # Get video info first
-            info = youtube_service.get_video_info(url)
+            # Get video info first - run in thread pool
+            info = await self._run_blocking(youtube_service.get_video_info, url)
             if not info:
                 await status_msg.edit_text("❌ Failed to get video information")
                 return
@@ -345,8 +364,8 @@ class TelegramGalleryBot:
                 parse_mode='Markdown'
             )
 
-            # Download video
-            result = youtube_service.download_video(url)
+            # Download video - run in thread pool
+            result = await self._run_blocking(youtube_service.download_video, url)
 
             if not result:
                 await status_msg.edit_text("❌ Download failed. Please try again.")
@@ -592,8 +611,9 @@ class TelegramGalleryBot:
         )
 
         try:
-            # Download video with appropriate settings
-            result = youtube_service.download_video(
+            # Download video with appropriate settings - run in thread pool
+            result = await self._run_blocking(
+                youtube_service.download_video,
                 url,
                 download_subtitles=download_subtitles,
                 original_subtitles=original_subtitles,
@@ -733,8 +753,8 @@ class TelegramGalleryBot:
         )
 
         try:
-            # Get video info first
-            info = youtube_service.get_video_info(url)
+            # Get video info first - run in thread pool
+            info = await self._run_blocking(youtube_service.get_video_info, url)
             if not info:
                 await status_msg.edit_text(f"❌ Failed to get video information from {platform}")
                 return
