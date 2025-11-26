@@ -2,9 +2,10 @@
 API routes for YouTube video operations
 """
 
+import os
 import logging
 from flask import Blueprint, jsonify, request
-from shared import db
+from shared import db, PHOTOS_DIR
 from youtube_service import YouTubeService
 
 logger = logging.getLogger(__name__)
@@ -497,10 +498,8 @@ def format_time_readable(ms):
 def create_video_clip(image_id):
     """Create a video clip from start to end time"""
     import subprocess
-    import os
     import tempfile
     from flask import send_file
-    from shared import PHOTOS_DIR
 
     data = request.json or {}
     start_ms = data.get('start_ms', 0)
