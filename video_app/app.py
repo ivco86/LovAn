@@ -104,13 +104,13 @@ if __name__ == '__main__':
 🤖 LM Studio URL: {LM_STUDIO_URL}
 💾 Database: {DATABASE_PATH}
 
-🌐 Open: http://localhost:5001
+🌐 Open: http://localhost:5000
 
 Press Ctrl+C to stop
     """)
 
     app.run(
         host='0.0.0.0',
-        port=5001,
+        port=5000,
         debug=True
     )
