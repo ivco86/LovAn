@@ -6215,6 +6215,17 @@ function initWordClickHandlers() {
 
         // Handle clickable word (single click)
         if (e.target.classList.contains('clickable-word')) {
+            // Check if user is making a text selection (dragging to select multiple words)
+            const selection = window.getSelection();
+            const selText = selection ? selection.toString().trim() : '';
+            console.log('[Click] Clickable word clicked, selection:', JSON.stringify(selText));
+            if (selText.length > 0) {
+                console.log('[Click] Has selection, skipping single word popup');
+                // User is selecting text, don't show single word popup
+                return;
+            }
+
+            console.log('[Click] No selection, showing single word popup');
             e.stopPropagation();
             // Pause video when clicking on a word
             pauseVideoForTranslation();
@@ -6226,30 +6237,59 @@ function initWordClickHandlers() {
 
     // Handle text selection for phrases (multiple words)
     document.addEventListener('mouseup', async (e) => {
-        // Small delay to let single click handler run first
+        // Small delay to ensure click handler runs first
         setTimeout(async () => {
+            console.log('[Phrase] mouseup handler triggered');
+
             // Check if popup is already open (from single word click)
-            if (document.getElementById('translationPopup')) return;
+            if (document.getElementById('translationPopup')) {
+                console.log('[Phrase] Popup already exists, skipping');
+                return;
+            }
 
             // Get selected text
             const selection = window.getSelection();
-            if (!selection || selection.rangeCount === 0) return;
+            if (!selection || selection.rangeCount === 0) {
+                console.log('[Phrase] No selection or range');
+                return;
+            }
 
             const selectedText = selection.toString().trim();
+            console.log('[Phrase] Selected text:', JSON.stringify(selectedText), 'length:', selectedText.length);
 
-            // Must have at least 2 characters and contain a space (multiple words)
-            if (!selectedText || selectedText.length < 2 || !selectedText.includes(' ')) return;
-            if (selectedText.length > 200) return;
+            // Must have at least 3 characters and contain whitespace (multiple words)
+            // Use regex to detect any whitespace (space, non-breaking space, etc.)
+            if (!selectedText || selectedText.length < 3) {
+                console.log('[Phrase] Too short or empty');
+                return;
+            }
+            if (!/\s/.test(selectedText)) {
+                console.log('[Phrase] No whitespace in selection');
+                return;
+            }
+            if (selectedText.length > 200) {
+                console.log('[Phrase] Too long');
+                return;
+            }
 
             // Check if selection is within subtitle content
             const subtitleContent = document.getElementById('subtitleContent');
-            if (!subtitleContent) return;
+            if (!subtitleContent) {
+                console.log('[Phrase] subtitleContent not found');
+                return;
+            }
 
             const range = selection.getRangeAt(0);
             const container = range.commonAncestorContainer;
             const containerElement = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+            console.log('[Phrase] Container:', containerElement?.tagName, containerElement?.className);
 
-            if (!subtitleContent.contains(containerElement)) return;
+            if (!subtitleContent.contains(containerElement)) {
+                console.log('[Phrase] Selection not inside subtitleContent');
+                return;
+            }
+
+            console.log('[Phrase] All checks passed! Showing popup...');
 
             // Pause video
             pauseVideoForTranslation();
