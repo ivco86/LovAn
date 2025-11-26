@@ -5655,7 +5655,7 @@ async function addBookmarkAtCurrentTime() {
 
     if (!title) return;
 
-    const imageId = currentDetailImage?.id;
+    const imageId = state.currentImage?.id;
     if (!imageId) return;
 
     try {
@@ -5730,7 +5730,7 @@ function showExportMenu(event) {
 }
 
 async function exportTranscript(format) {
-    const imageId = currentDetailImage?.id;
+    const imageId = state.currentImage?.id;
     if (!imageId) return;
 
     document.querySelectorAll('.export-dropdown').forEach(m => m.remove());
@@ -5788,7 +5788,7 @@ async function exportVideoClip() {
         return;
     }
 
-    const imageId = currentDetailImage?.id;
+    const imageId = state.currentImage?.id;
     if (!imageId) return;
 
     document.querySelectorAll('.modal').forEach(m => {
@@ -5829,7 +5829,7 @@ async function exportVideoClip() {
 // ============ AI VIDEO SUMMARY ============
 
 async function generateVideoSummary() {
-    const imageId = currentDetailImage?.id;
+    const imageId = state.currentImage?.id;
     if (!imageId) return;
 
     showToast('Generating AI summary...', 'info');
