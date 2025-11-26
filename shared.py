@@ -9,7 +9,7 @@ from database import Database
 from ai_service import AIService
 
 # Configuration from environment variables
-PHOTOS_DIR = os.environ.get('PHOTOS_DIR', './photos')
+PHOTOS_DIR = os.path.abspath(os.environ.get('PHOTOS_DIR', './photos'))
 DATA_DIR = os.environ.get('DATA_DIR', 'data')
 LM_STUDIO_URL = os.environ.get('LM_STUDIO_URL', 'http://localhost:1234')
 DATABASE_PATH = os.environ.get('DATABASE_PATH', 'data/gallery.db')
