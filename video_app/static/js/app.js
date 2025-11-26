@@ -7,6 +7,7 @@
 let videos = [];
 let currentVideo = null;
 let currentVideoId = null;
+let currentPlatform = 'all';
 
 // DOM Elements
 const videoGrid = document.getElementById('videoGrid');
@@ -26,6 +27,16 @@ function setupEventListeners() {
 
     // Add Video Button
     document.getElementById('addVideoBtn').addEventListener('click', openAddVideoModal);
+
+    // Platform filter buttons
+    document.querySelectorAll('.platform-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentPlatform = btn.dataset.platform;
+            filterVideos();
+        });
+    });
 
     // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
@@ -92,22 +103,54 @@ function showEmptyState(message) {
 
 function updateStats() {
     totalVideosEl.textContent = videos.length;
+
+    // Count by platform
+    const youtubeCount = videos.filter(v => detectPlatform(v.youtube_id) === 'youtube').length;
+    const tiktokCount = videos.filter(v => detectPlatform(v.youtube_id) === 'tiktok').length;
+
+    const youtubeEl = document.getElementById('youtubeCount');
+    const tiktokEl = document.getElementById('tiktokCount');
+
+    if (youtubeEl) youtubeEl.textContent = youtubeCount;
+    if (tiktokEl) tiktokEl.textContent = tiktokCount;
 }
 
-// ============ SEARCH ============
+// ============ SEARCH & FILTER ============
 
 function handleSearch() {
+    filterVideos();
+}
+
+function filterVideos() {
     const query = searchInput.value.toLowerCase().trim();
-    if (!query) {
-        renderVideos(videos);
-        return;
+
+    let filtered = videos;
+
+    // Filter by platform
+    if (currentPlatform !== 'all') {
+        filtered = filtered.filter(v => detectPlatform(v.youtube_id) === currentPlatform);
     }
 
-    const filtered = videos.filter(v =>
-        v.title.toLowerCase().includes(query) ||
-        (v.channel_name && v.channel_name.toLowerCase().includes(query))
-    );
+    // Filter by search query
+    if (query) {
+        filtered = filtered.filter(v =>
+            v.title.toLowerCase().includes(query) ||
+            (v.channel_name && v.channel_name.toLowerCase().includes(query))
+        );
+    }
+
     renderVideos(filtered);
+}
+
+function detectPlatform(videoId) {
+    if (!videoId) return 'other';
+    if (videoId.startsWith('tt_')) return 'tiktok';
+    if (videoId.startsWith('fb_')) return 'facebook';
+    if (videoId.startsWith('ig_')) return 'instagram';
+    if (videoId.startsWith('tw_')) return 'twitter';
+    // YouTube IDs are 11 characters
+    if (/^[a-zA-Z0-9_-]{11}$/.test(videoId)) return 'youtube';
+    return 'other';
 }
 
 // ============ ADD VIDEO MODAL ============

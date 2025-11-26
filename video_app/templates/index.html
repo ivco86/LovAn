@@ -25,9 +25,19 @@
             <!-- Sidebar -->
             <aside class="sidebar">
                 <div class="sidebar-section">
-                    <h3>Filters</h3>
+                    <h3>Platform</h3>
+                    <div class="platform-filters">
+                        <button class="platform-btn active" data-platform="all">All</button>
+                        <button class="platform-btn" data-platform="youtube">YouTube</button>
+                        <button class="platform-btn" data-platform="tiktok">TikTok</button>
+                        <button class="platform-btn" data-platform="facebook">Facebook</button>
+                        <button class="platform-btn" data-platform="instagram">Instagram</button>
+                        <button class="platform-btn" data-platform="twitter">Twitter/X</button>
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <h3>Search</h3>
                     <div class="filter-group">
-                        <label>Search</label>
                         <input type="text" id="searchInput" placeholder="Search videos...">
                     </div>
                 </div>
@@ -36,6 +46,14 @@
                     <div class="stat-item">
                         <span class="stat-label">Total Videos</span>
                         <span class="stat-value" id="totalVideos">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">YouTube</span>
+                        <span class="stat-value" id="youtubeCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">TikTok</span>
+                        <span class="stat-value" id="tiktokCount">0</span>
                     </div>
                 </div>
             </aside>

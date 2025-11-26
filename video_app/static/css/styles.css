@@ -151,6 +151,36 @@ body {
     border-color: var(--primary-color);
 }
 
+/* Platform Filters */
+.platform-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.platform-btn {
+    padding: 10px 14px;
+    background: var(--background);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.platform-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+}
+
+.platform-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
 .stat-item {
     display: flex;
     justify-content: space-between;
