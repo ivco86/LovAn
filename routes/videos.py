@@ -636,3 +636,176 @@ def get_video_summary(image_id):
         'message': 'Use POST to generate a summary',
         'endpoint': f'/api/images/{image_id}/summary'
     }), 200
+
+
+# ============ FRAME CAPTURE ============
+
+@videos_bp.route('/api/images/<int:image_id>/capture-frame', methods=['POST'])
+def capture_video_frame(image_id):
+    """Capture a frame from video at specified timestamp and save to gallery"""
+    import subprocess
+    from datetime import datetime
+
+    data = request.json or {}
+    timestamp_ms = data.get('timestamp_ms', 0)
+
+    # Get video file path
+    image = db.get_image(image_id)
+    if not image:
+        return jsonify({'error': 'Video not found'}), 404
+
+    video_path = os.path.join(PHOTOS_DIR, image['filepath'])
+    if not os.path.exists(video_path):
+        return jsonify({'error': 'Video file not found'}), 404
+
+    # Generate output filename
+    timestamp_sec = timestamp_ms / 1000
+    video_name = os.path.splitext(os.path.basename(image['filepath']))[0]
+    time_str = f"{int(timestamp_sec // 60):02d}m{int(timestamp_sec % 60):02d}s"
+    output_filename = f"{video_name}_frame_{time_str}_{datetime.now().strftime('%H%M%S')}.jpg"
+    output_path = os.path.join(PHOTOS_DIR, output_filename)
+
+    try:
+        # Use FFmpeg to extract frame
+        cmd = [
+            'ffmpeg', '-y',
+            '-ss', str(timestamp_sec),
+            '-i', video_path,
+            '-vframes', '1',
+            '-q:v', '2',  # High quality JPEG
+            output_path
+        ]
+
+        result = subprocess.run(cmd, capture_output=True, timeout=30)
+
+        if result.returncode != 0 or not os.path.exists(output_path):
+            logger.error(f"FFmpeg error: {result.stderr.decode()}")
+            return jsonify({'error': 'Failed to capture frame'}), 500
+
+        # Add captured frame to gallery
+        file_size = os.path.getsize(output_path)
+        new_image_id = db.add_image(
+            output_filename,
+            filename=output_filename,
+            file_size=file_size,
+            media_type='image'
+        )
+
+        if not new_image_id:
+            return jsonify({'error': 'Failed to add frame to gallery'}), 500
+
+        # Copy tags from video to captured frame
+        if image.get('tags'):
+            db.update_image(new_image_id, tags=image['tags'])
+
+        return jsonify({
+            'success': True,
+            'image_id': new_image_id,
+            'filename': output_filename,
+            'timestamp_ms': timestamp_ms
+        })
+
+    except subprocess.TimeoutExpired:
+        return jsonify({'error': 'Frame capture timed out'}), 500
+    except Exception as e:
+        logger.error(f"Error capturing frame: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ VIDEO NOTES ============
+
+@videos_bp.route('/api/images/<int:image_id>/notes', methods=['GET'])
+def get_video_notes(image_id):
+    """Get all timestamped notes for a video"""
+    video = db.get_youtube_video_by_image_id(image_id)
+    if not video:
+        return jsonify({'error': 'Video not found'}), 404
+
+    notes = db.get_video_notes(video['id'])
+    return jsonify({
+        'image_id': image_id,
+        'notes': notes,
+        'count': len(notes)
+    })
+
+
+@videos_bp.route('/api/images/<int:image_id>/notes', methods=['POST'])
+def add_video_note(image_id):
+    """Add a timestamped note to a video"""
+    video = db.get_youtube_video_by_image_id(image_id)
+    if not video:
+        return jsonify({'error': 'Video not found'}), 404
+
+    data = request.json or {}
+    timestamp_ms = data.get('timestamp_ms')
+    content = data.get('content')
+
+    if timestamp_ms is None or not content:
+        return jsonify({'error': 'timestamp_ms and content are required'}), 400
+
+    note_id = db.add_video_note(
+        youtube_video_id=video['id'],
+        timestamp_ms=timestamp_ms,
+        content=content
+    )
+
+    if note_id:
+        return jsonify({
+            'success': True,
+            'note_id': note_id
+        }), 201
+    return jsonify({'error': 'Failed to add note'}), 500
+
+
+@videos_bp.route('/api/notes/<int:note_id>', methods=['PUT'])
+def update_video_note(note_id):
+    """Update a video note"""
+    data = request.json or {}
+
+    success = db.update_video_note(
+        note_id=note_id,
+        content=data.get('content'),
+        timestamp_ms=data.get('timestamp_ms')
+    )
+
+    if success:
+        return jsonify({'success': True})
+    return jsonify({'error': 'Note not found or update failed'}), 404
+
+
+@videos_bp.route('/api/notes/<int:note_id>', methods=['DELETE'])
+def delete_video_note(note_id):
+    """Delete a video note"""
+    success = db.delete_video_note(note_id)
+
+    if success:
+        return jsonify({'success': True})
+    return jsonify({'error': 'Note not found'}), 404
+
+
+@videos_bp.route('/api/images/<int:image_id>/notes/export', methods=['GET'])
+def export_video_notes(image_id):
+    """Export video notes as markdown"""
+    from flask import Response
+
+    video = db.get_youtube_video_by_image_id(image_id)
+    if not video:
+        return jsonify({'error': 'Video not found'}), 404
+
+    notes = db.get_video_notes(video['id'])
+
+    # Generate markdown
+    md_content = f"# Notes: {video.get('title', 'Video')}\n\n"
+
+    for note in sorted(notes, key=lambda x: x.get('timestamp_ms', 0)):
+        time_str = format_time_readable(note.get('timestamp_ms', 0))
+        md_content += f"## [{time_str}]\n{note.get('content', '')}\n\n"
+
+    video_title = video.get('title', 'notes')
+    safe_title = ''.join(c for c in video_title if c.isalnum() or c in ' -_')[:50]
+
+    return Response(
+        md_content,
+        mimetype='text/markdown',
+        headers={'Content-Disposition': f'attachment; filename="{safe_title}_notes.md"'}
+    )

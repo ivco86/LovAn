@@ -1785,10 +1785,35 @@ async function loadAndInitSubtitles(imageId) {
             if (videoElement) {
                 initSubtitleSync(videoElement);
                 attachSubtitleClickHandlers();
+
+                // Load bookmarks when video metadata is ready
+                if (videoElement.readyState >= 1) {
+                    // Metadata already loaded
+                    await loadVideoBookmarks(imageId);
+                    renderBookmarkMarkers();
+                } else {
+                    videoElement.addEventListener('loadedmetadata', async () => {
+                        await loadVideoBookmarks(imageId);
+                        renderBookmarkMarkers();
+                    }, { once: true });
+                }
             }
         } else {
             // No subtitles - hide the panel or show message
             container.innerHTML = '';
+
+            // Still load bookmarks even if no subtitles
+            if (videoElement) {
+                if (videoElement.readyState >= 1) {
+                    await loadVideoBookmarks(imageId);
+                    renderBookmarkMarkers();
+                } else {
+                    videoElement.addEventListener('loadedmetadata', async () => {
+                        await loadVideoBookmarks(imageId);
+                        renderBookmarkMarkers();
+                    }, { once: true });
+                }
+            }
         }
     } catch (error) {
         console.error('Error loading subtitles:', error);
@@ -5593,6 +5618,9 @@ function createSubtitlePanel(subtitles, languages) {
                 <button onclick="toggleAutoScroll()" id="autoScrollBtn" class="active">🔄 Auto-scroll</button>
                 <button onclick="jumpToCurrentSubtitle()">⏱️ Jump to current</button>
                 <button onclick="addBookmarkAtCurrentTime()" title="Add bookmark at current time">🔖 Bookmark</button>
+                <button onclick="captureCurrentFrame()" title="Capture current frame as image">📸 Screenshot</button>
+                <button onclick="toggleABLoop()" id="abLoopBtn" title="A-B Loop: repeat section">🔁 A-B Loop</button>
+                <button onclick="addNoteAtCurrentTime()" title="Add timestamped note">📝 Note</button>
                 <button onclick="showExportMenu(event)" title="Export options">📤 Export</button>
                 <button onclick="generateVideoSummary()" title="AI Summary">🤖 Summary</button>
             </div>
@@ -5629,11 +5657,21 @@ function renderBookmarkMarkers() {
     const container = video.parentElement;
     if (!container) return;
 
+    // Get video's position within container
+    const videoRect = video.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const videoLeft = videoRect.left - containerRect.left;
+    const videoWidth = videoRect.width;
+    const videoBottom = containerRect.height - (videoRect.bottom - containerRect.top);
+
     currentVideoBookmarks.forEach(bookmark => {
-        const position = (bookmark.timestamp_ms / 1000) / video.duration * 100;
+        const timePercent = (bookmark.timestamp_ms / 1000) / video.duration;
+        const leftPx = videoLeft + (timePercent * videoWidth);
+
         const marker = document.createElement('div');
         marker.className = 'bookmark-marker';
-        marker.style.left = `${position}%`;
+        marker.style.left = `${leftPx}px`;
+        marker.style.bottom = `${videoBottom + 45}px`;  // Position above video controls
         marker.style.backgroundColor = bookmark.color || '#ff4444';
         marker.title = `${bookmark.title} (${formatTimeReadable(bookmark.timestamp_ms)})`;
         marker.onclick = () => {
@@ -5642,6 +5680,13 @@ function renderBookmarkMarkers() {
         container.appendChild(marker);
     });
 }
+
+// Re-render markers on window resize (debounced)
+let bookmarkResizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(bookmarkResizeTimeout);
+    bookmarkResizeTimeout = setTimeout(renderBookmarkMarkers, 100);
+});
 
 async function addBookmarkAtCurrentTime() {
     const video = document.getElementById('modalVideoPlayer');
@@ -5893,6 +5938,235 @@ function copySummaryToClipboard() {
         navigator.clipboard.writeText(content.dataset.rawSummary);
         showToast('Summary copied to clipboard!', 'success');
     }
+}
+
+// ============ FRAME CAPTURE ============
+
+async function captureCurrentFrame() {
+    const video = document.getElementById('modalVideoPlayer');
+    if (!video) {
+        showToast('No video playing', 'error');
+        return;
+    }
+
+    const imageId = state.currentImage?.id;
+    if (!imageId) return;
+
+    const currentTimeMs = Math.floor(video.currentTime * 1000);
+
+    showToast('Capturing frame...', 'info');
+
+    try {
+        const response = await fetch(`/api/images/${imageId}/capture-frame`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ timestamp_ms: currentTimeMs })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            showToast(`Frame captured! Added to gallery (ID: ${data.image_id})`, 'success');
+        } else {
+            showToast(data.error || 'Failed to capture frame', 'error');
+        }
+    } catch (error) {
+        console.error('Error capturing frame:', error);
+        showToast('Error capturing frame', 'error');
+    }
+}
+
+// ============ A-B LOOP ============
+
+let abLoopState = {
+    active: false,
+    pointA: null,
+    pointB: null
+};
+
+function toggleABLoop() {
+    const video = document.getElementById('modalVideoPlayer');
+    const btn = document.getElementById('abLoopBtn');
+    if (!video) return;
+
+    if (!abLoopState.active) {
+        // Start: Set point A
+        abLoopState.pointA = video.currentTime;
+        abLoopState.pointB = null;
+        abLoopState.active = true;
+        btn.textContent = '🔁 Set B';
+        btn.classList.add('active');
+        showToast(`Point A set at ${formatTimeReadable(abLoopState.pointA * 1000)}. Now set point B.`, 'info');
+    } else if (abLoopState.pointB === null) {
+        // Set point B and start looping
+        if (video.currentTime <= abLoopState.pointA) {
+            showToast('Point B must be after point A', 'error');
+            return;
+        }
+        abLoopState.pointB = video.currentTime;
+        btn.textContent = '🔁 Stop Loop';
+        video.currentTime = abLoopState.pointA;
+        video.play();
+        showToast(`Looping ${formatTimeReadable(abLoopState.pointA * 1000)} → ${formatTimeReadable(abLoopState.pointB * 1000)}`, 'success');
+
+        // Add timeupdate listener for looping
+        video.addEventListener('timeupdate', handleABLoop);
+    } else {
+        // Stop loop
+        video.removeEventListener('timeupdate', handleABLoop);
+        abLoopState = { active: false, pointA: null, pointB: null };
+        btn.textContent = '🔁 A-B Loop';
+        btn.classList.remove('active');
+        showToast('A-B Loop stopped', 'info');
+    }
+}
+
+function handleABLoop(e) {
+    const video = e.target;
+    if (abLoopState.active && abLoopState.pointB !== null) {
+        if (video.currentTime >= abLoopState.pointB) {
+            video.currentTime = abLoopState.pointA;
+        }
+    }
+}
+
+// ============ TIMESTAMPED NOTES ============
+
+let currentVideoNotes = [];
+
+async function loadVideoNotes(imageId) {
+    try {
+        const response = await fetch(`/api/images/${imageId}/notes`);
+        if (response.ok) {
+            const data = await response.json();
+            currentVideoNotes = data.notes || [];
+            return currentVideoNotes;
+        }
+    } catch (error) {
+        console.error('Error loading notes:', error);
+    }
+    return [];
+}
+
+async function addNoteAtCurrentTime() {
+    const video = document.getElementById('modalVideoPlayer');
+    if (!video) {
+        showToast('No video playing', 'error');
+        return;
+    }
+
+    const currentTimeMs = Math.floor(video.currentTime * 1000);
+    const timeStr = formatTimeReadable(currentTimeMs);
+
+    // Show note input dialog
+    const dialog = document.createElement('div');
+    dialog.className = 'modal';
+    dialog.style.display = 'flex';
+    dialog.innerHTML = `
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content" style="max-width: 500px;">
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+            <div class="modal-body">
+                <h2>📝 Add Note at ${timeStr}</h2>
+                <div class="form-group">
+                    <textarea id="noteContent" placeholder="Enter your note..." rows="4" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);"></textarea>
+                </div>
+                <div class="form-group" style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveVideoNote(${currentTimeMs})">Save Note</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+    document.getElementById('noteContent').focus();
+}
+
+async function saveVideoNote(timestampMs) {
+    const content = document.getElementById('noteContent')?.value?.trim();
+    if (!content) {
+        showToast('Note cannot be empty', 'error');
+        return;
+    }
+
+    const imageId = state.currentImage?.id;
+    if (!imageId) return;
+
+    try {
+        const response = await fetch(`/api/images/${imageId}/notes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                timestamp_ms: timestampMs,
+                content: content
+            })
+        });
+
+        if (response.ok) {
+            showToast('Note saved!', 'success');
+            document.querySelector('.modal')?.remove();
+            await loadVideoNotes(imageId);
+        } else {
+            const error = await response.json();
+            showToast(error.error || 'Failed to save note', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving note:', error);
+        showToast('Error saving note', 'error');
+    }
+}
+
+function showVideoNotes() {
+    if (currentVideoNotes.length === 0) {
+        showToast('No notes for this video', 'info');
+        return;
+    }
+
+    const video = document.getElementById('modalVideoPlayer');
+
+    const dialog = document.createElement('div');
+    dialog.className = 'modal';
+    dialog.style.display = 'flex';
+    dialog.innerHTML = `
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+            <div class="modal-body">
+                <h2>📝 Video Notes (${currentVideoNotes.length})</h2>
+                <div class="notes-list" style="max-height: 400px; overflow-y: auto;">
+                    ${currentVideoNotes.map(note => `
+                        <div class="note-item" style="padding: 12px; margin: 8px 0; background: var(--bg-secondary); border-radius: 8px; cursor: pointer;"
+                             onclick="jumpToNoteTime(${note.timestamp_ms})">
+                            <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 4px;">
+                                ⏱️ ${formatTimeReadable(note.timestamp_ms)}
+                            </div>
+                            <div style="white-space: pre-wrap;">${escapeHtml(note.content)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="form-group" style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="exportVideoNotes()">📤 Export as Markdown</button>
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+}
+
+function jumpToNoteTime(timestampMs) {
+    const video = document.getElementById('modalVideoPlayer');
+    if (video) {
+        video.currentTime = timestampMs / 1000;
+        document.querySelector('.modal')?.remove();
+    }
+}
+
+async function exportVideoNotes() {
+    const imageId = state.currentImage?.id;
+    if (!imageId) return;
+
+    window.open(`/api/images/${imageId}/notes/export`, '_blank');
 }
 
 // Subtitle panel resize functionality
