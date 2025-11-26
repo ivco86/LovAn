@@ -6192,6 +6192,16 @@ async function exportVideoNotes() {
 
 // ============ VOCABULARY & TRANSLATION (Language Reactor style) ============
 
+// Pause video for translation
+function pauseVideoForTranslation() {
+    const video = document.getElementById('modalVideoPlayer');
+    if (video && !video.paused) {
+        video.pause();
+        return true; // Was playing, now paused
+    }
+    return false;
+}
+
 // Initialize word click handlers
 function initWordClickHandlers() {
     // Handle single word click
@@ -6206,6 +6216,8 @@ function initWordClickHandlers() {
         // Handle clickable word (single click)
         if (e.target.classList.contains('clickable-word')) {
             e.stopPropagation();
+            // Pause video when clicking on a word
+            pauseVideoForTranslation();
             const word = e.target.dataset.word;
             const context = e.target.dataset.context;
             await showTranslationPopup(word, context, e.target);
@@ -6224,6 +6236,9 @@ function initWordClickHandlers() {
 
         // If more than one word is selected, show translation for phrase
         if (selectedText && selectedText.includes(' ') && selectedText.length > 2 && selectedText.length < 200) {
+            // Pause video when selecting text
+            pauseVideoForTranslation();
+
             // Wait a bit to not interfere with single word clicks
             setTimeout(async () => {
                 // Check if selection is still valid
