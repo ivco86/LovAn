@@ -6226,39 +6226,52 @@ function initWordClickHandlers() {
 
     // Handle text selection for phrases (multiple words)
     document.addEventListener('mouseup', async (e) => {
-        // Only handle selection in subtitle content
-        const subtitleContent = document.getElementById('subtitleContent');
-        if (!subtitleContent || !subtitleContent.contains(e.target)) return;
+        // Small delay to let single click handler run first
+        setTimeout(async () => {
+            // Check if popup is already open (from single word click)
+            if (document.getElementById('translationPopup')) return;
 
-        // Get selected text
-        const selection = window.getSelection();
-        const selectedText = selection.toString().trim();
+            // Get selected text
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0) return;
 
-        // If more than one word is selected, show translation for phrase
-        if (selectedText && selectedText.includes(' ') && selectedText.length > 2 && selectedText.length < 200) {
-            // Pause video when selecting text
+            const selectedText = selection.toString().trim();
+
+            // Must have at least 2 characters and contain a space (multiple words)
+            if (!selectedText || selectedText.length < 2 || !selectedText.includes(' ')) return;
+            if (selectedText.length > 200) return;
+
+            // Check if selection is within subtitle content
+            const subtitleContent = document.getElementById('subtitleContent');
+            if (!subtitleContent) return;
+
+            const range = selection.getRangeAt(0);
+            const container = range.commonAncestorContainer;
+            const containerElement = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+
+            if (!subtitleContent.contains(containerElement)) return;
+
+            // Pause video
             pauseVideoForTranslation();
 
-            // Wait a bit to not interfere with single word clicks
-            setTimeout(async () => {
-                // Check if selection is still valid
-                const currentSelection = window.getSelection().toString().trim();
-                if (currentSelection === selectedText) {
-                    // Find the context (full subtitle line)
-                    const subtitleLine = e.target.closest('.subtitle-line');
-                    const context = subtitleLine ? subtitleLine.querySelector('.text')?.textContent || selectedText : selectedText;
+            // Get the bounding rect before any DOM changes
+            const rect = range.getBoundingClientRect();
 
-                    // Create a temporary target element for positioning
-                    const range = selection.getRangeAt(0);
-                    const rect = range.getBoundingClientRect();
-                    const tempTarget = {
-                        getBoundingClientRect: () => rect
-                    };
+            // Find context (the subtitle line text)
+            const subtitleLine = containerElement.closest('.subtitle-line');
+            const context = subtitleLine ? subtitleLine.querySelector('.text')?.textContent || selectedText : selectedText;
 
-                    await showTranslationPopup(selectedText, context, tempTarget, true);
-                }
-            }, 200);
-        }
+            // Create target for positioning
+            const tempTarget = {
+                getBoundingClientRect: () => rect
+            };
+
+            await showTranslationPopup(selectedText, context, tempTarget, true);
+
+            // Clear selection after showing popup
+            selection.removeAllRanges();
+
+        }, 250);
     });
 }
 
