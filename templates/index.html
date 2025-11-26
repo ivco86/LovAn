@@ -35,6 +35,7 @@
                 <span class="icon-moon">☾</span>
             </button>
             <button class="btn-icon-round youtube-btn" id="youtubeHeaderBtn" aria-label="Video Download" title="Video Download (YouTube, TikTok, FB)">▶</button>
+            <button class="btn-icon-round" id="transcriptSearchBtn" aria-label="Transcript Search" title="Search Video Transcripts">🔍</button>
             <button class="btn-icon-round" id="uploadBtn" aria-label="Upload" title="Upload">+</button>
             <button class="btn-icon-round" id="selectBtn" aria-label="Select" title="Select">☑</button>
             <div class="dropdown">
@@ -44,6 +45,7 @@
                     <div class="dropdown-item" id="sortImagesBtnMenu">Sort Images</div>
                     <div class="dropdown-item" id="findDuplicatesBtnMenu">Find Duplicates</div>
                     <div class="dropdown-item" id="youtubeDownloadBtnMenu">Video Download</div>
+                    <div class="dropdown-item" id="transcriptSearchBtnMenu">🔍 Transcript Search</div>
                     <div class="dropdown-item" id="analyzeBtnMenu">AI Analyze</div>
                     <div class="dropdown-item" id="chatBtnMenu">AI Chat</div>
                     <div class="dropdown-divider"></div>
@@ -1017,6 +1019,34 @@
                 <div class="form-actions" style="margin-top: var(--spacing-lg);">
                     <button type="button" class="btn btn-secondary" id="youtubeCancelBtn">Close</button>
                     <button type="button" class="btn btn-primary" id="youtubeDownloadBtn" disabled>Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transcript Search Modal -->
+    <div class="modal" id="transcriptSearchModal" style="display: none;">
+        <div class="modal-overlay" id="transcriptSearchOverlay"></div>
+        <div class="modal-content">
+            <button class="modal-close" id="transcriptSearchClose" aria-label="Close transcript search">&times;</button>
+
+            <div class="modal-body">
+                <h2>🔍 Transcript Search</h2>
+                <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+                    Search through all video subtitles and transcripts
+                </p>
+
+                <!-- Search Input -->
+                <div class="form-group">
+                    <div style="display: flex; gap: var(--spacing-sm);">
+                        <input type="text" id="transcriptSearchInput" placeholder="Enter search term..." style="flex: 1;">
+                        <button class="btn btn-primary" id="transcriptSearchBtn2">Search</button>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="transcriptSearchResults" style="margin-top: var(--spacing-lg); max-height: 400px; overflow-y: auto;">
+                    <p style="color: var(--text-muted); text-align: center;">Enter a search term to find matches in video transcripts</p>
                 </div>
             </div>
         </div>

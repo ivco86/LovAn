@@ -400,6 +400,22 @@ class Database:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_subtitles_video ON video_subtitles(youtube_video_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_subtitles_time ON video_subtitles(start_time_ms, end_time_ms)")
 
+        # Video bookmarks/chapters table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS video_bookmarks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                youtube_video_id INTEGER NOT NULL,
+                timestamp_ms INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                color TEXT DEFAULT '#ff4444',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (youtube_video_id) REFERENCES youtube_videos(id) ON DELETE CASCADE
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_bookmarks_video ON video_bookmarks(youtube_video_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_bookmarks_time ON video_bookmarks(timestamp_ms)")
+
         # Full-text search index - check if needs migration
         cursor.execute("""
             SELECT sql FROM sqlite_master 
@@ -2567,3 +2583,120 @@ class Database:
             return False
         finally:
             conn.close()
+
+    # ============ VIDEO BOOKMARKS ============
+
+    def add_video_bookmark(self, youtube_video_id: int, timestamp_ms: int, title: str,
+                          description: str = None, color: str = '#ff4444') -> Optional[int]:
+        """Add a bookmark/chapter to a video"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                INSERT INTO video_bookmarks (youtube_video_id, timestamp_ms, title, description, color)
+                VALUES (?, ?, ?, ?, ?)
+            """, (youtube_video_id, timestamp_ms, title, description, color))
+
+            conn.commit()
+            return cursor.lastrowid
+        except Exception as e:
+            print(f"Error adding bookmark: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def get_video_bookmarks(self, youtube_video_id: int) -> List[Dict]:
+        """Get all bookmarks for a video"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT * FROM video_bookmarks
+            WHERE youtube_video_id = ?
+            ORDER BY timestamp_ms
+        """, (youtube_video_id,))
+
+        results = cursor.fetchall()
+        conn.close()
+
+        return [dict(row) for row in results]
+
+    def update_video_bookmark(self, bookmark_id: int, title: str = None,
+                             description: str = None, color: str = None,
+                             timestamp_ms: int = None) -> bool:
+        """Update a bookmark"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        updates = []
+        values = []
+
+        if title is not None:
+            updates.append("title = ?")
+            values.append(title)
+        if description is not None:
+            updates.append("description = ?")
+            values.append(description)
+        if color is not None:
+            updates.append("color = ?")
+            values.append(color)
+        if timestamp_ms is not None:
+            updates.append("timestamp_ms = ?")
+            values.append(timestamp_ms)
+
+        if not updates:
+            return False
+
+        values.append(bookmark_id)
+
+        try:
+            cursor.execute(f"""
+                UPDATE video_bookmarks SET {', '.join(updates)}
+                WHERE id = ?
+            """, values)
+
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error updating bookmark: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def delete_video_bookmark(self, bookmark_id: int) -> bool:
+        """Delete a bookmark"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("DELETE FROM video_bookmarks WHERE id = ?", (bookmark_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error deleting bookmark: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def get_bookmarks_by_image_id(self, image_id: int) -> List[Dict]:
+        """Get bookmarks for a video by its image_id"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT vb.* FROM video_bookmarks vb
+            JOIN youtube_videos yv ON vb.youtube_video_id = yv.id
+            WHERE yv.image_id = ?
+            ORDER BY vb.timestamp_ms
+        """, (image_id,))
+
+        results = cursor.fetchall()
+        conn.close()
+
+        return [dict(row) for row in results]
+
+    def get_full_transcript(self, youtube_video_id: int, language: str = None) -> str:
+        """Get full transcript text for a video"""
+        subtitles = self.get_video_subtitles(youtube_video_id, language)
+        return ' '.join(sub.get('text', '') for sub in subtitles)

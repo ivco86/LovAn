@@ -5589,12 +5589,310 @@ function createSubtitlePanel(subtitles, languages) {
                 ${subtitleLines}
             </div>
             <div class="subtitle-panel-controls">
-                <button onclick="toggleTeleprompterMode()" id="teleprompterBtn">Teleprompter</button>
-                <button onclick="toggleAutoScroll()" id="autoScrollBtn" class="active">Auto-scroll</button>
-                <button onclick="jumpToCurrentSubtitle()">Jump to current</button>
+                <button onclick="toggleTeleprompterMode()" id="teleprompterBtn">📺 Teleprompter</button>
+                <button onclick="toggleAutoScroll()" id="autoScrollBtn" class="active">🔄 Auto-scroll</button>
+                <button onclick="jumpToCurrentSubtitle()">⏱️ Jump to current</button>
+                <button onclick="addBookmarkAtCurrentTime()" title="Add bookmark at current time">🔖 Bookmark</button>
+                <button onclick="showExportMenu(event)" title="Export options">📤 Export</button>
+                <button onclick="generateVideoSummary()" title="AI Summary">🤖 Summary</button>
             </div>
         </div>
     `;
+}
+
+// ============ VIDEO BOOKMARKS ============
+
+let currentVideoBookmarks = [];
+
+async function loadVideoBookmarks(imageId) {
+    try {
+        const response = await fetch(`/api/images/${imageId}/bookmarks`);
+        if (response.ok) {
+            const data = await response.json();
+            currentVideoBookmarks = data.bookmarks || [];
+            renderBookmarkMarkers();
+            return currentVideoBookmarks;
+        }
+    } catch (error) {
+        console.error('Error loading bookmarks:', error);
+    }
+    return [];
+}
+
+function renderBookmarkMarkers() {
+    const video = document.getElementById('modalVideoPlayer');
+    if (!video || !video.duration) return;
+
+    // Remove existing markers
+    document.querySelectorAll('.bookmark-marker').forEach(m => m.remove());
+
+    const container = video.parentElement;
+    if (!container) return;
+
+    currentVideoBookmarks.forEach(bookmark => {
+        const position = (bookmark.timestamp_ms / 1000) / video.duration * 100;
+        const marker = document.createElement('div');
+        marker.className = 'bookmark-marker';
+        marker.style.left = `${position}%`;
+        marker.style.backgroundColor = bookmark.color || '#ff4444';
+        marker.title = `${bookmark.title} (${formatTimeReadable(bookmark.timestamp_ms)})`;
+        marker.onclick = () => {
+            video.currentTime = bookmark.timestamp_ms / 1000;
+        };
+        container.appendChild(marker);
+    });
+}
+
+async function addBookmarkAtCurrentTime() {
+    const video = document.getElementById('modalVideoPlayer');
+    if (!video) {
+        showToast('No video playing', 'error');
+        return;
+    }
+
+    const currentTimeMs = Math.floor(video.currentTime * 1000);
+    const title = prompt('Bookmark title:', `Bookmark at ${formatTimeReadable(currentTimeMs)}`);
+
+    if (!title) return;
+
+    const imageId = currentDetailImage?.id;
+    if (!imageId) return;
+
+    try {
+        const response = await fetch(`/api/images/${imageId}/bookmarks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                timestamp_ms: currentTimeMs,
+                title: title,
+                color: '#ff4444'
+            })
+        });
+
+        if (response.ok) {
+            showToast('Bookmark added!', 'success');
+            await loadVideoBookmarks(imageId);
+        } else {
+            showToast('Failed to add bookmark', 'error');
+        }
+    } catch (error) {
+        console.error('Error adding bookmark:', error);
+        showToast('Error adding bookmark', 'error');
+    }
+}
+
+function formatTimeReadable(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// ============ EXPORT MENU ============
+
+function showExportMenu(event) {
+    event.stopPropagation();
+
+    // Remove existing menu
+    document.querySelectorAll('.export-dropdown').forEach(m => m.remove());
+
+    const menu = document.createElement('div');
+    menu.className = 'export-dropdown';
+    menu.innerHTML = `
+        <div class="export-menu-title">Export Options</div>
+        <div class="export-menu-section">Transcript</div>
+        <div class="export-item" onclick="exportTranscript('txt')">📄 Plain Text (.txt)</div>
+        <div class="export-item" onclick="exportTranscript('txt_timestamps')">⏱️ Text with Timestamps</div>
+        <div class="export-item" onclick="exportTranscript('srt')">🎬 SRT Subtitles (.srt)</div>
+        <div class="export-item" onclick="exportTranscript('vtt')">🌐 WebVTT (.vtt)</div>
+        <div class="export-menu-section">Video Clip</div>
+        <div class="export-item" onclick="showClipExportDialog()">✂️ Export Clip...</div>
+    `;
+
+    document.body.appendChild(menu);
+
+    // Position near button
+    const rect = event.target.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = `${rect.top - menu.offsetHeight - 5}px`;
+    menu.style.left = `${rect.left}px`;
+    menu.style.zIndex = '10000';
+
+    // Close on click outside
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+    }, 100);
+}
+
+async function exportTranscript(format) {
+    const imageId = currentDetailImage?.id;
+    if (!imageId) return;
+
+    document.querySelectorAll('.export-dropdown').forEach(m => m.remove());
+
+    const url = `/api/images/${imageId}/transcript?format=${format}`;
+    window.open(url, '_blank');
+    showToast(`Exporting transcript as ${format.toUpperCase()}...`, 'info');
+}
+
+function showClipExportDialog() {
+    document.querySelectorAll('.export-dropdown').forEach(m => m.remove());
+
+    const video = document.getElementById('modalVideoPlayer');
+    if (!video) {
+        showToast('No video loaded', 'error');
+        return;
+    }
+
+    const currentTimeMs = Math.floor(video.currentTime * 1000);
+    const durationMs = Math.floor(video.duration * 1000);
+
+    const dialog = document.createElement('div');
+    dialog.className = 'modal';
+    dialog.style.display = 'flex';
+    dialog.innerHTML = `
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content modal-small">
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+            <div class="modal-body">
+                <h2>✂️ Export Video Clip</h2>
+                <div class="form-group">
+                    <label>Start Time (seconds)</label>
+                    <input type="number" id="clipStartTime" value="${Math.floor(currentTimeMs/1000)}" min="0" max="${Math.floor(durationMs/1000)}">
+                </div>
+                <div class="form-group">
+                    <label>End Time (seconds)</label>
+                    <input type="number" id="clipEndTime" value="${Math.min(Math.floor(currentTimeMs/1000) + 30, Math.floor(durationMs/1000))}" min="0" max="${Math.floor(durationMs/1000)}">
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="exportVideoClip()">Export Clip</button>
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+}
+
+async function exportVideoClip() {
+    const startSec = parseFloat(document.getElementById('clipStartTime').value);
+    const endSec = parseFloat(document.getElementById('clipEndTime').value);
+
+    if (isNaN(startSec) || isNaN(endSec) || endSec <= startSec) {
+        showToast('Invalid time range', 'error');
+        return;
+    }
+
+    const imageId = currentDetailImage?.id;
+    if (!imageId) return;
+
+    document.querySelectorAll('.modal').forEach(m => {
+        if (m.querySelector('#clipStartTime')) m.remove();
+    });
+
+    showToast('Creating clip... This may take a moment.', 'info');
+
+    try {
+        const response = await fetch(`/api/images/${imageId}/clip`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                start_ms: Math.floor(startSec * 1000),
+                end_ms: Math.floor(endSec * 1000)
+            })
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `clip_${imageId}_${startSec}-${endSec}.mp4`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Clip exported successfully!', 'success');
+        } else {
+            const error = await response.json();
+            showToast(error.error || 'Failed to create clip', 'error');
+        }
+    } catch (error) {
+        console.error('Error exporting clip:', error);
+        showToast('Error creating clip', 'error');
+    }
+}
+
+// ============ AI VIDEO SUMMARY ============
+
+async function generateVideoSummary() {
+    const imageId = currentDetailImage?.id;
+    if (!imageId) return;
+
+    showToast('Generating AI summary...', 'info');
+
+    try {
+        const response = await fetch(`/api/images/${imageId}/summary`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            showSummaryModal(data.summary, data.video_title);
+        } else {
+            showToast(data.error || 'Failed to generate summary', 'error');
+        }
+    } catch (error) {
+        console.error('Error generating summary:', error);
+        showToast('Error generating summary', 'error');
+    }
+}
+
+function showSummaryModal(summary, title) {
+    const dialog = document.createElement('div');
+    dialog.className = 'modal';
+    dialog.style.display = 'flex';
+    dialog.innerHTML = `
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content">
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+            <div class="modal-body">
+                <h2>🤖 AI Summary: ${escapeHtml(title || 'Video')}</h2>
+                <div class="summary-content" style="white-space: pre-wrap; line-height: 1.6;">
+                    ${formatMarkdown(summary)}
+                </div>
+                <div class="form-group" style="margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="copySummaryToClipboard()">📋 Copy to Clipboard</button>
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    dialog.querySelector('.summary-content').dataset.rawSummary = summary;
+    document.body.appendChild(dialog);
+}
+
+function formatMarkdown(text) {
+    // Simple markdown formatting
+    return text
+        .replace(/## (.*)/g, '<h3>$1</h3>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^- (.*)/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+        .replace(/\n/g, '<br>');
+}
+
+function copySummaryToClipboard() {
+    const content = document.querySelector('.summary-content');
+    if (content && content.dataset.rawSummary) {
+        navigator.clipboard.writeText(content.dataset.rawSummary);
+        showToast('Summary copied to clipboard!', 'success');
+    }
 }
 
 // Subtitle panel resize functionality
@@ -6151,5 +6449,111 @@ function closeDuplicatesModal() {
 
 // Initialize fullscreen drop zone on page load
 document.addEventListener('DOMContentLoaded', initFullscreenDropZone);
+
+// ============ TRANSCRIPT SEARCH ============
+
+function initTranscriptSearchModal() {
+    const modal = document.getElementById('transcriptSearchModal');
+    const overlay = document.getElementById('transcriptSearchOverlay');
+    const closeBtn = document.getElementById('transcriptSearchClose');
+    const searchInput = document.getElementById('transcriptSearchInput');
+    const searchBtn = document.getElementById('transcriptSearchBtn2');
+    const headerBtn = document.getElementById('transcriptSearchBtn');
+    const menuBtn = document.getElementById('transcriptSearchBtnMenu');
+
+    const openModal = () => {
+        if (modal) modal.style.display = 'flex';
+        if (searchInput) searchInput.focus();
+    };
+
+    const closeModal = () => {
+        if (modal) modal.style.display = 'none';
+    };
+
+    if (headerBtn) headerBtn.addEventListener('click', openModal);
+    if (menuBtn) menuBtn.addEventListener('click', openModal);
+    if (overlay) overlay.addEventListener('click', closeModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+    if (searchBtn) {
+        searchBtn.addEventListener('click', performTranscriptSearch);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performTranscriptSearch();
+        });
+    }
+}
+
+async function performTranscriptSearch() {
+    const input = document.getElementById('transcriptSearchInput');
+    const resultsDiv = document.getElementById('transcriptSearchResults');
+    const query = input?.value.trim();
+
+    if (!query) {
+        showToast('Please enter a search term', 'warning');
+        return;
+    }
+
+    resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner"></div><p>Searching...</p></div>';
+
+    try {
+        const response = await fetch(`/api/videos/search/subtitles?q=${encodeURIComponent(query)}&limit=50`);
+        const data = await response.json();
+
+        if (data.results && data.results.length > 0) {
+            resultsDiv.innerHTML = `
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">Found ${data.count} results for "<strong>${escapeHtml(query)}</strong>"</p>
+                <div class="transcript-search-results">
+                    ${data.results.map(result => `
+                        <div class="transcript-result-item" onclick="openVideoAtTimestamp(${result.youtube_video_id}, ${result.start_time_ms}, '${escapeHtml(result.filepath || '')}')">
+                            <div class="result-video-title">${escapeHtml(result.title || 'Unknown Video')}</div>
+                            <div class="result-timestamp">${formatTimeReadable(result.start_time_ms)}</div>
+                            <div class="result-text">${highlightText(result.text, query)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            resultsDiv.innerHTML = `<p style="color: var(--text-muted); text-align: center;">No results found for "${escapeHtml(query)}"</p>`;
+        }
+    } catch (error) {
+        console.error('Search error:', error);
+        resultsDiv.innerHTML = '<p style="color: var(--error-color); text-align: center;">Error performing search</p>';
+    }
+}
+
+function highlightText(text, query) {
+    const escaped = escapeHtml(text);
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return escaped.replace(regex, '<mark>$1</mark>');
+}
+
+async function openVideoAtTimestamp(youtubeVideoId, timestampMs, filepath) {
+    // Close search modal
+    const modal = document.getElementById('transcriptSearchModal');
+    if (modal) modal.style.display = 'none';
+
+    // Find the image by filepath
+    if (filepath) {
+        const image = allImages.find(img => img.filepath === filepath);
+        if (image) {
+            await openImageDetail(image);
+
+            // Wait for video to load then seek
+            setTimeout(() => {
+                const video = document.getElementById('modalVideoPlayer');
+                if (video) {
+                    video.currentTime = timestampMs / 1000;
+                    video.play();
+                }
+            }, 500);
+        }
+    }
+}
+
+// Initialize transcript search modal on page load
+document.addEventListener('DOMContentLoaded', initTranscriptSearchModal);
 
 console.log('AI Gallery initialized ✨');

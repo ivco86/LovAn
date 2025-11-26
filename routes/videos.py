@@ -280,3 +280,360 @@ def search_subtitles():
         'results': results,
         'count': len(results)
     })
+
+
+# ============ VIDEO BOOKMARKS ============
+
+@videos_bp.route('/api/videos/<int:video_id>/bookmarks', methods=['GET'])
+def get_bookmarks(video_id):
+    """Get all bookmarks for a video"""
+    bookmarks = db.get_video_bookmarks(video_id)
+    return jsonify({
+        'video_id': video_id,
+        'bookmarks': bookmarks,
+        'count': len(bookmarks)
+    })
+
+
+@videos_bp.route('/api/videos/<int:video_id>/bookmarks', methods=['POST'])
+def add_bookmark(video_id):
+    """Add a bookmark to a video"""
+    data = request.json or {}
+
+    timestamp_ms = data.get('timestamp_ms')
+    title = data.get('title')
+
+    if timestamp_ms is None or not title:
+        return jsonify({'error': 'timestamp_ms and title are required'}), 400
+
+    bookmark_id = db.add_video_bookmark(
+        youtube_video_id=video_id,
+        timestamp_ms=timestamp_ms,
+        title=title,
+        description=data.get('description'),
+        color=data.get('color', '#ff4444')
+    )
+
+    if bookmark_id:
+        return jsonify({
+            'success': True,
+            'bookmark_id': bookmark_id
+        }), 201
+    return jsonify({'error': 'Failed to add bookmark'}), 500
+
+
+@videos_bp.route('/api/bookmarks/<int:bookmark_id>', methods=['PUT'])
+def update_bookmark(bookmark_id):
+    """Update a bookmark"""
+    data = request.json or {}
+
+    success = db.update_video_bookmark(
+        bookmark_id=bookmark_id,
+        title=data.get('title'),
+        description=data.get('description'),
+        color=data.get('color'),
+        timestamp_ms=data.get('timestamp_ms')
+    )
+
+    if success:
+        return jsonify({'success': True})
+    return jsonify({'error': 'Bookmark not found or update failed'}), 404
+
+
+@videos_bp.route('/api/bookmarks/<int:bookmark_id>', methods=['DELETE'])
+def delete_bookmark(bookmark_id):
+    """Delete a bookmark"""
+    success = db.delete_video_bookmark(bookmark_id)
+
+    if success:
+        return jsonify({'success': True})
+    return jsonify({'error': 'Bookmark not found'}), 404
+
+
+@videos_bp.route('/api/images/<int:image_id>/bookmarks', methods=['GET'])
+def get_bookmarks_by_image(image_id):
+    """Get bookmarks for a video by image_id"""
+    bookmarks = db.get_bookmarks_by_image_id(image_id)
+    return jsonify({
+        'image_id': image_id,
+        'bookmarks': bookmarks,
+        'count': len(bookmarks)
+    })
+
+
+@videos_bp.route('/api/images/<int:image_id>/bookmarks', methods=['POST'])
+def add_bookmark_by_image(image_id):
+    """Add a bookmark to a video by image_id"""
+    video = db.get_youtube_video_by_image_id(image_id)
+    if not video:
+        return jsonify({'error': 'Video not found'}), 404
+
+    data = request.json or {}
+
+    timestamp_ms = data.get('timestamp_ms')
+    title = data.get('title')
+
+    if timestamp_ms is None or not title:
+        return jsonify({'error': 'timestamp_ms and title are required'}), 400
+
+    bookmark_id = db.add_video_bookmark(
+        youtube_video_id=video['id'],
+        timestamp_ms=timestamp_ms,
+        title=title,
+        description=data.get('description'),
+        color=data.get('color', '#ff4444')
+    )
+
+    if bookmark_id:
+        return jsonify({
+            'success': True,
+            'bookmark_id': bookmark_id
+        }), 201
+    return jsonify({'error': 'Failed to add bookmark'}), 500
+
+
+# ============ TRANSCRIPT EXPORT ============
+
+@videos_bp.route('/api/images/<int:image_id>/transcript', methods=['GET'])
+def export_transcript(image_id):
+    """Export transcript in various formats (txt, srt, vtt, json)"""
+    from flask import Response
+
+    format_type = request.args.get('format', 'txt').lower()
+    language = request.args.get('language')
+
+    video = db.get_youtube_video_by_image_id(image_id)
+    if not video:
+        return jsonify({'error': 'Video not found'}), 404
+
+    subtitles = db.get_video_subtitles(video['id'], language=language)
+    if not subtitles:
+        subtitles = db.get_video_subtitles(video['id'])
+
+    video_title = video.get('title', 'transcript')
+    safe_title = ''.join(c for c in video_title if c.isalnum() or c in ' -_')[:50]
+
+    if format_type == 'txt':
+        # Plain text without timestamps
+        content = '\n'.join(sub.get('text', '') for sub in subtitles)
+        return Response(
+            content,
+            mimetype='text/plain',
+            headers={'Content-Disposition': f'attachment; filename="{safe_title}.txt"'}
+        )
+
+    elif format_type == 'txt_timestamps':
+        # Plain text with timestamps
+        lines = []
+        for sub in subtitles:
+            time_str = format_time_readable(sub.get('start_time_ms', 0))
+            lines.append(f"[{time_str}] {sub.get('text', '')}")
+        content = '\n'.join(lines)
+        return Response(
+            content,
+            mimetype='text/plain',
+            headers={'Content-Disposition': f'attachment; filename="{safe_title}_timestamped.txt"'}
+        )
+
+    elif format_type == 'srt':
+        # SRT format
+        content = ""
+        for idx, sub in enumerate(subtitles, 1):
+            start = format_srt_time(sub.get('start_time_ms', 0))
+            end = format_srt_time(sub.get('end_time_ms', 0))
+            text = sub.get('text', '').replace('\n', ' ')
+            content += f"{idx}\n{start} --> {end}\n{text}\n\n"
+        return Response(
+            content,
+            mimetype='text/plain',
+            headers={'Content-Disposition': f'attachment; filename="{safe_title}.srt"'}
+        )
+
+    elif format_type == 'vtt':
+        # WebVTT format
+        content = "WEBVTT\n\n"
+        for idx, sub in enumerate(subtitles, 1):
+            start = format_vtt_time(sub.get('start_time_ms', 0))
+            end = format_vtt_time(sub.get('end_time_ms', 0))
+            text = sub.get('text', '').replace('\n', ' ')
+            content += f"{idx}\n{start} --> {end}\n{text}\n\n"
+        return Response(
+            content,
+            mimetype='text/vtt',
+            headers={'Content-Disposition': f'attachment; filename="{safe_title}.vtt"'}
+        )
+
+    elif format_type == 'json':
+        return jsonify({
+            'title': video_title,
+            'subtitles': subtitles
+        })
+
+    else:
+        return jsonify({'error': f'Unknown format: {format_type}'}), 400
+
+
+def format_srt_time(ms):
+    """Format milliseconds to SRT timestamp (HH:MM:SS,mmm)"""
+    total_seconds = ms // 1000
+    milliseconds = ms % 1000
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
+
+
+def format_time_readable(ms):
+    """Format milliseconds to readable time (MM:SS)"""
+    total_seconds = ms // 1000
+    minutes = total_seconds // 60
+    seconds = total_seconds % 60
+    return f"{minutes:02d}:{seconds:02d}"
+
+
+# ============ VIDEO CLIPS EXPORT ============
+
+@videos_bp.route('/api/images/<int:image_id>/clip', methods=['POST'])
+def create_video_clip(image_id):
+    """Create a video clip from start to end time"""
+    import subprocess
+    import os
+    import tempfile
+    from flask import send_file
+    from shared import PHOTOS_DIR
+
+    data = request.json or {}
+    start_ms = data.get('start_ms', 0)
+    end_ms = data.get('end_ms')
+    include_subtitles = data.get('include_subtitles', False)
+
+    if end_ms is None:
+        return jsonify({'error': 'end_ms is required'}), 400
+
+    if end_ms <= start_ms:
+        return jsonify({'error': 'end_ms must be greater than start_ms'}), 400
+
+    # Get video file path
+    image = db.get_image_by_id(image_id)
+    if not image:
+        return jsonify({'error': 'Video not found'}), 404
+
+    video_path = os.path.join(PHOTOS_DIR, image['filepath'])
+    if not os.path.exists(video_path):
+        return jsonify({'error': 'Video file not found'}), 404
+
+    # Convert ms to seconds
+    start_sec = start_ms / 1000
+    duration_sec = (end_ms - start_ms) / 1000
+
+    # Create temp output file
+    output_filename = f"clip_{image_id}_{start_ms}_{end_ms}.mp4"
+    output_path = os.path.join(tempfile.gettempdir(), output_filename)
+
+    try:
+        # Build ffmpeg command
+        cmd = [
+            'ffmpeg', '-y',
+            '-ss', str(start_sec),
+            '-i', video_path,
+            '-t', str(duration_sec),
+            '-c:v', 'libx264',
+            '-c:a', 'aac',
+            '-preset', 'fast',
+            output_path
+        ]
+
+        result = subprocess.run(cmd, capture_output=True, timeout=120)
+
+        if result.returncode != 0:
+            logger.error(f"FFmpeg error: {result.stderr.decode()}")
+            return jsonify({'error': 'Failed to create clip'}), 500
+
+        return send_file(
+            output_path,
+            mimetype='video/mp4',
+            as_attachment=True,
+            download_name=output_filename
+        )
+
+    except subprocess.TimeoutExpired:
+        return jsonify({'error': 'Clip creation timed out'}), 500
+    except Exception as e:
+        logger.error(f"Error creating clip: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ AI VIDEO SUMMARY ============
+
+@videos_bp.route('/api/images/<int:image_id>/summary', methods=['POST'])
+def generate_video_summary(image_id):
+    """Generate AI summary from video transcript"""
+    from ai_service import ai_service
+
+    video = db.get_youtube_video_by_image_id(image_id)
+    if not video:
+        return jsonify({'error': 'Video not found'}), 404
+
+    # Get transcript
+    transcript = db.get_full_transcript(video['id'])
+
+    if not transcript or len(transcript.strip()) < 50:
+        return jsonify({'error': 'Not enough transcript data for summary'}), 400
+
+    # Truncate if too long (keep first ~8000 chars for API limits)
+    if len(transcript) > 8000:
+        transcript = transcript[:8000] + "..."
+
+    prompt = f"""Analyze this video transcript and provide:
+1. A brief summary (2-3 sentences)
+2. Key topics/themes (bullet points)
+3. Important timestamps/moments to note (if mentioned)
+
+Video Title: {video.get('title', 'Unknown')}
+
+Transcript:
+{transcript}
+
+Format your response as:
+## Summary
+[summary here]
+
+## Key Topics
+- [topic 1]
+- [topic 2]
+...
+
+## Notable Moments
+- [moment 1]
+- [moment 2]
+..."""
+
+    try:
+        # Use AI service to generate summary
+        if hasattr(ai_service, 'analyze_with_prompt'):
+            summary = ai_service.analyze_with_prompt(prompt)
+        else:
+            # Fallback to basic analyze
+            summary = ai_service.analyze_image_content(prompt)
+
+        return jsonify({
+            'success': True,
+            'summary': summary,
+            'video_title': video.get('title'),
+            'transcript_length': len(transcript)
+        })
+
+    except Exception as e:
+        logger.error(f"Error generating summary: {e}")
+        return jsonify({'error': f'AI analysis failed: {str(e)}'}), 500
+
+
+@videos_bp.route('/api/images/<int:image_id>/summary', methods=['GET'])
+def get_video_summary(image_id):
+    """Get cached summary or generate new one"""
+    # For now, just redirect to POST to generate
+    # In future, could cache summaries in database
+    return jsonify({
+        'message': 'Use POST to generate a summary',
+        'endpoint': f'/api/images/{image_id}/summary'
+    }), 200
