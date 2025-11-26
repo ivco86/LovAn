@@ -1065,7 +1065,7 @@ def generate_video_highlight(image_id):
         return jsonify({'error': 'Video not found'}), 404
 
     # Check if video has subtitles
-    subtitles = db.get_youtube_subtitles(video['id'])
+    subtitles = db.get_video_subtitles(video['id'])
     if not subtitles:
         return jsonify({
             'error': 'No subtitles available for this video. Subtitles are required for AI highlight generation.'
@@ -1103,7 +1103,7 @@ def preview_highlight_segments(image_id):
         return jsonify({'error': 'Video not found'}), 404
 
     # Get subtitles
-    subtitles = db.get_youtube_subtitles(video['id'])
+    subtitles = db.get_video_subtitles(video['id'])
     if not subtitles:
         return jsonify({'error': 'No subtitles available'}), 400
 

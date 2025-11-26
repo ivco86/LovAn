@@ -1155,7 +1155,7 @@ class YouTubeService:
             return None
 
         # Get subtitles
-        subtitles = self.db.get_youtube_subtitles(video_id)
+        subtitles = self.db.get_video_subtitles(video_id)
         if not subtitles:
             logger.warning("No subtitles found for video, cannot generate AI highlight")
             return None
