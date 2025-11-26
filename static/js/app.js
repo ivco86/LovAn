@@ -6194,6 +6194,7 @@ async function exportVideoNotes() {
 
 // Initialize word click handlers
 function initWordClickHandlers() {
+    // Handle single word click
     document.addEventListener('click', async (e) => {
         // Close popup if clicking outside
         const existingPopup = document.getElementById('translationPopup');
@@ -6202,7 +6203,7 @@ function initWordClickHandlers() {
             return;
         }
 
-        // Handle clickable word
+        // Handle clickable word (single click)
         if (e.target.classList.contains('clickable-word')) {
             e.stopPropagation();
             const word = e.target.dataset.word;
@@ -6210,23 +6211,67 @@ function initWordClickHandlers() {
             await showTranslationPopup(word, context, e.target);
         }
     });
+
+    // Handle text selection for phrases (multiple words)
+    document.addEventListener('mouseup', async (e) => {
+        // Only handle selection in subtitle content
+        const subtitleContent = document.getElementById('subtitleContent');
+        if (!subtitleContent || !subtitleContent.contains(e.target)) return;
+
+        // Get selected text
+        const selection = window.getSelection();
+        const selectedText = selection.toString().trim();
+
+        // If more than one word is selected, show translation for phrase
+        if (selectedText && selectedText.includes(' ') && selectedText.length > 2 && selectedText.length < 200) {
+            // Wait a bit to not interfere with single word clicks
+            setTimeout(async () => {
+                // Check if selection is still valid
+                const currentSelection = window.getSelection().toString().trim();
+                if (currentSelection === selectedText) {
+                    // Find the context (full subtitle line)
+                    const subtitleLine = e.target.closest('.subtitle-line');
+                    const context = subtitleLine ? subtitleLine.querySelector('.text')?.textContent || selectedText : selectedText;
+
+                    // Create a temporary target element for positioning
+                    const range = selection.getRangeAt(0);
+                    const rect = range.getBoundingClientRect();
+                    const tempTarget = {
+                        getBoundingClientRect: () => rect
+                    };
+
+                    await showTranslationPopup(selectedText, context, tempTarget, true);
+                }
+            }, 200);
+        }
+    });
 }
 
 // Show translation popup
-async function showTranslationPopup(word, context, targetElement) {
+async function showTranslationPopup(word, context, targetElement, isPhrase = false) {
     // Remove existing popup
     document.getElementById('translationPopup')?.remove();
 
     // Get position
     const rect = targetElement.getBoundingClientRect();
 
+    // Determine if it's a phrase (multiple words)
+    const wordCount = word.split(/\s+/).length;
+    const displayIsPhrase = isPhrase || wordCount > 1;
+    const headerLabel = displayIsPhrase ? '📝 Phrase' : '📖 Word';
+    const displayWord = word.length > 40 ? word.substring(0, 40) + '...' : word;
+
     // Create popup
     const popup = document.createElement('div');
     popup.id = 'translationPopup';
     popup.className = 'translation-popup';
+    if (displayIsPhrase) popup.classList.add('phrase-popup');
     popup.innerHTML = `
         <div class="translation-popup-header">
-            <span class="translation-word">${escapeHtml(word)}</span>
+            <div class="translation-header-content">
+                <span class="translation-label">${headerLabel}</span>
+                <span class="translation-word">${escapeHtml(displayWord)}</span>
+            </div>
             <button class="popup-close" onclick="document.getElementById('translationPopup').remove()">&times;</button>
         </div>
         <div class="translation-popup-body">

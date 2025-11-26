@@ -3107,3 +3107,31 @@ body {
 .translation-text {
     flex: 1;
 }
+
+/* Phrase popup styling */
+.phrase-popup {
+    max-width: 450px;
+}
+
+.translation-header-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.translation-label {
+    font-size: 0.75em;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.phrase-popup .translation-word {
+    font-size: 1em;
+}
+
+/* Selection highlight in subtitles */
+.subtitle-content ::selection {
+    background: rgba(168, 85, 247, 0.4);
+    color: white;
+}
