@@ -258,14 +258,21 @@ class TelegramGalleryBot:
             "🤖 *Bot Commands*\n\n"
             "/start - Show welcome message\n"
             "/status - Check gallery statistics\n"
-            "/download <url> - Download YouTube video\n"
+            "/download <url> - Download video manually\n"
             "/help - Show this help message\n\n"
+            "*Auto Video Download:*\n"
+            "Just paste a video link and I'll download it automatically!\n\n"
+            "*Supported platforms:*\n"
+            "🎬 YouTube (720p + auto subtitles)\n"
+            "🎵 TikTok\n"
+            "📘 Facebook\n"
+            "📷 Instagram Reels\n"
+            "🐦 Twitter/X\n\n"
             "*Features:*\n"
             "• Automatic photo saving\n"
             "• AI analysis with descriptions and tags\n"
-            "• YouTube video downloading with subtitles\n"
+            "• Video downloading with subtitles\n"
             "• Works in groups and private chats\n"
-            "• Supports JPG, PNG, WebP formats\n"
         )
 
         await update.message.reply_text(help_msg, parse_mode='Markdown')
@@ -500,6 +507,166 @@ class TelegramGalleryBot:
             logger.error(f"Error handling document: {e}", exc_info=True)
             await update.message.reply_text(f"❌ Error: {str(e)}")
 
+    async def handle_text_with_links(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle text messages that may contain video URLs"""
+        chat_id = update.effective_chat.id
+
+        if not self.is_chat_allowed(chat_id):
+            return
+
+        text = update.message.text or update.message.caption or ""
+        if not text:
+            return
+
+        # Detect video URLs
+        import re
+        video_url_patterns = [
+            # YouTube
+            r'(https?://(?:www\.)?youtube\.com/watch\?v=[\w-]+)',
+            r'(https?://youtu\.be/[\w-]+)',
+            r'(https?://(?:www\.)?youtube\.com/shorts/[\w-]+)',
+            # TikTok
+            r'(https?://(?:www\.)?tiktok\.com/@[\w.-]+/video/\d+)',
+            r'(https?://(?:vm\.)?tiktok\.com/[\w]+)',
+            # Facebook
+            r'(https?://(?:www\.)?facebook\.com/.+/videos/\d+)',
+            r'(https?://fb\.watch/[\w]+)',
+            # Instagram
+            r'(https?://(?:www\.)?instagram\.com/(?:p|reel|tv)/[\w-]+)',
+            # Twitter/X
+            r'(https?://(?:www\.)?(?:twitter|x)\.com/\w+/status/\d+)',
+        ]
+
+        urls_found = []
+        for pattern in video_url_patterns:
+            matches = re.findall(pattern, text)
+            urls_found.extend(matches)
+
+        if not urls_found:
+            return
+
+        # Process first URL found
+        url = urls_found[0]
+        platform = youtube_service.detect_platform(url)
+
+        # Determine settings based on platform
+        if platform == 'youtube':
+            # YouTube: 720p, auto subtitles
+            quality = '720'
+            download_subtitles = True
+            original_subtitles = False  # Auto-generated only
+        else:
+            # Other platforms: best quality, no subtitles
+            quality = 'best'
+            download_subtitles = False
+            original_subtitles = False
+
+        # Send initial status message
+        platform_emoji = {
+            'youtube': '🎬',
+            'tiktok': '🎵',
+            'facebook': '📘',
+            'instagram': '📷',
+            'twitter': '🐦',
+        }.get(platform, '📺')
+
+        status_msg = await update.message.reply_text(
+            f"{platform_emoji} Detected {platform.title()} video link...\n"
+            f"🔍 Getting video information...",
+            parse_mode='Markdown'
+        )
+
+        try:
+            # Get video info first
+            info = youtube_service.get_video_info(url)
+            if not info:
+                await status_msg.edit_text(f"❌ Failed to get video information from {platform}")
+                return
+
+            # Check if already exists
+            video_id = youtube_service.extract_video_id(url)
+            existing = db.get_youtube_video_by_youtube_id(video_id)
+            if existing:
+                await status_msg.edit_text(
+                    f"ℹ️ *Video already in gallery*\n\n"
+                    f"📺 {existing.get('title', 'Unknown')}\n"
+                    f"🆔 ID: {existing.get('id')}",
+                    parse_mode='Markdown'
+                )
+                return
+
+            # Show video info and start download
+            quality_text = '720p' if quality == '720' else 'Best'
+            await status_msg.edit_text(
+                f"📥 *Downloading from {platform.title()}...*\n\n"
+                f"📺 {info.get('title', 'Unknown')[:50]}...\n"
+                f"🎬 {info.get('channel_name', 'Unknown')}\n"
+                f"⏱️ {youtube_service.format_duration(info.get('duration', 0))}\n"
+                f"📐 Quality: {quality_text}\n"
+                f"💬 Subtitles: {'Auto-generated' if download_subtitles else 'None'}\n\n"
+                f"⏳ Please wait...",
+                parse_mode='Markdown'
+            )
+
+            # Download video with appropriate settings
+            result = youtube_service.download_video(
+                url,
+                download_subtitles=download_subtitles,
+                original_subtitles=original_subtitles,
+                quality=quality
+            )
+
+            if not result:
+                await status_msg.edit_text(f"❌ Download failed from {platform}")
+                return
+
+            if result.get('status') == 'exists':
+                video = result.get('video', {})
+                await status_msg.edit_text(
+                    f"ℹ️ *Video already exists*\n\n"
+                    f"📺 {video.get('title', 'Unknown')}\n"
+                    f"🆔 ID: {video.get('id')}",
+                    parse_mode='Markdown'
+                )
+                return
+
+            # Success message
+            keyframe_count = len(result.get('keyframes', []))
+            subtitle_langs = list(result.get('parsed_subtitles', {}).keys())
+
+            success_msg = (
+                f"✅ *Download Complete!*\n\n"
+                f"{platform_emoji} Platform: {platform.title()}\n"
+                f"📺 {result.get('title', 'Unknown')[:50]}\n"
+                f"⏱️ Duration: {youtube_service.format_duration(result.get('duration', 0))}\n"
+                f"📐 {result.get('width', 0)}x{result.get('height', 0)}\n"
+            )
+
+            if keyframe_count > 0:
+                success_msg += f"🖼️ Keyframes: {keyframe_count}\n"
+
+            if subtitle_langs:
+                success_msg += f"💬 Subtitles: {', '.join(subtitle_langs)}\n"
+
+            success_msg += f"\n🆔 Gallery ID: {result.get('image_id', 'N/A')}"
+
+            await status_msg.edit_text(success_msg, parse_mode='Markdown')
+
+            # Send thumbnail if available
+            thumbnail_url = info.get('thumbnail_url')
+            if thumbnail_url:
+                try:
+                    await update.message.reply_photo(
+                        photo=thumbnail_url,
+                        caption=f"🎬 {info.get('title', '')[:100]}"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to send thumbnail: {e}")
+
+        except Exception as e:
+            logger.error(f"Error downloading from link: {e}", exc_info=True)
+            await status_msg.edit_text(f"❌ Error: {str(e)}")
+
     def run(self):
         """Start the bot"""
         if not self.token:
@@ -524,6 +691,11 @@ class TelegramGalleryBot:
         self.app.add_handler(MessageHandler(filters.PHOTO, self.handle_photo))
         self.app.add_handler(MessageHandler(filters.VIDEO, self.handle_video))
         self.app.add_handler(MessageHandler(filters.Document.ALL, self.handle_document))
+        # Auto-detect video links in text messages
+        self.app.add_handler(MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            self.handle_text_with_links
+        ))
 
         # Start bot
         print("🤖 Telegram Gallery Bot is running...")
