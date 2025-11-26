@@ -967,3 +967,245 @@ class YouTubeService:
                 yt_id for yt_id, future in _active_downloads.items()
                 if not future.done()
             ]
+
+    # ============ HIGHLIGHT VIDEO GENERATION ============
+
+    def create_highlight_video(self, video_path: str, segments: List[Dict],
+                                output_filename: str = None,
+                                add_transitions: bool = True) -> Optional[str]:
+        """
+        Create a highlight video by cutting and concatenating segments.
+
+        Args:
+            video_path: Path to the source video file
+            segments: List of {'start_ms': int, 'end_ms': int} dicts
+            output_filename: Optional output filename (default: original_highlight.mp4)
+            add_transitions: Whether to add fade transitions between clips
+
+        Returns:
+            Path to the generated highlight video, or None on error
+        """
+        if not os.path.exists(video_path):
+            logger.error(f"Source video not found: {video_path}")
+            return None
+
+        if not segments:
+            logger.error("No segments provided for highlight")
+            return None
+
+        # Create highlights directory
+        highlights_dir = os.path.join('data', 'highlights')
+        os.makedirs(highlights_dir, exist_ok=True)
+
+        # Generate output filename
+        if not output_filename:
+            base_name = Path(video_path).stem
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            output_filename = f"{base_name}_highlight_{timestamp}.mp4"
+
+        output_path = os.path.join(highlights_dir, output_filename)
+        temp_dir = os.path.join(highlights_dir, 'temp_segments')
+        os.makedirs(temp_dir, exist_ok=True)
+
+        try:
+            segment_files = []
+            logger.info(f"Creating highlight video with {len(segments)} segments...")
+
+            # Step 1: Extract each segment
+            for i, seg in enumerate(segments):
+                start_sec = seg.get('start_ms', 0) / 1000
+                end_sec = seg.get('end_ms', 0) / 1000
+                duration = end_sec - start_sec
+
+                if duration <= 0:
+                    logger.warning(f"Skipping invalid segment {i}: duration={duration}")
+                    continue
+
+                segment_file = os.path.join(temp_dir, f'segment_{i:03d}.mp4')
+
+                # Build FFmpeg command for segment extraction
+                cmd = [
+                    self.ffmpeg_cmd,
+                    '-y',  # Overwrite
+                    '-ss', str(start_sec),  # Seek before input (fast)
+                    '-i', video_path,
+                    '-t', str(duration),
+                    '-c:v', 'libx264',
+                    '-preset', 'fast',
+                    '-crf', '23',
+                    '-c:a', 'aac',
+                    '-b:a', '128k',
+                    '-movflags', '+faststart',
+                ]
+
+                # Add fade in/out for transitions
+                if add_transitions:
+                    fade_duration = min(0.3, duration / 4)  # 0.3s or 1/4 of clip
+                    filter_str = (
+                        f"fade=t=in:st=0:d={fade_duration},"
+                        f"fade=t=out:st={duration - fade_duration}:d={fade_duration}"
+                    )
+                    cmd.extend(['-vf', filter_str])
+                    # Audio fade
+                    cmd.extend(['-af', f"afade=t=in:st=0:d={fade_duration},afade=t=out:st={duration - fade_duration}:d={fade_duration}"])
+
+                cmd.append(segment_file)
+
+                logger.debug(f"Extracting segment {i}: {start_sec:.1f}s - {end_sec:.1f}s")
+
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+
+                if result.returncode == 0 and os.path.exists(segment_file):
+                    segment_files.append(segment_file)
+                else:
+                    logger.error(f"Failed to extract segment {i}: {result.stderr[:200]}")
+
+            if not segment_files:
+                logger.error("No segments were extracted successfully")
+                return None
+
+            # Step 2: Create concat file
+            concat_file = os.path.join(temp_dir, 'concat_list.txt')
+            with open(concat_file, 'w') as f:
+                for seg_file in segment_files:
+                    # Use absolute path and escape for FFmpeg
+                    abs_path = os.path.abspath(seg_file).replace('\\', '/')
+                    f.write(f"file '{abs_path}'\n")
+
+            # Step 3: Concatenate all segments
+            logger.info(f"Concatenating {len(segment_files)} segments...")
+
+            concat_cmd = [
+                self.ffmpeg_cmd,
+                '-y',
+                '-f', 'concat',
+                '-safe', '0',
+                '-i', concat_file,
+                '-c:v', 'libx264',
+                '-preset', 'fast',
+                '-crf', '22',
+                '-c:a', 'aac',
+                '-b:a', '128k',
+                '-movflags', '+faststart',
+                output_path
+            ]
+
+            result = subprocess.run(concat_cmd, capture_output=True, text=True, timeout=300)
+
+            if result.returncode != 0:
+                logger.error(f"Concatenation failed: {result.stderr[:500]}")
+                return None
+
+            # Cleanup temp files
+            for seg_file in segment_files:
+                try:
+                    os.remove(seg_file)
+                except:
+                    pass
+            try:
+                os.remove(concat_file)
+                os.rmdir(temp_dir)
+            except:
+                pass
+
+            if os.path.exists(output_path):
+                file_size = os.path.getsize(output_path) / (1024 * 1024)
+                logger.info(f"✅ Highlight video created: {output_path} ({file_size:.1f} MB)")
+                return output_path
+            else:
+                logger.error("Output file was not created")
+                return None
+
+        except subprocess.TimeoutExpired:
+            logger.error("FFmpeg timed out during highlight creation")
+            return None
+        except Exception as e:
+            logger.error(f"Error creating highlight video: {e}", exc_info=True)
+            return None
+
+    def generate_ai_highlight(self, video_id: int, target_duration: int = 30) -> Optional[Dict]:
+        """
+        Generate an AI-powered highlight video for a video in the database.
+
+        Args:
+            video_id: Database ID of the youtube_videos record
+            target_duration: Target duration in seconds (default 30)
+
+        Returns:
+            {
+                'highlight_path': str,
+                'segments': list,
+                'summary': str,
+                'duration_ms': int
+            }
+        """
+        if not self.db:
+            logger.error("Database not available for AI highlight generation")
+            return None
+
+        # Get video info from database
+        video = self.db.get_youtube_video(video_id)
+        if not video:
+            logger.error(f"Video not found: {video_id}")
+            return None
+
+        video_path = video.get('local_path')
+        if not video_path or not os.path.exists(video_path):
+            logger.error(f"Video file not found: {video_path}")
+            return None
+
+        # Get subtitles
+        subtitles = self.db.get_youtube_subtitles(video_id)
+        if not subtitles:
+            logger.warning("No subtitles found for video, cannot generate AI highlight")
+            return None
+
+        # Use AI to analyze subtitles and find highlights
+        try:
+            from ai_service import ai_service
+
+            video_duration_ms = (video.get('duration') or 0) * 1000
+
+            analysis = ai_service.analyze_subtitles_for_highlights(
+                subtitles,
+                target_duration=target_duration,
+                video_duration_ms=video_duration_ms
+            )
+
+            if not analysis or not analysis.get('segments'):
+                logger.error("AI analysis returned no segments")
+                return None
+
+            # Reorder segments: put hook first if specified
+            segments = analysis['segments']
+            hook_idx = analysis.get('hook_segment_index', 0)
+            if hook_idx > 0 and hook_idx < len(segments):
+                # Move hook to front
+                hook_segment = segments.pop(hook_idx)
+                segments.insert(0, hook_segment)
+
+            # Create the highlight video
+            output_filename = f"{video.get('youtube_id', 'video')}_highlight_{target_duration}s.mp4"
+            highlight_path = self.create_highlight_video(
+                video_path,
+                segments,
+                output_filename=output_filename,
+                add_transitions=True
+            )
+
+            if highlight_path:
+                return {
+                    'highlight_path': highlight_path,
+                    'segments': segments,
+                    'summary': analysis.get('summary', ''),
+                    'duration_ms': analysis.get('total_duration_ms', 0)
+                }
+            else:
+                return None
+
+        except ImportError:
+            logger.error("AI service not available")
+            return None
+        except Exception as e:
+            logger.error(f"Error generating AI highlight: {e}", exc_info=True)
+            return None

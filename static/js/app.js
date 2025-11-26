@@ -5644,6 +5644,7 @@ function createSubtitlePanel(subtitles, languages) {
                 <button onclick="addNoteAtCurrentTime()" title="Add timestamped note">📝 Note</button>
                 <button onclick="showExportMenu(event)" title="Export options">📤 Export</button>
                 <button onclick="generateVideoSummary()" title="AI Summary">🤖 Summary</button>
+                <button onclick="showHighlightDialog()" title="Create AI-powered highlight video">🎬 AI Trailer</button>
             </div>
         </div>
     `;
@@ -5958,6 +5959,214 @@ function copySummaryToClipboard() {
     if (content && content.dataset.rawSummary) {
         navigator.clipboard.writeText(content.dataset.rawSummary);
         showToast('Summary copied to clipboard!', 'success');
+    }
+}
+
+// ============ AI VIDEO HIGHLIGHT (Trailer) ============
+
+function showHighlightDialog() {
+    const imageId = state.currentImage?.id;
+    if (!imageId) {
+        showToast('No video selected', 'error');
+        return;
+    }
+
+    const dialog = document.createElement('div');
+    dialog.className = 'modal';
+    dialog.id = 'highlightDialog';
+    dialog.style.display = 'flex';
+    dialog.innerHTML = `
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+            <div class="modal-body">
+                <h2>🎬 AI Video Highlight (Trailer)</h2>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    AI will analyze the video transcript to find the most engaging moments
+                    and create a short highlight reel (TikTok/Shorts style).
+                </p>
+
+                <div class="form-group">
+                    <label>Target Duration (seconds)</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="range" id="highlightDuration" min="15" max="90" value="30"
+                               oninput="document.getElementById('durationValue').textContent = this.value + 's'">
+                        <span id="durationValue" style="min-width: 40px;">30s</span>
+                    </div>
+                    <small style="color: var(--text-muted);">Recommended: 30s for TikTok, 60s for YouTube Shorts</small>
+                </div>
+
+                <div id="highlightPreview" style="display: none; margin: 20px 0;">
+                    <h4>📍 Selected Segments</h4>
+                    <div id="segmentsList"></div>
+                    <p id="highlightSummary" style="font-style: italic; margin-top: 10px;"></p>
+                </div>
+
+                <div class="form-group" style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="previewHighlightSegments()">
+                        👁️ Preview Segments
+                    </button>
+                    <button class="btn btn-primary" onclick="generateHighlight()" id="generateHighlightBtn">
+                        🎬 Generate Highlight
+                    </button>
+                </div>
+
+                <div id="highlightProgress" style="display: none; margin-top: 20px;">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="highlightProgressBar"></div>
+                    </div>
+                    <p id="highlightStatus" style="text-align: center; margin-top: 10px;">Processing...</p>
+                </div>
+
+                <div id="highlightResult" style="display: none; margin-top: 20px;">
+                    <h4>✅ Highlight Ready!</h4>
+                    <video id="highlightPreviewVideo" controls style="width: 100%; max-height: 300px; margin: 10px 0;"></video>
+                    <div style="display: flex; gap: 10px;">
+                        <a id="highlightDownloadLink" class="btn btn-primary" download>📥 Download</a>
+                        <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+}
+
+async function previewHighlightSegments() {
+    const imageId = state.currentImage?.id;
+    if (!imageId) return;
+
+    const duration = document.getElementById('highlightDuration').value;
+    const previewDiv = document.getElementById('highlightPreview');
+    const segmentsList = document.getElementById('segmentsList');
+
+    segmentsList.innerHTML = '<p>Analyzing video with AI...</p>';
+    previewDiv.style.display = 'block';
+
+    try {
+        const response = await fetch(`/api/images/${imageId}/highlight/preview`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ duration: parseInt(duration) })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            // Display segments
+            const segments = data.segments || [];
+            segmentsList.innerHTML = segments.map((seg, i) => {
+                const startTime = formatTime(seg.start_ms / 1000);
+                const endTime = formatTime(seg.end_ms / 1000);
+                const duration = ((seg.end_ms - seg.start_ms) / 1000).toFixed(1);
+                const typeEmoji = {
+                    'emotion': '🔥',
+                    'insight': '💡',
+                    'humor': '😂',
+                    'action': '📈',
+                    'hook': '❓'
+                }[seg.type] || '🎯';
+
+                return `
+                    <div class="segment-item" style="padding: 8px; margin: 5px 0; background: var(--bg-secondary); border-radius: 8px; cursor: pointer;"
+                         onclick="seekToSegment(${seg.start_ms})">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>${typeEmoji} ${startTime} - ${endTime} (${duration}s)</span>
+                            <span style="color: var(--text-muted); font-size: 12px;">Score: ${(seg.score * 100).toFixed(0)}%</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                            ${seg.reason || ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const totalSec = (data.total_duration_ms / 1000).toFixed(1);
+            document.getElementById('highlightSummary').textContent =
+                `📝 ${data.summary || ''} (Total: ${totalSec}s)`;
+        } else {
+            segmentsList.innerHTML = `<p style="color: var(--error-color);">${data.error || 'Failed to analyze'}</p>`;
+        }
+    } catch (error) {
+        console.error('Preview error:', error);
+        segmentsList.innerHTML = '<p style="color: var(--error-color);">Error analyzing video</p>';
+    }
+}
+
+function seekToSegment(startMs) {
+    const video = document.getElementById('modalVideoPlayer');
+    if (video) {
+        video.currentTime = startMs / 1000;
+        video.play();
+    }
+}
+
+async function generateHighlight() {
+    const imageId = state.currentImage?.id;
+    if (!imageId) return;
+
+    const duration = document.getElementById('highlightDuration').value;
+    const progressDiv = document.getElementById('highlightProgress');
+    const resultDiv = document.getElementById('highlightResult');
+    const generateBtn = document.getElementById('generateHighlightBtn');
+
+    generateBtn.disabled = true;
+    generateBtn.textContent = '⏳ Generating...';
+    progressDiv.style.display = 'block';
+    resultDiv.style.display = 'none';
+
+    // Animate progress bar
+    const progressBar = document.getElementById('highlightProgressBar');
+    const statusText = document.getElementById('highlightStatus');
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        if (progress < 90) {
+            progress += Math.random() * 10;
+            progressBar.style.width = `${Math.min(progress, 90)}%`;
+        }
+    }, 500);
+
+    statusText.textContent = '🤖 Analyzing subtitles with AI...';
+
+    try {
+        const response = await fetch(`/api/images/${imageId}/highlight`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ duration: parseInt(duration) })
+        });
+
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            statusText.textContent = '✅ Complete!';
+
+            // Show result
+            progressDiv.style.display = 'none';
+            resultDiv.style.display = 'block';
+
+            const previewVideo = document.getElementById('highlightPreviewVideo');
+            const downloadLink = document.getElementById('highlightDownloadLink');
+
+            previewVideo.src = data.highlight_url;
+            downloadLink.href = data.highlight_url;
+            downloadLink.textContent = `📥 Download (${data.duration_formatted})`;
+
+            showToast('Highlight video created!', 'success');
+        } else {
+            statusText.textContent = `❌ ${data.error || 'Generation failed'}`;
+            showToast(data.error || 'Failed to generate highlight', 'error');
+        }
+    } catch (error) {
+        clearInterval(progressInterval);
+        console.error('Generate error:', error);
+        statusText.textContent = '❌ Error generating highlight';
+        showToast('Error generating highlight', 'error');
+    } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = '🎬 Generate Highlight';
     }
 }
 

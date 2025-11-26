@@ -557,6 +557,148 @@ Format rules:
                 user_msg=f"❌ Неочаквана грешка:\n{type(e).__name__}\n\n{str(e)}"
             )
 
+    def analyze_subtitles_for_highlights(self, subtitles: List[Dict],
+                                          target_duration: int = 30,
+                                          video_duration_ms: int = 0) -> Optional[Dict]:
+        """
+        Analyze subtitles to find the most interesting/engaging moments for a highlight reel.
+
+        Args:
+            subtitles: List of subtitle dicts with 'text', 'start_time_ms', 'end_time_ms'
+            target_duration: Target duration for highlight in seconds (default 30)
+            video_duration_ms: Total video duration in milliseconds
+
+        Returns:
+            {
+                'segments': [{'start_ms': int, 'end_ms': int, 'reason': str, 'score': float}, ...],
+                'total_duration_ms': int,
+                'summary': str
+            }
+        """
+        if not subtitles:
+            logger.warning("No subtitles provided for highlight analysis")
+            return None
+
+        start_time = time.time()
+        self.metrics['total_requests'] += 1
+
+        # Format subtitles for AI analysis
+        formatted_subs = []
+        for i, sub in enumerate(subtitles):
+            start_sec = sub.get('start_time_ms', 0) / 1000
+            end_sec = sub.get('end_time_ms', 0) / 1000
+            text = sub.get('text', '')
+            formatted_subs.append(f"[{start_sec:.1f}s - {end_sec:.1f}s] {text}")
+
+        # Limit to reasonable size for AI
+        subtitle_text = "\n".join(formatted_subs[:500])  # Max 500 lines
+
+        video_duration_sec = video_duration_ms / 1000 if video_duration_ms else 0
+
+        prompt = f"""You are a professional video editor. Analyze these subtitles/transcript and identify the MOST ENGAGING moments for a {target_duration}-second highlight reel (TikTok/Shorts style).
+
+VIDEO INFO:
+- Total duration: {video_duration_sec:.0f} seconds
+- Target highlight: {target_duration} seconds
+
+SUBTITLES/TRANSCRIPT:
+{subtitle_text}
+
+IDENTIFY moments that are:
+1. 🔥 Emotionally intense (excitement, surprise, humor, drama)
+2. 💡 Key insights or important information
+3. 😂 Funny or entertaining
+4. 🎯 Quotable or memorable statements
+5. 📈 Peak action or climax moments
+6. ❓ Intriguing hooks that create curiosity
+
+RULES:
+- Select 3-6 segments that together total approximately {target_duration} seconds
+- Each segment should be 3-10 seconds long
+- Segments should be impactful standalone clips
+- Prefer variety (don't pick all from one section)
+- Include start/end timestamps in milliseconds
+
+OUTPUT FORMAT (JSON only, no markdown):
+{{
+    "segments": [
+        {{
+            "start_ms": <start time in milliseconds>,
+            "end_ms": <end time in milliseconds>,
+            "reason": "<why this moment is engaging>",
+            "score": <0.0-1.0 importance score>,
+            "type": "<emotion|insight|humor|action|hook>"
+        }}
+    ],
+    "summary": "<one sentence describing the highlight theme>",
+    "hook_segment_index": <index of best opening hook, 0-based>
+}}
+
+Respond with ONLY the JSON object, no additional text."""
+
+        try:
+            payload = {
+                "model": self.config.default_model,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 1500,
+                "temperature": 0.4  # Lower for more consistent results
+            }
+
+            response = requests.post(
+                self.api_endpoint,
+                json=payload,
+                timeout=120
+            )
+
+            if response.status_code != 200:
+                logger.error(f"AI API error: {response.status_code}")
+                self.metrics['failed'] += 1
+                return None
+
+            data = response.json()
+            if 'choices' not in data or len(data['choices']) == 0:
+                logger.error("Invalid response structure")
+                self.metrics['failed'] += 1
+                return None
+
+            content = data['choices'][0]['message']['content']
+            parsed = self._extract_json(content)
+
+            if parsed and 'segments' in parsed:
+                # Calculate total duration
+                total_ms = sum(
+                    seg.get('end_ms', 0) - seg.get('start_ms', 0)
+                    for seg in parsed.get('segments', [])
+                )
+                parsed['total_duration_ms'] = total_ms
+
+                # Sort segments by start time
+                parsed['segments'] = sorted(
+                    parsed.get('segments', []),
+                    key=lambda x: x.get('start_ms', 0)
+                )
+
+                elapsed = time.time() - start_time
+                self.metrics['successful'] += 1
+                self.metrics['total_time'] += elapsed
+                logger.info(f"✅ Highlight analysis complete: {len(parsed['segments'])} segments, "
+                           f"{total_ms/1000:.1f}s total, in {elapsed:.2f}s")
+
+                return parsed
+            else:
+                logger.warning("Could not parse highlight segments from AI response")
+                self.metrics['failed'] += 1
+                return None
+
+        except requests.Timeout:
+            logger.error("AI API timeout during highlight analysis")
+            self.metrics['failed'] += 1
+            return None
+        except Exception as e:
+            logger.error(f"Error in highlight analysis: {e}")
+            self.metrics['failed'] += 1
+            return None
+
     def analyze_text(self, prompt: str) -> Optional[str]:
         """
         Analyze text without an image - useful for summarizing transcripts, etc.
