@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video App - Video Management</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <h1 class="app-title">Video App</h1>
+            </div>
+            <div class="header-right">
+                <button id="addVideoBtn" class="btn btn-primary">
+                    + Add Video
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Filters</h3>
+                    <div class="filter-group">
+                        <label>Search</label>
+                        <input type="text" id="searchInput" placeholder="Search videos...">
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <h3>Statistics</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Videos</span>
+                        <span class="stat-value" id="totalVideos">0</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Video Grid -->
+            <section class="video-grid-container">
+                <div class="video-grid" id="videoGrid">
+                    <!-- Videos will be loaded here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Add Video Modal -->
+        <div class="modal" id="addVideoModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add Video</h2>
+                    <button class="close-btn" onclick="closeAddVideoModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="videoUrl">Video URL</label>
+                        <input type="text" id="videoUrl" placeholder="https://youtube.com/watch?v=...">
+                    </div>
+                    <div id="videoPreview" class="video-preview hidden">
+                        <img id="previewThumb" src="" alt="Thumbnail">
+                        <div class="preview-info">
+                            <h4 id="previewTitle"></h4>
+                            <p id="previewChannel"></p>
+                            <p id="previewDuration"></p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Options</label>
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" id="downloadSubtitles" checked>
+                                Download subtitles
+                            </label>
+                            <label>
+                                <input type="checkbox" id="extractKeyframes" checked>
+                                Extract keyframes
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="videoQuality">Quality</label>
+                        <select id="videoQuality">
+                            <option value="best">Best</option>
+                            <option value="1080" selected>1080p</option>
+                            <option value="720">720p</option>
+                            <option value="480">480p</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeAddVideoModal()">Cancel</button>
+                    <button class="btn btn-primary" id="fetchInfoBtn" onclick="fetchVideoInfo()">Fetch Info</button>
+                    <button class="btn btn-success" id="downloadBtn" onclick="downloadVideo()" disabled>Download</button>
+                </div>
+                <div id="downloadProgress" class="progress-container hidden">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p id="progressText">Downloading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Player Modal -->
+        <div class="modal" id="videoPlayerModal">
+            <div class="modal-content video-player-modal">
+                <div class="modal-header">
+                    <h2 id="playerTitle">Video Player</h2>
+                    <button class="close-btn" onclick="closeVideoPlayer()">&times;</button>
+                </div>
+                <div class="modal-body player-body">
+                    <div class="player-container">
+                        <video id="videoPlayer" controls>
+                            <source src="" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="player-sidebar">
+                        <div class="tabs">
+                            <button class="tab active" data-tab="subtitles">Subtitles</button>
+                            <button class="tab" data-tab="bookmarks">Bookmarks</button>
+                            <button class="tab" data-tab="notes">Notes</button>
+                        </div>
+                        <div class="tab-content" id="subtitlesTab">
+                            <div class="subtitle-list" id="subtitleList">
+                                <!-- Subtitles will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="tab-content hidden" id="bookmarksTab">
+                            <button class="btn btn-small" onclick="addBookmark()">+ Add Bookmark</button>
+                            <div class="bookmark-list" id="bookmarkList">
+                                <!-- Bookmarks will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="tab-content hidden" id="notesTab">
+                            <button class="btn btn-small" onclick="addNote()">+ Add Note</button>
+                            <div class="notes-list" id="notesList">
+                                <!-- Notes will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
