@@ -5574,6 +5574,23 @@ async function loadSubtitlesForVideo(imageId) {
     }
 }
 
+// Make words clickable for translation (Language Reactor style)
+function makeWordsClickable(text, sentenceContext) {
+    // Split text into words while preserving punctuation
+    const words = text.split(/(\s+)/);
+    return words.map(word => {
+        // Skip whitespace and punctuation-only
+        if (/^\s*$/.test(word) || /^[.,!?;:'"()[\]{}]+$/.test(word)) {
+            return escapeHtml(word);
+        }
+        // Clean word for lookup (remove punctuation)
+        const cleanWord = word.replace(/[.,!?;:'"()[\]{}]/g, '');
+        if (!cleanWord) return escapeHtml(word);
+
+        return `<span class="clickable-word" data-word="${escapeHtml(cleanWord)}" data-context="${escapeHtml(sentenceContext)}">${escapeHtml(word)}</span>`;
+    }).join('');
+}
+
 function createSubtitlePanel(subtitles, languages) {
     if (!subtitles || subtitles.length === 0) {
         return `
@@ -5591,10 +5608,11 @@ function createSubtitlePanel(subtitles, languages) {
 
     const subtitleLines = subtitles.map((sub, idx) => {
         const startTime = formatSubtitleTime(sub.start_time_ms);
+        const clickableText = makeWordsClickable(sub.text, sub.text);
         return `
             <div class="subtitle-line" data-index="${idx}" data-start="${sub.start_time_ms}" data-end="${sub.end_time_ms}">
                 <span class="timestamp">${startTime}</span>
-                <span class="text">${escapeHtml(sub.text)}</span>
+                <span class="text">${clickableText}</span>
             </div>
         `;
     }).join('');
@@ -5606,9 +5624,12 @@ function createSubtitlePanel(subtitles, languages) {
             </div>
             <div class="subtitle-panel-header">
                 <h4>🎤 Subtitles</h4>
-                <select class="subtitle-lang-select" id="subtitleLangSelect" onchange="changeSubtitleLanguage(this.value)">
-                    ${langOptions}
-                </select>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <select class="subtitle-lang-select" id="subtitleLangSelect" onchange="changeSubtitleLanguage(this.value)">
+                        ${langOptions}
+                    </select>
+                    <button onclick="showVocabularyList()" title="View saved words" style="padding: 4px 8px; font-size: 12px;">📚 Vocabulary</button>
+                </div>
             </div>
             <div class="subtitle-content" id="subtitleContent">
                 ${subtitleLines}
@@ -6168,6 +6189,227 @@ async function exportVideoNotes() {
 
     window.open(`/api/images/${imageId}/notes/export`, '_blank');
 }
+
+// ============ VOCABULARY & TRANSLATION (Language Reactor style) ============
+
+// Initialize word click handlers
+function initWordClickHandlers() {
+    document.addEventListener('click', async (e) => {
+        // Close popup if clicking outside
+        const existingPopup = document.getElementById('translationPopup');
+        if (existingPopup && !existingPopup.contains(e.target) && !e.target.classList.contains('clickable-word')) {
+            existingPopup.remove();
+            return;
+        }
+
+        // Handle clickable word
+        if (e.target.classList.contains('clickable-word')) {
+            e.stopPropagation();
+            const word = e.target.dataset.word;
+            const context = e.target.dataset.context;
+            await showTranslationPopup(word, context, e.target);
+        }
+    });
+}
+
+// Show translation popup
+async function showTranslationPopup(word, context, targetElement) {
+    // Remove existing popup
+    document.getElementById('translationPopup')?.remove();
+
+    // Get position
+    const rect = targetElement.getBoundingClientRect();
+
+    // Create popup
+    const popup = document.createElement('div');
+    popup.id = 'translationPopup';
+    popup.className = 'translation-popup';
+    popup.innerHTML = `
+        <div class="translation-popup-header">
+            <span class="translation-word">${escapeHtml(word)}</span>
+            <button class="popup-close" onclick="document.getElementById('translationPopup').remove()">&times;</button>
+        </div>
+        <div class="translation-popup-body">
+            <div class="translation-loading">Loading translation...</div>
+        </div>
+    `;
+
+    // Position popup
+    popup.style.position = 'fixed';
+    popup.style.left = Math.min(rect.left, window.innerWidth - 320) + 'px';
+    popup.style.top = (rect.bottom + 5) + 'px';
+
+    document.body.appendChild(popup);
+
+    // Fetch translation
+    try {
+        const response = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                word: word,
+                source: 'en',
+                target: 'bg',
+                context: context
+            })
+        });
+
+        const data = await response.json();
+
+        // Update popup with translations
+        const body = popup.querySelector('.translation-popup-body');
+        if (data.translations && data.translations.length > 0) {
+            const translationsHtml = data.translations.map((t, i) =>
+                `<div class="translation-option ${i === 0 ? 'primary' : ''}" data-translation="${escapeHtml(t.translation)}">
+                    ${escapeHtml(t.translation)}
+                    ${t.source ? `<span class="translation-source">${t.source}</span>` : ''}
+                </div>`
+            ).join('');
+
+            body.innerHTML = `
+                <div class="translations-list">
+                    ${translationsHtml}
+                </div>
+                <div class="translation-context">
+                    <small>"${escapeHtml(context)}"</small>
+                </div>
+                <div class="translation-actions">
+                    ${data.is_saved
+                        ? `<button class="btn-saved" disabled>✓ Saved</button>`
+                        : `<button onclick="saveWordToVocabulary('${escapeHtml(word)}', '${escapeHtml(data.translations[0]?.translation || '')}', '${escapeHtml(context)}')" class="btn-save">💾 Save Word</button>`
+                    }
+                </div>
+            `;
+        } else {
+            body.innerHTML = `
+                <div class="no-translation">No translation found</div>
+                <div class="translation-actions">
+                    <button onclick="saveWordToVocabulary('${escapeHtml(word)}', '', '${escapeHtml(context)}')" class="btn-save">💾 Save Anyway</button>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Translation error:', error);
+        popup.querySelector('.translation-popup-body').innerHTML = `
+            <div class="translation-error">Translation failed</div>
+        `;
+    }
+}
+
+// Save word to vocabulary
+async function saveWordToVocabulary(word, translation, context) {
+    if (!translation) {
+        translation = prompt('Enter translation:', '');
+        if (!translation) return;
+    }
+
+    const video = db?.get_youtube_video_by_image_id?.(state.currentImage?.id);
+    const videoElement = document.getElementById('modalVideoPlayer');
+    const timestampMs = videoElement ? Math.floor(videoElement.currentTime * 1000) : null;
+
+    try {
+        const response = await fetch('/api/vocabulary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                word: word,
+                translation: translation,
+                source_language: 'en',
+                target_language: 'bg',
+                context_sentence: context,
+                video_id: state.currentImage?.id,
+                timestamp_ms: timestampMs
+            })
+        });
+
+        if (response.ok) {
+            showToast(`"${word}" saved to vocabulary!`, 'success');
+            document.getElementById('translationPopup')?.remove();
+
+            // Mark the word as saved in subtitles
+            document.querySelectorAll(`.clickable-word[data-word="${word}"]`).forEach(el => {
+                el.classList.add('saved-word');
+            });
+        } else {
+            showToast('Failed to save word', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving word:', error);
+        showToast('Error saving word', 'error');
+    }
+}
+
+// Show vocabulary list
+async function showVocabularyList() {
+    try {
+        const response = await fetch('/api/vocabulary?limit=100');
+        const data = await response.json();
+
+        const dialog = document.createElement('div');
+        dialog.className = 'modal';
+        dialog.style.display = 'flex';
+        dialog.innerHTML = `
+            <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+            <div class="modal-content" style="max-width: 700px;">
+                <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+                <div class="modal-body">
+                    <h2>📚 My Vocabulary (${data.total} words)</h2>
+                    <div class="vocab-search" style="margin-bottom: 15px;">
+                        <input type="text" id="vocabSearchInput" placeholder="Search words..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+                    <div class="vocab-list" style="max-height: 400px; overflow-y: auto;">
+                        ${data.words.length > 0 ? data.words.map(w => `
+                            <div class="vocab-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin: 8px 0; background: var(--bg-secondary); border-radius: 8px;">
+                                <div>
+                                    <div style="font-weight: bold; color: var(--accent-color);">${escapeHtml(w.word)}</div>
+                                    <div style="color: var(--text-secondary);">${escapeHtml(w.translation)}</div>
+                                    ${w.context_sentence ? `<div style="font-size: 0.85em; color: var(--text-muted); margin-top: 4px;"><i>"${escapeHtml(w.context_sentence.substring(0, 50))}..."</i></div>` : ''}
+                                </div>
+                                <button onclick="deleteVocabularyWord(${w.id}, this)" style="background: none; border: none; cursor: pointer; font-size: 18px;" title="Delete">🗑️</button>
+                            </div>
+                        `).join('') : '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No words saved yet. Click on words in subtitles to translate and save them!</div>'}
+                    </div>
+                    <div class="vocab-actions" style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-secondary" onclick="window.open('/api/vocabulary/export?format=csv', '_blank')">📊 Export CSV</button>
+                        <button class="btn btn-secondary" onclick="window.open('/api/vocabulary/export?format=anki', '_blank')">📝 Export for Anki</button>
+                        <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(dialog);
+
+        // Add search functionality
+        document.getElementById('vocabSearchInput')?.addEventListener('input', (e) => {
+            const search = e.target.value.toLowerCase();
+            document.querySelectorAll('.vocab-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(search) ? 'flex' : 'none';
+            });
+        });
+    } catch (error) {
+        console.error('Error loading vocabulary:', error);
+        showToast('Error loading vocabulary', 'error');
+    }
+}
+
+// Delete vocabulary word
+async function deleteVocabularyWord(id, button) {
+    if (!confirm('Delete this word from vocabulary?')) return;
+
+    try {
+        const response = await fetch(`/api/vocabulary/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            button.closest('.vocab-item').remove();
+            showToast('Word deleted', 'success');
+        }
+    } catch (error) {
+        showToast('Error deleting word', 'error');
+    }
+}
+
+// Initialize word handlers on page load
+document.addEventListener('DOMContentLoaded', initWordClickHandlers);
 
 // Subtitle panel resize functionality
 function initSubtitleResize() {

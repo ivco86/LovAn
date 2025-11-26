@@ -808,3 +808,177 @@ def export_video_notes(image_id):
         mimetype='text/markdown',
         headers={'Content-Disposition': f'attachment; filename="{safe_title}_notes.md"'}
     )
+
+
+# ============ TRANSLATION & VOCABULARY (Language Reactor style) ============
+
+@videos_bp.route('/api/translate', methods=['POST'])
+def translate_word():
+    """Translate a word using free translation API"""
+    import requests as req
+
+    data = request.json or {}
+    word = data.get('word', '').strip()
+    source_lang = data.get('source', 'en')
+    target_lang = data.get('target', 'bg')
+    context = data.get('context', '')
+
+    if not word:
+        return jsonify({'error': 'Word is required'}), 400
+
+    translations = []
+
+    # Try MyMemory API (free, no key needed)
+    try:
+        mymemory_url = f"https://api.mymemory.translated.net/get"
+        params = {
+            'q': word,
+            'langpair': f'{source_lang}|{target_lang}'
+        }
+        response = req.get(mymemory_url, params=params, timeout=5)
+        if response.ok:
+            data = response.json()
+            if data.get('responseStatus') == 200:
+                main_translation = data.get('responseData', {}).get('translatedText', '')
+                if main_translation and main_translation.lower() != word.lower():
+                    translations.append({
+                        'source': 'MyMemory',
+                        'translation': main_translation
+                    })
+                # Get alternative translations
+                matches = data.get('matches', [])
+                for match in matches[:3]:
+                    trans = match.get('translation', '')
+                    if trans and trans.lower() != word.lower() and trans != main_translation:
+                        translations.append({
+                            'source': 'MyMemory',
+                            'translation': trans,
+                            'quality': match.get('quality', 0)
+                        })
+    except Exception as e:
+        logger.warning(f"MyMemory translation error: {e}")
+
+    # Check if word is already in vocabulary
+    saved_word = db.get_vocabulary_word(word, source_lang, target_lang)
+
+    return jsonify({
+        'word': word,
+        'source_language': source_lang,
+        'target_language': target_lang,
+        'translations': translations[:5],  # Limit to 5
+        'context': context,
+        'is_saved': saved_word is not None,
+        'saved_data': saved_word
+    })
+
+
+@videos_bp.route('/api/vocabulary', methods=['GET'])
+def get_vocabulary_list():
+    """Get all saved vocabulary"""
+    search = request.args.get('search', '')
+    source = request.args.get('source', 'en')
+    target = request.args.get('target', 'bg')
+    limit = request.args.get('limit', 100, type=int)
+    offset = request.args.get('offset', 0, type=int)
+
+    words = db.get_vocabulary(
+        source_language=source,
+        target_language=target,
+        search=search if search else None,
+        limit=limit,
+        offset=offset
+    )
+
+    total = db.get_vocabulary_count()
+
+    return jsonify({
+        'words': words,
+        'total': total,
+        'limit': limit,
+        'offset': offset
+    })
+
+
+@videos_bp.route('/api/vocabulary', methods=['POST'])
+def save_vocabulary_word():
+    """Save a word to vocabulary"""
+    data = request.json or {}
+    word = data.get('word', '').strip()
+    translation = data.get('translation', '').strip()
+
+    if not word or not translation:
+        return jsonify({'error': 'Word and translation are required'}), 400
+
+    vocab_id = db.add_vocabulary(
+        word=word,
+        translation=translation,
+        source_language=data.get('source_language', 'en'),
+        target_language=data.get('target_language', 'bg'),
+        context_sentence=data.get('context_sentence'),
+        video_id=data.get('video_id'),
+        timestamp_ms=data.get('timestamp_ms'),
+        notes=data.get('notes')
+    )
+
+    if vocab_id:
+        return jsonify({'success': True, 'id': vocab_id}), 201
+    return jsonify({'error': 'Failed to save word'}), 500
+
+
+@videos_bp.route('/api/vocabulary/<int:vocab_id>', methods=['DELETE'])
+def delete_vocabulary_word(vocab_id):
+    """Delete a word from vocabulary"""
+    success = db.delete_vocabulary(vocab_id)
+    if success:
+        return jsonify({'success': True})
+    return jsonify({'error': 'Word not found'}), 404
+
+
+@videos_bp.route('/api/vocabulary/export', methods=['GET'])
+def export_vocabulary():
+    """Export vocabulary as CSV or Anki format"""
+    from flask import Response
+    import csv
+    import io
+
+    format_type = request.args.get('format', 'csv')
+    source = request.args.get('source', 'en')
+    target = request.args.get('target', 'bg')
+
+    words = db.get_vocabulary(source_language=source, target_language=target, limit=10000)
+
+    if format_type == 'anki':
+        # Anki tab-separated format
+        content = ""
+        for word in words:
+            front = word['word']
+            back = f"{word['translation']}"
+            if word.get('context_sentence'):
+                back += f"<br><br><i>{word['context_sentence']}</i>"
+            content += f"{front}\t{back}\n"
+
+        return Response(
+            content,
+            mimetype='text/plain',
+            headers={'Content-Disposition': 'attachment; filename="vocabulary_anki.txt"'}
+        )
+    else:
+        # CSV format
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['Word', 'Translation', 'Context', 'Notes', 'Created'])
+
+        for word in words:
+            writer.writerow([
+                word['word'],
+                word['translation'],
+                word.get('context_sentence', ''),
+                word.get('notes', ''),
+                word.get('created_at', '')
+            ])
+
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename="vocabulary.csv"'}
+        )

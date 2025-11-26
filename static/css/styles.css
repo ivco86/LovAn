@@ -2912,3 +2912,170 @@ body {
         border-color: var(--accent-cyan);
     }
 }
+
+/* ============ VOCABULARY & TRANSLATION (Language Reactor style) ============ */
+
+/* Clickable words in subtitles */
+.clickable-word {
+    cursor: pointer;
+    border-radius: 3px;
+    padding: 1px 2px;
+    margin: 0 -2px;
+    transition: all 0.15s ease;
+}
+
+.clickable-word:hover {
+    background: rgba(168, 85, 247, 0.3);
+    color: var(--accent-color);
+}
+
+.clickable-word.saved-word {
+    background: rgba(34, 197, 94, 0.2);
+    border-bottom: 2px solid rgba(34, 197, 94, 0.6);
+}
+
+.clickable-word.saved-word:hover {
+    background: rgba(34, 197, 94, 0.3);
+}
+
+/* Translation popup */
+.translation-popup {
+    position: fixed;
+    z-index: 10000;
+    min-width: 280px;
+    max-width: 350px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    animation: popupFadeIn 0.2s ease;
+}
+
+@keyframes popupFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.translation-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+}
+
+.translation-word {
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.popup-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    line-height: 1;
+}
+
+.popup-close:hover {
+    opacity: 1;
+}
+
+.translation-popup-body {
+    padding: 15px;
+}
+
+.translation-loading {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 20px;
+}
+
+.translations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.translation-option {
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    font-size: 1.1em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.translation-option.primary {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15));
+    border: 1px solid var(--accent-color);
+    font-weight: 600;
+}
+
+.translation-source {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.translation-context {
+    padding: 10px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 12px;
+    border-left: 3px solid var(--accent-color);
+}
+
+.translation-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn-save {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-save:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+}
+
+.btn-saved {
+    padding: 8px 16px;
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid #22c55e;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+}
+
+.no-translation, .translation-error {
+    text-align: center;
+    padding: 15px;
+    color: var(--text-muted);
+}
