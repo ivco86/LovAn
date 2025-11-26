@@ -6215,6 +6215,13 @@ function initWordClickHandlers() {
 
         // Handle clickable word (single click)
         if (e.target.classList.contains('clickable-word')) {
+            // Check if user is making a text selection (dragging to select multiple words)
+            const selection = window.getSelection();
+            if (selection && selection.toString().trim().length > 0) {
+                // User is selecting text, don't show single word popup
+                return;
+            }
+
             e.stopPropagation();
             // Pause video when clicking on a word
             pauseVideoForTranslation();
@@ -6226,7 +6233,7 @@ function initWordClickHandlers() {
 
     // Handle text selection for phrases (multiple words)
     document.addEventListener('mouseup', async (e) => {
-        // Small delay to let single click handler run first
+        // Small delay to ensure click handler runs first
         setTimeout(async () => {
             // Check if popup is already open (from single word click)
             if (document.getElementById('translationPopup')) return;
@@ -6237,8 +6244,10 @@ function initWordClickHandlers() {
 
             const selectedText = selection.toString().trim();
 
-            // Must have at least 2 characters and contain a space (multiple words)
-            if (!selectedText || selectedText.length < 2 || !selectedText.includes(' ')) return;
+            // Must have at least 3 characters and contain whitespace (multiple words)
+            // Use regex to detect any whitespace (space, non-breaking space, etc.)
+            if (!selectedText || selectedText.length < 3) return;
+            if (!/\s/.test(selectedText)) return; // Must contain whitespace
             if (selectedText.length > 200) return;
 
             // Check if selection is within subtitle content
