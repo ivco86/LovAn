@@ -1078,9 +1078,11 @@ def generate_video_highlight(image_id):
 
         # Generate highlight
         youtube_service = YouTubeService(db)
+        logger.info(f"Starting AI highlight generation for video {video['id']}")
         result = youtube_service.generate_ai_highlight(video['id'], target_duration=target_duration)
 
         if result:
+            logger.info(f"Highlight generated successfully: {result.get('highlight_path')}")
             return jsonify({
                 'success': True,
                 'highlight_path': result['highlight_path'],
@@ -1091,7 +1093,8 @@ def generate_video_highlight(image_id):
                 'duration_formatted': format_time_readable(result['duration_ms'])
             })
         else:
-            return jsonify({'error': 'Failed to generate highlight video'}), 500
+            logger.error(f"generate_ai_highlight returned None for video {video['id']}")
+            return jsonify({'error': 'Failed to generate highlight video. Check server logs for details.'}), 500
 
     except Exception as e:
         logger.error(f"Error in generate_video_highlight: {e}", exc_info=True)

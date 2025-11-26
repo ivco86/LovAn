@@ -1166,15 +1166,22 @@ class YouTubeService:
 
             video_duration_ms = (video.get('duration') or 0) * 1000
 
+            logger.info(f"Calling AI service for highlight analysis with {len(subtitles)} subtitles")
             analysis = ai_service.analyze_subtitles_for_highlights(
                 subtitles,
                 target_duration=target_duration,
                 video_duration_ms=video_duration_ms
             )
 
-            if not analysis or not analysis.get('segments'):
-                logger.error("AI analysis returned no segments")
+            if not analysis:
+                logger.error("AI analysis returned None - AI service may be unavailable or failed")
                 return None
+
+            if not analysis.get('segments'):
+                logger.error(f"AI analysis returned no segments. Analysis: {analysis}")
+                return None
+
+            logger.info(f"AI analysis returned {len(analysis['segments'])} segments")
 
             # Reorder segments: put hook first if specified
             segments = analysis['segments']

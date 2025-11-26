@@ -662,20 +662,57 @@ Respond with ONLY the JSON object, no additional text."""
                 return None
 
             content = data['choices'][0]['message']['content']
+            logger.debug(f"AI highlight response: {content[:500]}...")
             parsed = self._extract_json(content)
+            logger.debug(f"Parsed highlight data: {parsed}")
 
             if parsed and 'segments' in parsed:
+                # Normalize segments - ensure proper types and required fields
+                normalized_segments = []
+                for seg in parsed.get('segments', []):
+                    try:
+                        # Convert timestamps to integers (handle strings from AI)
+                        start_ms = int(float(seg.get('start_ms', 0) or 0))
+                        end_ms = int(float(seg.get('end_ms', 0) or 0))
+
+                        # Convert score to float
+                        score = float(seg.get('score', 0.5) or 0.5)
+                        score = max(0.0, min(1.0, score))  # Clamp to 0-1
+
+                        # Validate duration
+                        if end_ms <= start_ms:
+                            logger.warning(f"Skipping invalid segment: start={start_ms}, end={end_ms}")
+                            continue
+
+                        normalized_segments.append({
+                            'start_ms': start_ms,
+                            'end_ms': end_ms,
+                            'reason': str(seg.get('reason', '') or ''),
+                            'score': score,
+                            'type': str(seg.get('type', 'action') or 'action')
+                        })
+                    except (ValueError, TypeError) as e:
+                        logger.warning(f"Skipping malformed segment: {seg}, error: {e}")
+                        continue
+
+                if not normalized_segments:
+                    logger.warning("No valid segments after normalization")
+                    self.metrics['failed'] += 1
+                    return None
+
+                parsed['segments'] = normalized_segments
+
                 # Calculate total duration
                 total_ms = sum(
-                    seg.get('end_ms', 0) - seg.get('start_ms', 0)
-                    for seg in parsed.get('segments', [])
+                    seg['end_ms'] - seg['start_ms']
+                    for seg in parsed['segments']
                 )
                 parsed['total_duration_ms'] = total_ms
 
                 # Sort segments by start time
                 parsed['segments'] = sorted(
-                    parsed.get('segments', []),
-                    key=lambda x: x.get('start_ms', 0)
+                    parsed['segments'],
+                    key=lambda x: x['start_ms']
                 )
 
                 elapsed = time.time() - start_time

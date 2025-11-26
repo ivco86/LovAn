@@ -6056,8 +6056,8 @@ async function previewHighlightSegments() {
             // Display segments
             const segments = data.segments || [];
             segmentsList.innerHTML = segments.map((seg, i) => {
-                const startTime = formatTime(seg.start_ms / 1000);
-                const endTime = formatTime(seg.end_ms / 1000);
+                const startTime = formatTimeReadable(seg.start_ms);
+                const endTime = formatTimeReadable(seg.end_ms);
                 const duration = ((seg.end_ms - seg.start_ms) / 1000).toFixed(1);
                 const typeEmoji = {
                     'emotion': '🔥',
