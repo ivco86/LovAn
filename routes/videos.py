@@ -814,21 +814,79 @@ def export_video_notes(image_id):
 
 @videos_bp.route('/api/translate', methods=['POST'])
 def translate_word():
-    """Translate a word using free translation API"""
+    """Translate a word using AI and free translation APIs"""
     import requests as req
+    from ai_service import ai_service
 
     data = request.json or {}
     word = data.get('word', '').strip()
     source_lang = data.get('source', 'en')
     target_lang = data.get('target', 'bg')
     context = data.get('context', '')
+    use_ai = data.get('use_ai', True)  # Enable AI by default
 
     if not word:
         return jsonify({'error': 'Word is required'}), 400
 
     translations = []
 
-    # Try MyMemory API (free, no key needed)
+    # Language names for AI prompt
+    lang_names = {
+        'en': 'English', 'bg': 'Bulgarian', 'de': 'German', 'fr': 'French',
+        'es': 'Spanish', 'it': 'Italian', 'ru': 'Russian', 'pt': 'Portuguese'
+    }
+    source_name = lang_names.get(source_lang, source_lang)
+    target_name = lang_names.get(target_lang, target_lang)
+
+    # Try AI translation first (more contextual)
+    if use_ai:
+        try:
+            prompt = f"""Translate the {source_name} word "{word}" to {target_name}.
+Context sentence: "{context}"
+
+Provide:
+1. The most accurate translation for this context
+2. 1-2 alternative translations if applicable
+3. Brief usage note (optional)
+
+Format your response as:
+Translation: [main translation]
+Alternatives: [alt1], [alt2]
+Note: [brief note about usage]
+
+Be concise. If the word has multiple meanings, focus on the one that fits the context."""
+
+            ai_response = ai_service.analyze_text(prompt)
+            if ai_response:
+                # Parse AI response
+                lines = ai_response.strip().split('\n')
+                for line in lines:
+                    if line.startswith('Translation:'):
+                        main_trans = line.replace('Translation:', '').strip()
+                        if main_trans and main_trans.lower() != word.lower():
+                            translations.append({
+                                'source': 'AI',
+                                'translation': main_trans,
+                                'is_ai': True
+                            })
+                    elif line.startswith('Alternatives:'):
+                        alts = line.replace('Alternatives:', '').strip()
+                        for alt in alts.split(','):
+                            alt = alt.strip()
+                            if alt and alt.lower() != word.lower() and not any(t['translation'] == alt for t in translations):
+                                translations.append({
+                                    'source': 'AI',
+                                    'translation': alt,
+                                    'is_ai': True
+                                })
+                    elif line.startswith('Note:'):
+                        note = line.replace('Note:', '').strip()
+                        if translations and note:
+                            translations[0]['note'] = note
+        except Exception as e:
+            logger.warning(f"AI translation error: {e}")
+
+    # Try MyMemory API as fallback/additional source
     try:
         mymemory_url = f"https://api.mymemory.translated.net/get"
         params = {
@@ -837,24 +895,27 @@ def translate_word():
         }
         response = req.get(mymemory_url, params=params, timeout=5)
         if response.ok:
-            data = response.json()
-            if data.get('responseStatus') == 200:
-                main_translation = data.get('responseData', {}).get('translatedText', '')
+            mm_data = response.json()
+            if mm_data.get('responseStatus') == 200:
+                main_translation = mm_data.get('responseData', {}).get('translatedText', '')
                 if main_translation and main_translation.lower() != word.lower():
-                    translations.append({
-                        'source': 'MyMemory',
-                        'translation': main_translation
-                    })
-                # Get alternative translations
-                matches = data.get('matches', [])
-                for match in matches[:3]:
-                    trans = match.get('translation', '')
-                    if trans and trans.lower() != word.lower() and trans != main_translation:
+                    # Check if not already in translations
+                    if not any(t['translation'].lower() == main_translation.lower() for t in translations):
                         translations.append({
                             'source': 'MyMemory',
-                            'translation': trans,
-                            'quality': match.get('quality', 0)
+                            'translation': main_translation
                         })
+                # Get alternative translations
+                matches = mm_data.get('matches', [])
+                for match in matches[:3]:
+                    trans = match.get('translation', '')
+                    if trans and trans.lower() != word.lower():
+                        if not any(t['translation'].lower() == trans.lower() for t in translations):
+                            translations.append({
+                                'source': 'MyMemory',
+                                'translation': trans,
+                                'quality': match.get('quality', 0)
+                            })
     except Exception as e:
         logger.warning(f"MyMemory translation error: {e}")
 

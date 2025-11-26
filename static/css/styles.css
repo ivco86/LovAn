@@ -3079,3 +3079,31 @@ body {
     padding: 15px;
     color: var(--text-muted);
 }
+
+/* AI Translation specific styles */
+.ai-translation {
+    border-left: 3px solid #22c55e;
+}
+
+.ai-source {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    color: white !important;
+}
+
+.ai-note {
+    padding: 10px 12px;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.1));
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin-bottom: 12px;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.ai-note .note-icon {
+    margin-right: 6px;
+}
+
+.translation-text {
+    flex: 1;
+}
