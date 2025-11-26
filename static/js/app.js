@@ -1785,10 +1785,35 @@ async function loadAndInitSubtitles(imageId) {
             if (videoElement) {
                 initSubtitleSync(videoElement);
                 attachSubtitleClickHandlers();
+
+                // Load bookmarks when video metadata is ready
+                if (videoElement.readyState >= 1) {
+                    // Metadata already loaded
+                    await loadVideoBookmarks(imageId);
+                    renderBookmarkMarkers();
+                } else {
+                    videoElement.addEventListener('loadedmetadata', async () => {
+                        await loadVideoBookmarks(imageId);
+                        renderBookmarkMarkers();
+                    }, { once: true });
+                }
             }
         } else {
             // No subtitles - hide the panel or show message
             container.innerHTML = '';
+
+            // Still load bookmarks even if no subtitles
+            if (videoElement) {
+                if (videoElement.readyState >= 1) {
+                    await loadVideoBookmarks(imageId);
+                    renderBookmarkMarkers();
+                } else {
+                    videoElement.addEventListener('loadedmetadata', async () => {
+                        await loadVideoBookmarks(imageId);
+                        renderBookmarkMarkers();
+                    }, { once: true });
+                }
+            }
         }
     } catch (error) {
         console.error('Error loading subtitles:', error);
@@ -5629,11 +5654,21 @@ function renderBookmarkMarkers() {
     const container = video.parentElement;
     if (!container) return;
 
+    // Get video's position within container
+    const videoRect = video.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const videoLeft = videoRect.left - containerRect.left;
+    const videoWidth = videoRect.width;
+    const videoBottom = containerRect.height - (videoRect.bottom - containerRect.top);
+
     currentVideoBookmarks.forEach(bookmark => {
-        const position = (bookmark.timestamp_ms / 1000) / video.duration * 100;
+        const timePercent = (bookmark.timestamp_ms / 1000) / video.duration;
+        const leftPx = videoLeft + (timePercent * videoWidth);
+
         const marker = document.createElement('div');
         marker.className = 'bookmark-marker';
-        marker.style.left = `${position}%`;
+        marker.style.left = `${leftPx}px`;
+        marker.style.bottom = `${videoBottom + 45}px`;  // Position above video controls
         marker.style.backgroundColor = bookmark.color || '#ff4444';
         marker.title = `${bookmark.title} (${formatTimeReadable(bookmark.timestamp_ms)})`;
         marker.onclick = () => {
@@ -5642,6 +5677,13 @@ function renderBookmarkMarkers() {
         container.appendChild(marker);
     });
 }
+
+// Re-render markers on window resize (debounced)
+let bookmarkResizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(bookmarkResizeTimeout);
+    bookmarkResizeTimeout = setTimeout(renderBookmarkMarkers, 100);
+});
 
 async function addBookmarkAtCurrentTime() {
     const video = document.getElementById('modalVideoPlayer');
