@@ -6446,9 +6446,38 @@ function initWordClickHandlers() {
 
     // Handle text selection for phrases (multiple words)
     document.addEventListener('mouseup', async (e) => {
-        // Small delay to ensure click handler runs first
+        // Capture selection IMMEDIATELY before it gets cleared
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+
+        const selectedText = selection.toString().trim();
+        console.log('[Phrase] mouseup - immediate selection:', JSON.stringify(selectedText));
+
+        // Early exit if no valid selection
+        if (!selectedText || selectedText.length < 3 || !/\s/.test(selectedText)) return;
+        if (selectedText.length > 200) return;
+
+        // Check if selection is within subtitle content
+        const subtitleContent = document.getElementById('subtitleContent');
+        if (!subtitleContent) return;
+
+        const range = selection.getRangeAt(0);
+        const container = range.commonAncestorContainer;
+        const containerElement = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+
+        if (!subtitleContent.contains(containerElement)) {
+            console.log('[Phrase] Selection not in subtitles');
+            return;
+        }
+
+        // Get the bounding rect before any DOM changes
+        const rect = range.getBoundingClientRect();
+        const subtitleLine = containerElement.closest('.subtitle-line');
+        const context = subtitleLine ? subtitleLine.querySelector('.text')?.textContent || selectedText : selectedText;
+
+        // Small delay to ensure click handler runs first (but we already have the data)
         setTimeout(async () => {
-            console.log('[Phrase] mouseup handler triggered');
+            console.log('[Phrase] setTimeout callback, showing popup for:', JSON.stringify(selectedText));
 
             // Check if popup is already open (from single word click)
             if (document.getElementById('translationPopup')) {
@@ -6456,61 +6485,10 @@ function initWordClickHandlers() {
                 return;
             }
 
-            // Get selected text
-            const selection = window.getSelection();
-            if (!selection || selection.rangeCount === 0) {
-                console.log('[Phrase] No selection or range');
-                return;
-            }
-
-            const selectedText = selection.toString().trim();
-            console.log('[Phrase] Selected text:', JSON.stringify(selectedText), 'length:', selectedText.length);
-
-            // Must have at least 3 characters and contain whitespace (multiple words)
-            // Use regex to detect any whitespace (space, non-breaking space, etc.)
-            if (!selectedText || selectedText.length < 3) {
-                console.log('[Phrase] Too short or empty');
-                return;
-            }
-            if (!/\s/.test(selectedText)) {
-                console.log('[Phrase] No whitespace in selection');
-                return;
-            }
-            if (selectedText.length > 200) {
-                console.log('[Phrase] Too long');
-                return;
-            }
-
-            // Check if selection is within subtitle content
-            const subtitleContent = document.getElementById('subtitleContent');
-            if (!subtitleContent) {
-                console.log('[Phrase] subtitleContent not found');
-                return;
-            }
-
-            const range = selection.getRangeAt(0);
-            const container = range.commonAncestorContainer;
-            const containerElement = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
-            console.log('[Phrase] Container:', containerElement?.tagName, containerElement?.className);
-
-            if (!subtitleContent.contains(containerElement)) {
-                console.log('[Phrase] Selection not inside subtitleContent');
-                return;
-            }
-
-            console.log('[Phrase] All checks passed! Showing popup...');
-
             // Pause video
             pauseVideoForTranslation();
 
-            // Get the bounding rect before any DOM changes
-            const rect = range.getBoundingClientRect();
-
-            // Find context (the subtitle line text)
-            const subtitleLine = containerElement.closest('.subtitle-line');
-            const context = subtitleLine ? subtitleLine.querySelector('.text')?.textContent || selectedText : selectedText;
-
-            // Create target for positioning
+            // Create target for positioning using pre-captured rect
             const tempTarget = {
                 getBoundingClientRect: () => rect
             };
@@ -6518,9 +6496,9 @@ function initWordClickHandlers() {
             await showTranslationPopup(selectedText, context, tempTarget, true);
 
             // Clear selection after showing popup
-            selection.removeAllRanges();
+            window.getSelection()?.removeAllRanges();
 
-        }, 250);
+        }, 100); // Reduced delay since we captured data already
     });
 }
 
