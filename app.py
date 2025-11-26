@@ -7,7 +7,9 @@ This is the main entry point. All routes are organized into Blueprints in the ro
 
 import os
 import atexit
-from flask import Flask, render_template, jsonify, send_from_directory
+import gzip
+from io import BytesIO
+from flask import Flask, render_template, jsonify, send_from_directory, request
 
 # Import shared configuration and services
 from shared import PHOTOS_DIR, LM_STUDIO_URL, DATABASE_PATH
@@ -30,6 +32,44 @@ app.register_blueprint(export_bp)
 app.register_blueprint(ai_bp)
 app.register_blueprint(faces_bp)
 app.register_blueprint(videos_bp)
+
+
+# ============ PERFORMANCE OPTIMIZATIONS ============
+
+@app.after_request
+def add_performance_headers(response):
+    """Add caching and compression headers for better performance"""
+    # Skip for API endpoints that return dynamic data
+    if request.path.startswith('/api/') and request.method != 'GET':
+        return response
+
+    # Add cache headers for static assets
+    if request.path.startswith('/static/'):
+        # Cache static files for 1 week
+        response.headers['Cache-Control'] = 'public, max-age=604800'
+    elif request.path.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+        # Cache images for 1 day
+        response.headers['Cache-Control'] = 'public, max-age=86400'
+
+    # Gzip compression for text responses
+    if (response.content_type and
+        ('text/' in response.content_type or
+         'application/json' in response.content_type or
+         'application/javascript' in response.content_type) and
+        'gzip' in request.headers.get('Accept-Encoding', '') and
+        len(response.get_data()) > 500):  # Only compress if > 500 bytes
+
+        try:
+            buffer = BytesIO()
+            with gzip.GzipFile(mode='wb', fileobj=buffer, compresslevel=6) as f:
+                f.write(response.get_data())
+            response.set_data(buffer.getvalue())
+            response.headers['Content-Encoding'] = 'gzip'
+            response.headers['Content-Length'] = len(response.get_data())
+        except Exception:
+            pass  # Fall back to uncompressed response
+
+    return response
 
 
 # ============ FRONTEND ROUTES ============

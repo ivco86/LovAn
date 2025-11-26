@@ -16,6 +16,8 @@ const state = {
     pendingAnalyzeImageId: null,
     uploadFiles: [],
     similarImagesCache: new Map(),
+    imageDetailsCache: new Map(),
+    pendingRequests: new Map(),  // Request deduplication
 
     // Selection mode
     selectionMode: false,
@@ -29,6 +31,41 @@ const state = {
     // Sorting
     imageSort: 'date-desc'
 };
+
+// Cache configuration
+const CACHE_CONFIG = {
+    SIMILAR_TTL: 10 * 60 * 1000,   // 10 minutes
+    DETAILS_TTL: 5 * 60 * 1000     // 5 minutes
+};
+
+// Cache helper functions
+function getCachedData(cache, key, ttl) {
+    const cached = cache.get(key);
+    if (!cached) return null;
+    if (Date.now() - cached.timestamp > ttl) {
+        cache.delete(key);
+        return null;
+    }
+    return cached.data;
+}
+
+function setCacheData(cache, key, data) {
+    cache.set(key, { data, timestamp: Date.now() });
+}
+
+async function deduplicatedRequest(key, requestFn) {
+    // Return existing promise if request is in flight
+    if (state.pendingRequests.has(key)) {
+        return state.pendingRequests.get(key);
+    }
+
+    const promise = requestFn().finally(() => {
+        state.pendingRequests.delete(key);
+    });
+
+    state.pendingRequests.set(key, promise);
+    return promise;
+}
 
 // Constants
 const CONFIG = {
@@ -958,8 +995,16 @@ async function mergeBoards(sourceBoardId, targetBoardId, deleteSource = true) {
 }
 
 async function getImageDetails(imageId) {
+    // Check cache with TTL
+    const cached = getCachedData(state.imageDetailsCache, imageId, CACHE_CONFIG.DETAILS_TTL);
+    if (cached) return cached;
+
     try {
-        const data = await apiCall(`/images/${imageId}`);
+        // Use deduplication to avoid duplicate requests
+        const data = await deduplicatedRequest(`details-${imageId}`, () =>
+            apiCall(`/images/${imageId}`)
+        );
+        setCacheData(state.imageDetailsCache, imageId, data);
         return data;
     } catch (error) {
         console.error('Failed to get image details:', error);
@@ -971,9 +1016,9 @@ async function loadSimilarImages(imageId) {
     const container = document.getElementById('similarImages');
     if (!container) return;
 
-    // Check cache first
-    if (state.similarImagesCache.has(imageId)) {
-        const cached = state.similarImagesCache.get(imageId);
+    // Check cache with TTL
+    const cached = getCachedData(state.similarImagesCache, imageId, CACHE_CONFIG.SIMILAR_TTL);
+    if (cached) {
         renderSimilarImagesInContainer(container, cached, imageId);
         return;
     }
@@ -981,10 +1026,13 @@ async function loadSimilarImages(imageId) {
     container.innerHTML = '<span class="tags-placeholder">Loading...</span>';
 
     try {
-        const data = await apiCall(`/images/${imageId}/similar?limit=${CONFIG.SIMILAR_IMAGES_LIMIT}`);
+        // Use deduplication to avoid duplicate requests
+        const data = await deduplicatedRequest(`similar-${imageId}`, () =>
+            apiCall(`/images/${imageId}/similar?limit=${CONFIG.SIMILAR_IMAGES_LIMIT}`)
+        );
 
         const similarImages = data.similar || [];
-        state.similarImagesCache.set(imageId, similarImages);
+        setCacheData(state.similarImagesCache, imageId, similarImages);
 
         renderSimilarImagesInContainer(container, similarImages, imageId);
     } catch (error) {

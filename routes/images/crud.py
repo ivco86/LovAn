@@ -34,6 +34,11 @@ def get_images():
     youtube_only = request.args.get('youtube_only', 'false').lower() == 'true'
     exclude_youtube = request.args.get('exclude_youtube', 'false').lower() == 'true'
 
+    # Column selection: 'grid' for minimal data (faster), 'detail' for full data
+    columns = request.args.get('columns', 'detail')
+    if columns not in ('grid', 'detail'):
+        columns = 'detail'
+
     images = db.get_all_images(
         limit=limit,
         offset=offset,
@@ -41,7 +46,8 @@ def get_images():
         media_type=media_type,
         analyzed=analyzed,
         youtube_only=youtube_only,
-        exclude_youtube=exclude_youtube
+        exclude_youtube=exclude_youtube,
+        columns=columns
     )
 
     return jsonify({

@@ -528,24 +528,38 @@ class Database:
             return self._row_to_dict(result)
         return None
     
+    # Column sets for different use cases (performance optimization)
+    COLUMNS_GRID = "id, filepath, filename, width, height, media_type, analyzed_at, is_favorite, created_at"
+    COLUMNS_DETAIL = "id, filepath, filename, description, tags, width, height, media_type, analyzed_at, is_favorite, created_at"
+
     def get_all_images(self, limit: int = 1000, offset: int = 0,
                        favorites_only: bool = False,
                        media_type: Optional[str] = None,
                        analyzed: Optional[bool] = None,
                        youtube_only: bool = False,
-                       exclude_youtube: bool = False) -> List[Dict]:
-        """Get all images with pagination and optional filters"""
+                       exclude_youtube: bool = False,
+                       columns: str = 'detail') -> List[Dict]:
+        """Get all images with pagination and optional filters.
+
+        Args:
+            columns: 'grid' for minimal columns (faster), 'detail' for all columns
+        """
         conn = self.get_connection()
         cursor = conn.cursor()
 
+        # Select columns based on mode
+        col_set = self.COLUMNS_GRID if columns == 'grid' else self.COLUMNS_DETAIL
+
         # Use LEFT JOIN if we need YouTube filtering
         if youtube_only or exclude_youtube:
-            query = """
-                SELECT i.* FROM images i
+            # Prefix columns with table alias
+            prefixed_cols = ', '.join([f'i.{c.strip()}' for c in col_set.split(',')])
+            query = f"""
+                SELECT {prefixed_cols} FROM images i
                 LEFT JOIN youtube_videos yv ON i.id = yv.image_id
             """
         else:
-            query = "SELECT * FROM images"
+            query = f"SELECT {col_set} FROM images"
 
         clauses = []
         params = []
@@ -778,7 +792,7 @@ class Database:
         return [self._row_to_dict(row) for row in results]
 
     def get_similar_images(self, image_id: int, limit: int = 6) -> List[Dict]:
-        """Get similar images based on shared tags"""
+        """Get similar images based on shared tags - optimized with SQL-level filtering"""
         conn = self.get_connection()
         cursor = conn.cursor()
 
@@ -800,37 +814,93 @@ class Database:
             conn.close()
             return []
 
-        # Find images with matching tags (simplified approach without json_each)
-        # Get all analyzed images with tags
-        cursor.execute("""
-            SELECT * FROM images
-            WHERE id != ?
-              AND analyzed_at IS NOT NULL
-              AND tags IS NOT NULL
-              AND tags != '[]'
-            ORDER BY analyzed_at DESC
-            LIMIT 50
-        """, (image_id,))
+        # Try optimized SQL-level tag matching using json_each
+        try:
+            # Build LIKE conditions for each tag (fast pre-filter at SQL level)
+            # This reduces the dataset before Python processing
+            tag_conditions = []
+            params = [image_id]
 
-        results = cursor.fetchall()
-        conn.close()
+            # Use top 5 most specific tags for SQL filtering
+            filter_tags = source_tags[:5] if len(source_tags) > 5 else source_tags
+            for tag in filter_tags:
+                # Escape special characters for LIKE
+                escaped_tag = tag.replace('%', '\\%').replace('_', '\\_')
+                tag_conditions.append("tags LIKE ?")
+                params.append(f'%"{escaped_tag}"%')
 
-        # Calculate similarity based on shared tags
-        similar_images = []
-        for row in results:
-            try:
-                img_tags = json.loads(row['tags'])
-                shared_tags = set(source_tags) & set(img_tags)
-                if len(shared_tags) > 0:
-                    img_dict = self._row_to_dict(row)
-                    img_dict['similarity_score'] = len(shared_tags)
-                    similar_images.append(img_dict)
-            except (json.JSONDecodeError, TypeError):
-                continue
+            # Build query with OR conditions for pre-filtering
+            where_clause = " OR ".join(tag_conditions) if tag_conditions else "1=1"
 
-        # Sort by similarity and return top N
-        similar_images.sort(key=lambda x: x['similarity_score'], reverse=True)
-        return similar_images[:limit]
+            cursor.execute(f"""
+                SELECT id, filepath, filename, description, tags, width, height,
+                       media_type, analyzed_at, is_favorite, created_at
+                FROM images
+                WHERE id != ?
+                  AND analyzed_at IS NOT NULL
+                  AND tags IS NOT NULL
+                  AND tags != '[]'
+                  AND ({where_clause})
+                ORDER BY analyzed_at DESC
+                LIMIT 30
+            """, params)
+
+            results = cursor.fetchall()
+            conn.close()
+
+            # Calculate exact similarity score in Python (but with much smaller dataset)
+            source_tags_set = set(source_tags)
+            similar_images = []
+
+            for row in results:
+                try:
+                    img_tags = json.loads(row['tags'])
+                    shared_count = len(source_tags_set & set(img_tags))
+                    if shared_count > 0:
+                        img_dict = self._row_to_dict(row)
+                        img_dict['similarity_score'] = shared_count
+                        similar_images.append(img_dict)
+                except (json.JSONDecodeError, TypeError):
+                    continue
+
+            # Sort by similarity and return top N
+            similar_images.sort(key=lambda x: x['similarity_score'], reverse=True)
+            return similar_images[:limit]
+
+        except Exception as e:
+            # Fallback to simpler query if optimized version fails
+            print(f"[DB] Optimized similar images query failed, using fallback: {e}")
+            cursor.execute("""
+                SELECT id, filepath, filename, description, tags, width, height,
+                       media_type, analyzed_at, is_favorite, created_at
+                FROM images
+                WHERE id != ?
+                  AND analyzed_at IS NOT NULL
+                  AND tags IS NOT NULL
+                  AND tags != '[]'
+                ORDER BY analyzed_at DESC
+                LIMIT 25
+            """, (image_id,))
+
+            results = cursor.fetchall()
+            conn.close()
+
+            source_tags_set = set(source_tags)
+            similar_images = []
+
+            for row in results:
+                try:
+                    img_tags = json.loads(row['tags'])
+                    shared_count = len(source_tags_set & set(img_tags))
+                    if shared_count > 0:
+                        img_dict = self._row_to_dict(row)
+                        img_dict['similarity_score'] = shared_count
+                        similar_images.append(img_dict)
+                except (json.JSONDecodeError, TypeError):
+                    continue
+
+            similar_images.sort(key=lambda x: x['similarity_score'], reverse=True)
+            return similar_images[:limit]
 
     def get_unanalyzed_images(self, limit: int = 100) -> List[Dict]:
         """Get images that haven't been analyzed yet"""

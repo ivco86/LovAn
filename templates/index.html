@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Gallery</title>
+    <!-- Preload critical resources for faster loading -->
+    <link rel="preload" href="/static/css/styles.css" as="style">
+    <link rel="preload" href="/static/js/app.js" as="script">
+    <!-- DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="//i.ytimg.com">
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 
@@ -1052,9 +1057,10 @@
         </div>
     </div>
 
-    <script src="/static/js/app.js"></script>
-    <script src="/static/js/faces.js"></script>
-    <script src="/static/js/chat.js"></script>
+    <!-- Scripts with defer for non-blocking load -->
+    <script src="/static/js/app.js" defer></script>
+    <script src="/static/js/faces.js" defer></script>
+    <script src="/static/js/chat.js" defer></script>
 </body>
 
 </html>
