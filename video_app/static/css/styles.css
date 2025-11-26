@@ -303,6 +303,13 @@ body {
 
 .modal-header h2 {
     font-size: 18px;
+    flex: 1;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .close-btn {

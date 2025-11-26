@@ -956,6 +956,108 @@ def serve_highlight(filename):
     return send_from_directory(highlights_dir, filename)
 
 
+# ============ AI VIDEO ANALYSIS (from subtitles) ============
+
+@videos_bp.route('/api/videos/<int:video_id>/analyze', methods=['POST'])
+def analyze_video_from_subtitles(video_id):
+    """
+    Analyze video content using subtitles to generate tags and description.
+    Does NOT change the filename.
+    """
+    from ai_service import AIService
+
+    video = db.get_youtube_video(video_id)
+    if not video:
+        return jsonify({'error': 'Video not found'}), 404
+
+    # Get subtitles
+    subtitles = db.get_video_subtitles(video_id)
+    if not subtitles:
+        return jsonify({'error': 'No subtitles available for analysis'}), 400
+
+    # Get transcript text
+    transcript = ' '.join(sub.get('text', '') for sub in subtitles)
+
+    # Limit transcript length for AI
+    if len(transcript) > 6000:
+        transcript = transcript[:6000] + "..."
+
+    video_title = video.get('title', 'Unknown')
+
+    # Create AI prompt
+    prompt = f"""Analyze this video transcript and provide tags and a description.
+
+VIDEO TITLE: {video_title}
+
+TRANSCRIPT:
+{transcript}
+
+Based on the transcript content, provide:
+1. A brief description (2-3 sentences) summarizing what this video is about
+2. A list of relevant tags (5-15 tags) that describe the content, topics, themes
+
+Format your response EXACTLY as:
+DESCRIPTION: [your description here]
+TAGS: tag1, tag2, tag3, tag4, tag5
+
+Be concise and accurate. Focus on the actual content discussed in the transcript."""
+
+    try:
+        ai_service = AIService()
+        ai_response = ai_service.analyze_text(prompt)
+
+        if not ai_response:
+            return jsonify({'error': 'AI analysis failed'}), 500
+
+        # Parse AI response
+        description = ''
+        tags = []
+
+        for line in ai_response.strip().split('\n'):
+            if line.startswith('DESCRIPTION:'):
+                description = line.replace('DESCRIPTION:', '').strip()
+            elif line.startswith('TAGS:'):
+                tags_str = line.replace('TAGS:', '').strip()
+                tags = [t.strip() for t in tags_str.split(',') if t.strip()]
+
+        if not description and not tags:
+            # Try to extract from unformatted response
+            description = ai_response[:500]
+            tags = []
+
+        # Update database - only description and tags, NOT filename
+        image_id = video.get('image_id')
+        if image_id:
+            db.update_image(
+                image_id,
+                description=description,
+                tags=', '.join(tags)
+            )
+
+        return jsonify({
+            'success': True,
+            'video_id': video_id,
+            'description': description,
+            'tags': tags,
+            'transcript_length': len(transcript)
+        })
+
+    except Exception as e:
+        logger.error(f"Error analyzing video: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@videos_bp.route('/api/images/<int:image_id>/analyze', methods=['POST'])
+def analyze_video_by_image_id(image_id):
+    """Analyze video by image_id (alias for convenience)"""
+    video = db.get_youtube_video_by_image_id(image_id)
+    if not video:
+        return jsonify({'error': 'Video not found'}), 404
+
+    # Redirect to main analyze endpoint
+    return analyze_video_from_subtitles(video['id'])
+
+
 # ============ KEYFRAME FILE SERVING ============
 
 @videos_bp.route('/keyframes/<path:filename>')

@@ -128,7 +128,10 @@
             <div class="modal-content video-player-modal">
                 <div class="modal-header">
                     <h2 id="playerTitle">Video Player</h2>
-                    <button class="close-btn" onclick="closeVideoPlayer()">&times;</button>
+                    <div class="header-actions">
+                        <button class="btn btn-small" id="analyzeBtn" onclick="analyzeVideo()">Analyze</button>
+                        <button class="close-btn" onclick="closeVideoPlayer()">&times;</button>
+                    </div>
                 </div>
                 <div class="modal-body player-body">
                     <div class="player-container">

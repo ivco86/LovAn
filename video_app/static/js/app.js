@@ -505,3 +505,38 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ============ AI ANALYSIS ============
+
+async function analyzeVideo() {
+    if (!currentVideo) return;
+
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const originalText = analyzeBtn.textContent;
+
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = 'Analyzing...';
+
+    try {
+        const response = await fetch(`/api/videos/${currentVideo.id}/analyze`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert(`Analysis complete!\n\nDescription: ${data.description}\n\nTags: ${data.tags.join(', ')}`);
+            // Refresh video list to show updated data
+            await loadVideos();
+        } else {
+            alert(`Analysis failed: ${data.error}`);
+        }
+    } catch (error) {
+        console.error('Error analyzing video:', error);
+        alert('Failed to analyze video');
+    } finally {
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = originalText;
+    }
+}
