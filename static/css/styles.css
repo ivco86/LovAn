@@ -3135,3 +3135,37 @@ body {
     background: rgba(168, 85, 247, 0.4);
     color: white;
 }
+
+/* ============ PROGRESS BAR ============ */
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-color), #a855f7);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+/* ============ AI HIGHLIGHT STYLES ============ */
+.segment-item:hover {
+    background: var(--bg-tertiary) !important;
+    transform: translateX(4px);
+    transition: all 0.2s ease;
+}
+
+#highlightPreview h4 {
+    margin-bottom: 10px;
+    color: var(--accent-color);
+}
+
+#highlightResult video {
+    border-radius: 8px;
+    background: #000;
+}

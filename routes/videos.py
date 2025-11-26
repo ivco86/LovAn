@@ -1043,3 +1043,93 @@ def export_vocabulary():
             mimetype='text/csv',
             headers={'Content-Disposition': 'attachment; filename="vocabulary.csv"'}
         )
+
+
+# ============ AI VIDEO HIGHLIGHTS ============
+
+@videos_bp.route('/api/images/<int:image_id>/highlight', methods=['POST'])
+def generate_video_highlight(image_id):
+    """Generate an AI-powered highlight video (TikTok/Shorts style)"""
+    from youtube_service import YouTubeService
+
+    data = request.json or {}
+    target_duration = data.get('duration', 30)  # Default 30 seconds
+
+    # Validate duration
+    if target_duration < 10 or target_duration > 120:
+        return jsonify({'error': 'Duration must be between 10 and 120 seconds'}), 400
+
+    # Get video info
+    video = db.get_youtube_video_by_image_id(image_id)
+    if not video:
+        return jsonify({'error': 'Video not found'}), 404
+
+    # Check if video has subtitles
+    subtitles = db.get_youtube_subtitles(video['id'])
+    if not subtitles:
+        return jsonify({
+            'error': 'No subtitles available for this video. Subtitles are required for AI highlight generation.'
+        }), 400
+
+    # Generate highlight
+    youtube_service = YouTubeService(db)
+    result = youtube_service.generate_ai_highlight(video['id'], target_duration=target_duration)
+
+    if result:
+        return jsonify({
+            'success': True,
+            'highlight_path': result['highlight_path'],
+            'highlight_url': f"/highlights/{os.path.basename(result['highlight_path'])}",
+            'segments': result['segments'],
+            'summary': result['summary'],
+            'duration_ms': result['duration_ms'],
+            'duration_formatted': format_time_readable(result['duration_ms'])
+        })
+    else:
+        return jsonify({'error': 'Failed to generate highlight video'}), 500
+
+
+@videos_bp.route('/api/images/<int:image_id>/highlight/preview', methods=['POST'])
+def preview_highlight_segments(image_id):
+    """Preview AI-selected highlight segments without generating video"""
+    from ai_service import ai_service
+
+    data = request.json or {}
+    target_duration = data.get('duration', 30)
+
+    # Get video info
+    video = db.get_youtube_video_by_image_id(image_id)
+    if not video:
+        return jsonify({'error': 'Video not found'}), 404
+
+    # Get subtitles
+    subtitles = db.get_youtube_subtitles(video['id'])
+    if not subtitles:
+        return jsonify({'error': 'No subtitles available'}), 400
+
+    # Analyze subtitles
+    video_duration_ms = (video.get('duration') or 0) * 1000
+    analysis = ai_service.analyze_subtitles_for_highlights(
+        subtitles,
+        target_duration=target_duration,
+        video_duration_ms=video_duration_ms
+    )
+
+    if analysis:
+        return jsonify({
+            'success': True,
+            'segments': analysis['segments'],
+            'summary': analysis.get('summary', ''),
+            'total_duration_ms': analysis.get('total_duration_ms', 0),
+            'hook_segment_index': analysis.get('hook_segment_index', 0)
+        })
+    else:
+        return jsonify({'error': 'AI analysis failed'}), 500
+
+
+@videos_bp.route('/highlights/<path:filename>')
+def serve_highlight(filename):
+    """Serve highlight videos"""
+    from flask import send_from_directory
+    highlights_dir = os.path.join('data', 'highlights')
+    return send_from_directory(highlights_dir, filename)
